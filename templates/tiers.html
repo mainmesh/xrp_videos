@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Tiers & Pricing{% endblock %}
+{% block content %}
+  <h2 class="text-4xl font-bold text-center gradient-text mb-12">Tier System & Pricing</h2>
+  
+  <div class="grid md:grid-cols-3 gap-8 mb-16">
+    <!-- Bronze/Free Tier -->
+    <div class="glass-effect rounded-2xl p-8 border border-yellow-400/50 hover:shadow-2xl hover:shadow-yellow-400/30 transition">
+      <div class="text-6xl mb-4">🥉</div>
+      <h3 class="text-2xl font-bold text-white mb-2">Bronze Tier</h3>
+      <p class="text-3xl font-bold text-yellow-400 mb-2">Free</p>
+      <p class="text-gray-300 mb-6">No deposit required</p>
+      
+      <ul class="space-y-3 text-gray-300 mb-8">
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>Access to Bronze videos</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>Earn <strong>$0.50</strong> per video</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>Referral bonuses (10% commission)</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>Instant wallet payouts</span>
+        </li>
+      </ul>
+      
+      <a href="{% url 'accounts:register' %}" class="w-full block text-center px-4 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white font-bold rounded-lg transition">
+        Get Started
+      </a>
+    </div>
+
+    <!-- Silver Tier -->
+    <div class="glass-effect rounded-2xl p-8 border border-gray-300/50 hover:shadow-2xl hover:shadow-gray-300/30 transition relative">
+      <div class="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold rounded-full">
+        POPULAR
+      </div>
+      <div class="text-6xl mb-4">🥈</div>
+      <h3 class="text-2xl font-bold text-white mb-2">Silver Tier</h3>
+      <p class="text-3xl font-bold text-gray-300 mb-2">$50</p>
+      <p class="text-gray-300 mb-6">One-time deposit</p>
+      
+      <ul class="space-y-3 text-gray-300 mb-8">
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>All Bronze features</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>Access to Silver videos</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>Earn <strong>$1.00</strong> per video</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>Priority access to new content</span>
+        </li>
+      </ul>
+      
+      <a href="{% url 'accounts:deposit' %}" class="w-full block text-center px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
+        Upgrade Now
+      </a>
+    </div>
+
+    <!-- Gold Tier -->
+    <div class="glass-effect rounded-2xl p-8 border border-yellow-500/50 hover:shadow-2xl hover:shadow-yellow-500/30 transition">
+      <div class="text-6xl mb-4">🥇</div>
+      <h3 class="text-2xl font-bold text-white mb-2">Gold Tier</h3>
+      <p class="text-3xl font-bold text-yellow-500 mb-2">$100</p>
+      <p class="text-gray-300 mb-6">One-time deposit</p>
+      
+      <ul class="space-y-3 text-gray-300 mb-8">
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>All Silver features</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>Full access to Gold videos</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>Premium earning: <strong>$2.00</strong> per video</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 mt-1">✓</span>
+          <span>VIP customer support</span>
+        </li>
+      </ul>
+      
+      <a href="{% url 'accounts:deposit' %}" class="w-full block text-center px-4 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white font-bold rounded-lg transition">
+        Upgrade Now
+      </a>
+    </div>
+  </div>
+
+  <!-- FAQ Section -->
+  <section class="dark-glass rounded-2xl p-8 border border-purple-500/30">
+    <h3 class="text-2xl font-bold gradient-text mb-6">Tier FAQs</h3>
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="font-bold text-white mb-2">Can I upgrade later?</h4>
+        <p class="text-gray-300">Yes! You can upgrade from Bronze to Silver or Gold anytime by making a deposit.</p>
+      </div>
+      <div>
+        <h4 class="font-bold text-white mb-2">Is my deposit refundable?</h4>
+        <p class="text-gray-300">Your deposit stays in your wallet and counts toward your balance for withdrawals.</p>
+      </div>
+      <div>
+        <h4 class="font-bold text-white mb-2">How often are videos added?</h4>
+        <p class="text-gray-300">We add new premium content regularly. Check back daily for fresh earning opportunities!</p>
+      </div>
+      <div>
+        <h4 class="font-bold text-white mb-2">Any hidden fees?</h4>
+        <p class="text-gray-300">Nope! No hidden fees. Your earnings are yours to keep and withdraw anytime.</p>
+      </div>
+    </div>
+  </section>
+
+{% endblock %}

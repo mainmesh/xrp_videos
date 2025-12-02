@@ -1,0 +1,80 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Watch-to-Earn Platform{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      * { font-family: 'Inter', sans-serif; }
+      .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+      .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+      .glass-effect { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
+      .dark-glass { background: rgba(30, 27, 75, 0.5); backdrop-filter: blur(10px); }
+    </style>
+  </head>
+  <body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-gray-100 font-sans min-h-screen">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 dark-glass border-b border-purple-500/20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center space-x-8">
+            <a href="{% url 'home' %}" class="text-2xl font-bold gradient-text hover:opacity-80 transition">✨ XRPPrime</a>
+            <nav class="hidden md:flex space-x-1 text-sm">
+              <a href="{% url 'home' %}" class="px-3 py-2 rounded-lg hover:bg-white/10 transition">Home</a>
+              <a href="{% url 'videos:list' %}" class="px-3 py-2 rounded-lg hover:bg-white/10 transition">Browse</a>
+              <a href="{% url 'tiers' %}" class="px-3 py-2 rounded-lg hover:bg-white/10 transition">Tiers</a>
+              <a href="{% url 'about' %}" class="px-3 py-2 rounded-lg hover:bg-white/10 transition">About</a>
+            </nav>
+          </div>
+          <div class="flex items-center space-x-3">
+            {% if user.is_authenticated %}
+              <a href="{% url 'accounts:dashboard' %}" class="text-sm px-4 py-2 rounded-lg hover:bg-white/10 transition">Dashboard</a>
+              <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+                <button type="submit" class="text-sm px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg transition">Logout</button>
+              </form>
+            {% else %}
+              <a href="{% url 'login' %}" class="text-sm px-4 py-2 rounded-lg hover:bg-white/10 transition">Log in</a>
+              <a href="{% url 'accounts:register' %}" class="text-sm px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition font-medium">Sign up</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="mt-12 mb-16">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-purple-500/20 mt-20 pt-12 pb-8 dark-glass">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+          <div>
+            <h3 class="text-lg font-bold gradient-text">✨ XRPPrime</h3>
+            <p class="text-sm text-gray-400 mt-2">Watch videos, earn rewards, refer friends, and withdraw.</p>
+          </div>
+          <div class="flex gap-8">
+            <div>
+              <h4 class="text-sm font-semibold text-purple-300">Links</h4>
+              <ul class="mt-3 text-sm text-gray-400 space-y-1">
+                <li><a href="{% url 'about' %}" class="hover:text-purple-400 transition">About</a></li>
+                <li><a href="{% url 'tiers' %}" class="hover:text-purple-400 transition">Tiers</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="mt-8 pt-6 border-t border-purple-500/10 text-sm text-gray-500 text-center">© {% now "Y" %} XRPPrime Watch-to-Earn. All rights reserved.</div>
+      </div>
+    </footer>
+
+  </body>
+</html>

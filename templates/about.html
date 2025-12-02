@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}About Us{% endblock %}
+{% block content %}
+  <h2 class="text-4xl font-bold text-center gradient-text mb-12">About XRPPrime</h2>
+
+  <!-- Main Info -->
+  <div class="dark-glass rounded-2xl p-8 border border-purple-500/30 mb-12">
+    <p class="text-lg text-gray-300 mb-4">
+      XRPPrime is a revolutionary Watch-to-Earn platform that rewards users for their time and attention. 
+      We believe that quality content creators deserve compensation, and viewers deserve to be paid for engaging with premium videos.
+    </p>
+    <p class="text-lg text-gray-300">
+      Our mission is to create a transparent, fair, and rewarding ecosystem where everyone—creators, viewers, and advocates—benefits.
+    </p>
+  </div>
+
+  <!-- Values Section -->
+  <section class="mb-16">
+    <h3 class="text-3xl font-bold gradient-text mb-8 text-center">Our Values</h3>
+    <div class="grid md:grid-cols-3 gap-6">
+      <div class="dark-glass rounded-2xl p-8 border border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/50 transition">
+        <div class="text-5xl mb-4">🤝</div>
+        <h4 class="text-xl font-bold text-purple-300 mb-3">Transparency</h4>
+        <p class="text-gray-300">Every reward, payout, and withdrawal is tracked and transparent. You know exactly what you're earning.</p>
+      </div>
+
+      <div class="dark-glass rounded-2xl p-8 border border-pink-500/30 hover:shadow-2xl hover:shadow-pink-500/50 transition">
+        <div class="text-5xl mb-4">💎</div>
+        <h4 class="text-xl font-bold text-pink-300 mb-3">Fairness</h4>
+        <p class="text-gray-300">All users earn the same rate for their time. Higher tiers simply unlock more premium content, not unfair advantages.</p>
+      </div>
+
+      <div class="dark-glass rounded-2xl p-8 border border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/50 transition">
+        <div class="text-5xl mb-4">⚡</div>
+        <h4 class="text-xl font-bold text-purple-300 mb-3">Reliability</h4>
+        <p class="text-gray-300">Your earnings are secured by proven blockchain technology and instant payouts. No delays, no excuses.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How We Work -->
+  <section class="mb-16">
+    <h3 class="text-3xl font-bold gradient-text mb-8 text-center">How It Works</h3>
+    <div class="grid md:grid-cols-4 gap-4">
+      <div class="dark-glass rounded-xl p-6 border border-purple-500/20 text-center">
+        <div class="text-4xl mb-3">👥</div>
+        <h4 class="font-bold text-white mb-2">Join Free</h4>
+        <p class="text-sm text-gray-400">Create your account instantly with just an email.</p>
+      </div>
+      <div class="dark-glass rounded-xl p-6 border border-purple-500/20 text-center">
+        <div class="text-4xl mb-3">📺</div>
+        <h4 class="font-bold text-white mb-2">Watch Videos</h4>
+        <p class="text-sm text-gray-400">Browse and watch quality content in our library.</p>
+      </div>
+      <div class="dark-glass rounded-xl p-6 border border-purple-500/20 text-center">
+        <div class="text-4xl mb-3">💰</div>
+        <h4 class="font-bold text-white mb-2">Earn Instantly</h4>
+        <p class="text-sm text-gray-400">Get paid instantly to your wallet after each video.</p>
+      </div>
+      <div class="dark-glass rounded-xl p-6 border border-purple-500/20 text-center">
+        <div class="text-4xl mb-3">🚀</div>
+        <h4 class="font-bold text-white mb-2">Grow & Withdraw</h4>
+        <p class="text-sm text-gray-400">Refer friends and withdraw your earnings anytime.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats/Features -->
+  <section class="grid md:grid-cols-2 gap-8 mb-16">
+    <div class="dark-glass rounded-2xl p-8 border border-purple-500/30">
+      <h3 class="text-2xl font-bold text-purple-300 mb-6">Why Choose Us?</h3>
+      <ul class="space-y-3 text-gray-300">
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 text-xl mt-1">✓</span>
+          <span><strong>No investment required</strong> — Start earning immediately for free</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 text-xl mt-1">✓</span>
+          <span><strong>Instant payouts</strong> — Withdraw your earnings anytime</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 text-xl mt-1">✓</span>
+          <span><strong>Referral bonuses</strong> — Earn 10% from friends you refer</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 text-xl mt-1">✓</span>
+          <span><strong>Premium content</strong> — Upgrade to unlock exclusive videos</span>
+        </li>
+        <li class="flex items-start gap-3">
+          <span class="text-green-400 text-xl mt-1">✓</span>
+          <span><strong>Secure payments</strong> — Stripe-powered transactions</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="dark-glass rounded-2xl p-8 border border-pink-500/30">
+      <h3 class="text-2xl font-bold text-pink-300 mb-6">Our Community</h3>
+      <p class="text-gray-300 mb-4">
+        We're building a community of engaged viewers and creators who believe in fair compensation for time and attention.
+      </p>
+      <p class="text-gray-300 mb-6">
+        Join thousands of users who are already earning with XRPPrime. Your first reward is just a video away!
+      </p>
+      <a href="{% url 'accounts:register' %}" class="inline-block px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-lg transition">
+        Join Now 🚀
+      </a>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section class="text-center dark-glass rounded-2xl p-8 border border-purple-500/30">
+    <h3 class="text-2xl font-bold gradient-text mb-4">Questions?</h3>
+    <p class="text-gray-300 mb-6">We're here to help! Check out our FAQ or contact us directly.</p>
+    <div class="flex justify-center gap-4 flex-wrap">
+      <a href="#faq" class="px-6 py-2 dark-glass border border-purple-500/50 text-purple-300 rounded-lg hover:border-purple-400 transition">FAQ</a>
+      <a href="mailto:support@xrpprime.com" class="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-500 hover:to-pink-500 transition">Contact Us</a>
+    </div>
+  </section>
+
+{% endblock %}
