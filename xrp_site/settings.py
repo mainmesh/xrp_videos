@@ -9,7 +9,7 @@ SECRET_KEY = config('SECRET_KEY', default='dummy-key-change-this-in-production')
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Allowed Hosts
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,*.onrender.com', cast=Csv())
 
 INSTALLED_APPS=['django.contrib.admin','django.contrib.auth','django.contrib.contenttypes','django.contrib.sessions','django.contrib.messages','django.contrib.staticfiles','core','accounts','videos','referrals']
 
