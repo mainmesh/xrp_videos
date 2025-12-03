@@ -28,4 +28,4 @@ services:
           name: xrp_videos_db
           property: connectionString
       - key: ALLOWED_HOSTS
-        value: "localhost,127.0.0.1,*.onrender.com"
+        value: "localhost,127.0.0.1,xrp-videos.onrender.com"
