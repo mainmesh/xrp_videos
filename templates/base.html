@@ -15,16 +15,123 @@
       .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
       .glass-effect { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
       .dark-glass { background: rgba(30, 27, 75, 0.5); backdrop-filter: blur(10px); }
+      
+      /* Sidebar Styles */
+      .sidebar { transition: transform 0.3s ease-in-out; }
+      .sidebar-open { transform: translateX(0); }
+      .sidebar-closed { transform: translateX(-100%); }
+      @media (min-width: 1024px) {
+        .sidebar { transform: translateX(0) !important; }
+      }
+      
+      /* Dark mode */
+      body.dark-mode { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
+      body.light-mode { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+      body.light-mode .dark-glass { background: rgba(255, 255, 255, 0.8); color: #1f2937; }
+      body.light-mode .glass-effect { background: rgba(255, 255, 255, 0.9); color: #1f2937; }
+      body.light-mode { color: #1f2937; }
     </style>
   </head>
-  <body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-gray-100 font-sans min-h-screen">
+  <body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-gray-100 font-sans min-h-screen dark-mode">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar sidebar-closed lg:sidebar-open fixed top-0 left-0 h-full w-64 dark-glass border-r border-purple-500/20 z-50 overflow-y-auto">
+      <div class="p-6">
+        <!-- Logo -->
+        <div class="mb-8">
+          <a href="{% url 'home' %}" class="text-2xl font-bold gradient-text">xrpvideos</a>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="space-y-2 mb-8">
+          <h3 class="text-xs uppercase text-gray-400 font-semibold mb-3">Navigation</h3>
+          <a href="{% url 'home' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+            <span>Home</span>
+          </a>
+          <a href="{% url 'videos:list' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Browse Videos</span>
+          </a>
+          <a href="{% url 'tiers' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>Earning Tiers</span>
+          </a>
+          <a href="{% url 'about' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span>About</span>
+          </a>
+        </nav>
+
+        {% if user.is_authenticated %}
+        <!-- Account Section -->
+        <div class="space-y-2 mb-8 pt-6 border-t border-purple-500/20">
+          <h3 class="text-xs uppercase text-gray-400 font-semibold mb-3">Account</h3>
+          <a href="{% url 'accounts:dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="{% url 'referrals:stats' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            <span>Referrals</span>
+          </a>
+          <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            <span>Notifications</span>
+            <span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">0</span>
+          </a>
+        </div>
+        {% endif %}
+
+        <!-- Settings -->
+        <div class="space-y-2 pt-6 border-t border-purple-500/20">
+          <h3 class="text-xs uppercase text-gray-400 font-semibold mb-3">Settings</h3>
+          <button onclick="toggleTheme()" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition w-full text-left">
+            <svg id="theme-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            <span id="theme-text">Dark Mode</span>
+          </button>
+          
+          {% if user.is_authenticated %}
+          <form method="post" action="{% url 'logout' %}" class="w-full">
+            {% csrf_token %}
+            <button type="submit" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/20 transition w-full text-left text-red-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+              <span>Logout</span>
+            </button>
+          </form>
+          {% else %}
+          <a href="{% url 'login' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/10 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+            <span>Login</span>
+          </a>
+          <a href="{% url 'accounts:register' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+            <span>Sign Up</span>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 lg:hidden hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Main Content Wrapper -->
+    <div class="lg:ml-64 min-h-screen">
+      <!-- Mobile Header -->
+      <div class="lg:hidden sticky top-0 z-30 dark-glass border-b border-purple-500/20 px-4 py-3 flex items-center justify-between">
+        <button onclick="toggleSidebar()" class="text-white p-2 hover:bg-white/10 rounded-lg">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+        <a href="{% url 'home' %}" class="text-xl font-bold gradient-text">xrpvideos</a>
+        <div class="w-10"></div>
+      </div>
 
     <!-- Header -->
-    <header class="sticky top-0 z-50 dark-glass border-b border-purple-500/20">
+    <header class="sticky top-0 z-50 dark-glass border-b border-purple-500/20 hidden lg:block">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center space-x-8">
-            <a href="{% url 'home' %}" class="text-2xl font-bold gradient-text hover:opacity-80 transition">xrpvideos</a>
             <nav class="hidden md:flex space-x-1 text-sm">
               <a href="{% url 'home' %}" class="px-3 py-2 rounded-lg hover:bg-white/10 transition">Home</a>
               <a href="{% url 'videos:list' %}" class="px-3 py-2 rounded-lg hover:bg-white/10 transition">Browse</a>
@@ -76,5 +183,57 @@
       </div>
     </footer>
 
+    </div>
+
+    <!-- Theme Toggle Script -->
+    <script>
+      function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        
+        if (sidebar.classList.contains('sidebar-closed')) {
+          sidebar.classList.remove('sidebar-closed');
+          sidebar.classList.add('sidebar-open');
+          overlay.classList.remove('hidden');
+        } else {
+          sidebar.classList.remove('sidebar-open');
+          sidebar.classList.add('sidebar-closed');
+          overlay.classList.add('hidden');
+        }
+      }
+
+      function toggleTheme() {
+        const body = document.body;
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+        
+        if (body.classList.contains('dark-mode')) {
+          body.classList.remove('dark-mode');
+          body.classList.add('light-mode');
+          themeText.textContent = 'Light Mode';
+          localStorage.setItem('theme', 'light');
+          // Update icon to sun
+          themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+        } else {
+          body.classList.remove('light-mode');
+          body.classList.add('dark-mode');
+          themeText.textContent = 'Dark Mode';
+          localStorage.setItem('theme', 'dark');
+          // Update icon to moon
+          themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
+        }
+      }
+
+      // Load theme preference on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        if (savedTheme === 'light') {
+          document.body.classList.remove('dark-mode');
+          document.body.classList.add('light-mode');
+          document.getElementById('theme-text').textContent = 'Light Mode';
+          document.getElementById('theme-icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+        }
+      });
+    </script>
   </body>
 </html>
