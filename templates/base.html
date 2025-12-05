@@ -35,11 +35,60 @@
       }
       
       /* Dark mode */
-      body.dark-mode { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
-      body.light-mode { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
-      body.light-mode .dark-glass { background: rgba(255, 255, 255, 0.8); color: #1f2937; }
-      body.light-mode .glass-effect { background: rgba(255, 255, 255, 0.9); color: #1f2937; }
-      body.light-mode { color: #1f2937; }
+      body.dark-mode { 
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        color: #f3f4f6;
+      }
+      
+      /* Light mode */
+      body.light-mode { 
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        color: #1f2937;
+      }
+      
+      body.light-mode .dark-glass { 
+        background: rgba(255, 255, 255, 0.9); 
+        color: #1f2937;
+        border-color: rgba(139, 92, 246, 0.2);
+      }
+      
+      body.light-mode .glass-effect { 
+        background: rgba(255, 255, 255, 0.95); 
+        color: #1f2937;
+        border-color: rgba(139, 92, 246, 0.3);
+      }
+      
+      body.light-mode .text-gray-100,
+      body.light-mode .text-gray-200,
+      body.light-mode .text-gray-300 { 
+        color: #374151 !important;
+      }
+      
+      body.light-mode .text-gray-400 { 
+        color: #6b7280 !important;
+      }
+      
+      body.light-mode .text-gray-500 { 
+        color: #9ca3af !important;
+      }
+      
+      body.light-mode .text-white { 
+        color: #1f2937 !important;
+      }
+      
+      body.light-mode .border-purple-500\/20,
+      body.light-mode .border-purple-500\/30 {
+        border-color: rgba(139, 92, 246, 0.3) !important;
+      }
+      
+      body.light-mode .sidebar {
+        background: rgba(255, 255, 255, 0.95);
+        border-color: rgba(139, 92, 246, 0.2);
+      }
+      
+      body.light-mode .hover\:bg-white\/10:hover {
+        background-color: rgba(139, 92, 246, 0.1) !important;
+      }
       
       /* Mobile responsive fixes */
       @media (max-width: 1023px) {
