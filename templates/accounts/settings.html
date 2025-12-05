@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Account Settings{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-full overflow-hidden">
+  <h2 class="text-3xl md:text-4xl font-bold gradient-text mb-8">Account Settings</h2>
+
+  <div class="grid lg:grid-cols-2 gap-6">
+    <!-- Profile Information -->
+    <div class="dark-glass rounded-2xl p-6 md:p-8 border border-purple-500/30">
+      <h3 class="text-xl font-bold text-purple-300 mb-6">Profile Information</h3>
+      <form method="post" action="{% url 'accounts:update_profile' %}" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Username</label>
+          <input type="text" name="username" value="{{ user.username }}" class="w-full px-4 py-3 bg-white/10 border border-purple-500/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" required>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+          <input type="email" name="email" value="{{ user.email }}" class="w-full px-4 py-3 bg-white/10 border border-purple-500/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" required>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">First Name</label>
+          <input type="text" name="first_name" value="{{ user.first_name }}" class="w-full px-4 py-3 bg-white/10 border border-purple-500/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Last Name</label>
+          <input type="text" name="last_name" value="{{ user.last_name }}" class="w-full px-4 py-3 bg-white/10 border border-purple-500/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500">
+        </div>
+        
+        <button type="submit" class="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
+          Update Profile
+        </button>
+      </form>
+    </div>
+
+    <!-- Change Password -->
+    <div class="dark-glass rounded-2xl p-6 md:p-8 border border-purple-500/30">
+      <h3 class="text-xl font-bold text-pink-300 mb-6">Change Password</h3>
+      <form method="post" action="{% url 'accounts:change_password' %}" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Current Password</label>
+          <input type="password" name="old_password" class="w-full px-4 py-3 bg-white/10 border border-purple-500/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" required>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">New Password</label>
+          <input type="password" name="new_password1" class="w-full px-4 py-3 bg-white/10 border border-purple-500/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" required>
+          <p class="text-xs text-gray-400 mt-1">Minimum 8 characters</p>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Confirm New Password</label>
+          <input type="password" name="new_password2" class="w-full px-4 py-3 bg-white/10 border border-purple-500/30 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500" required>
+        </div>
+        
+        <button type="submit" class="w-full px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-lg transition">
+          Change Password
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Account Information -->
+  <div class="dark-glass rounded-2xl p-6 md:p-8 border border-purple-500/30 mt-6">
+    <h3 class="text-xl font-bold text-purple-300 mb-6">Account Information</h3>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="bg-white/5 rounded-lg p-4">
+        <p class="text-sm text-gray-400 mb-1">Member Since</p>
+        <p class="text-lg font-semibold text-white">{{ user.date_joined|date:"M d, Y" }}</p>
+      </div>
+      
+      <div class="bg-white/5 rounded-lg p-4">
+        <p class="text-sm text-gray-400 mb-1">Current Tier</p>
+        <p class="text-lg font-semibold text-yellow-400">{{ user.profile.current_tier|default:"Bronze" }}</p>
+      </div>
+      
+      <div class="bg-white/5 rounded-lg p-4">
+        <p class="text-sm text-gray-400 mb-1">Account Status</p>
+        <p class="text-lg font-semibold text-green-400">Active</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Danger Zone -->
+  <div class="dark-glass rounded-2xl p-6 md:p-8 border border-red-500/30 mt-6">
+    <h3 class="text-xl font-bold text-red-400 mb-4">Danger Zone</h3>
+    <p class="text-gray-300 mb-4">Once you delete your account, there is no going back. Please be certain.</p>
+    <button onclick="confirm('Are you sure you want to delete your account? This action cannot be undone.') && this.closest('div').querySelector('form').submit()" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition">
+      Delete Account
+    </button>
+    <form method="post" action="{% url 'accounts:delete_account' %}" style="display: none;">
+      {% csrf_token %}
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-full overflow-hidden">
+  <h2 class="text-3xl md:text-4xl font-bold gradient-text mb-8">Notifications</h2>
+
+  <!-- Notification Settings -->
+  <div class="dark-glass rounded-2xl p-6 md:p-8 border border-purple-500/30 mb-6">
+    <h3 class="text-xl font-bold text-purple-300 mb-4">Notification Preferences</h3>
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+        <div>
+          <h4 class="font-semibold text-white">Video Earnings</h4>
+          <p class="text-sm text-gray-400">Get notified when you earn from watching videos</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" checked class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+        </label>
+      </div>
+      
+      <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+        <div>
+          <h4 class="font-semibold text-white">Referral Bonuses</h4>
+          <p class="text-sm text-gray-400">Get notified when you earn referral commissions</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" checked class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+        </label>
+      </div>
+      
+      <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+        <div>
+          <h4 class="font-semibold text-white">Withdrawal Updates</h4>
+          <p class="text-sm text-gray-400">Get notified about withdrawal status changes</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" checked class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+        </label>
+      </div>
+      
+      <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
+        Save Preferences
+      </button>
+    </form>
+  </div>
+
+  <!-- Recent Notifications -->
+  <div class="dark-glass rounded-2xl p-6 md:p-8 border border-purple-500/30">
+    <h3 class="text-xl font-bold text-purple-300 mb-6">Recent Activity</h3>
+    
+    <div class="space-y-4">
+      <!-- Empty State -->
+      <div class="text-center py-12">
+        <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+        </svg>
+        <p class="text-gray-400 mb-2">No notifications yet</p>
+        <p class="text-sm text-gray-500">You'll see your activity here when you start earning</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

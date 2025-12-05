@@ -4,8 +4,9 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from .models import Profile, Deposit, WithdrawalRequest
 from django.contrib.auth.models import User
-from django.contrib.auth import login
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login, update_session_auth_hash
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
+from django.contrib import messages
 from referrals.models import ReferralLink
 import stripe
 from django.conf import settings
@@ -169,3 +170,58 @@ def stripe_webhook(request):
         return JsonResponse({"status": "ok"})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+
+
+@login_required
+def notifications(request):
+    """Display user notifications."""
+    return render(request, "accounts/notifications.html")
+
+
+@login_required
+def settings(request):
+    """Display account settings page."""
+    return render(request, "accounts/settings.html")
+
+
+@login_required
+def update_profile(request):
+    """Update user profile information."""
+    if request.method == "POST":
+        user = request.user
+        user.username = request.POST.get("username", user.username)
+        user.email = request.POST.get("email", user.email)
+        user.first_name = request.POST.get("first_name", "")
+        user.last_name = request.POST.get("last_name", "")
+        user.save()
+        messages.success(request, "Profile updated successfully!")
+        return redirect("accounts:settings")
+    return redirect("accounts:settings")
+
+
+@login_required
+def change_password(request):
+    """Change user password."""
+    if request.method == "POST":
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, "Password changed successfully!")
+            return redirect("accounts:settings")
+        else:
+            messages.error(request, "Please correct the errors below.")
+            return redirect("accounts:settings")
+    return redirect("accounts:settings")
+
+
+@login_required
+def delete_account(request):
+    """Delete user account."""
+    if request.method == "POST":
+        user = request.user
+        user.delete()
+        messages.success(request, "Your account has been deleted.")
+        return redirect("home")
+    return redirect("accounts:settings")
+
