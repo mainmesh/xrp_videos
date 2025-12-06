@@ -11,12 +11,52 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { font-family: 'Inter', sans-serif; }
+        * { 
+            font-family: 'Inter', sans-serif;
+            box-sizing: border-box;
+        }
+        
+        /* Prevent horizontal scroll */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+        
+        /* Ensure all content fits */
+        * {
+            max-width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
         .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .admin-sidebar { transition: transform 0.3s ease; }
+        
         @media (max-width: 1024px) {
             .admin-sidebar.closed { transform: translateX(-100%); }
+            
+            /* Reduce padding on mobile */
+            .p-8 { padding: 1rem !important; }
+            .p-6 { padding: 0.75rem !important; }
+            .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+            
+            /* Ensure tables are scrollable */
+            table { font-size: 0.875rem; }
+            
+            /* Touch-friendly buttons and inputs */
+            button, input, select, textarea {
+                min-height: 44px;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            /* Smaller text on mobile */
+            h1 { font-size: 1.5rem !important; }
+            h2 { font-size: 1.25rem !important; }
+            h3 { font-size: 1.125rem !important; }
+            
+            table { font-size: 0.75rem; }
         }
     </style>
 </head>

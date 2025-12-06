@@ -27,10 +27,39 @@
         max-width: 100vw;
       }
       
+      /* Ensure all content fits within viewport */
+      * {
+        max-width: 100%;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+      
+      /* Prevent horizontal scroll on all containers */
+      .container, .main-content-wrapper, main, section, div {
+        max-width: 100%;
+      }
+      
       .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
       .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
       .glass-effect { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
       .dark-glass { background: rgba(30, 27, 75, 0.5); backdrop-filter: blur(10px); }
+      
+      /* Mobile responsive text */
+      @media (max-width: 640px) {
+        h1 { font-size: 1.875rem !important; line-height: 2.25rem !important; }
+        h2 { font-size: 1.5rem !important; line-height: 2rem !important; }
+        h3 { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+        
+        /* Ensure buttons and inputs are touch-friendly */
+        button, input, select, textarea {
+          min-height: 44px;
+        }
+        
+        /* Prevent text overflow on small screens */
+        p, span, div {
+          word-break: break-word;
+        }
+      }
       
       /* Sidebar Styles */
       .sidebar { transition: transform 0.3s ease-in-out; }
@@ -152,10 +181,36 @@
       /* Mobile responsive fixes */
       @media (max-width: 1023px) {
         .main-content-wrapper {
-          width: 100vw;
+          width: 100%;
           max-width: 100vw;
           overflow-x: hidden;
         }
+        
+        /* Ensure main content padding doesn't cause overflow */
+        main {
+          padding-left: 1rem;
+          padding-right: 1rem;
+        }
+        
+        /* Prevent cards and containers from exceeding viewport */
+        .dark-glass, .glass-effect {
+          max-width: 100%;
+          overflow: hidden;
+        }
+      }
+      
+      /* Tablet and mobile spacing adjustments */
+      @media (max-width: 768px) {
+        main {
+          padding-left: 0.75rem;
+          padding-right: 0.75rem;
+        }
+        
+        /* Reduce padding on mobile for better space utilization */
+        .p-8 { padding: 1rem !important; }
+        .p-6 { padding: 0.75rem !important; }
+        .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
+        .py-8 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
       }
     </style>
   </head>
