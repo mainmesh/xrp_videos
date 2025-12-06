@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout as auth_logout, login as auth_login, authenticate
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
+from django.http import HttpResponseForbidden
+from functools import wraps
 from datetime import timedelta
 
 from accounts.models import Profile, Deposit, WithdrawalRequest
@@ -12,7 +14,42 @@ from videos.models import Video, WatchHistory, Tier, Category
 from referrals.models import ReferralLink, ReferralBonus
 
 
-@staff_member_required
+def staff_required(view_func):
+    """Custom decorator to check if user is staff and redirect to admin login."""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('admin_panel:login' + '?next=' + request.path)
+        if not request.user.is_staff:
+            return HttpResponseForbidden("You don't have permission to access this page.")
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def admin_login(request):
+    """Custom admin login page."""
+    if request.user.is_authenticated and request.user.is_staff:
+        return redirect('admin_panel:dashboard')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            if user.is_staff:
+                auth_login(request, user)
+                next_url = request.GET.get('next', 'admin_panel:dashboard')
+                return redirect(next_url)
+            else:
+                messages.error(request, 'You do not have permission to access the admin panel.')
+        else:
+            messages.error(request, 'Invalid username or password.')
+    
+    return render(request, 'admin_panel/login.html')
+
+
+@staff_required
 def dashboard(request):
     """Admin dashboard with statistics and recent activity."""
     today = timezone.now().date()
@@ -47,7 +84,7 @@ def dashboard(request):
     return render(request, 'admin_panel/dashboard.html', context)
 
 
-@staff_member_required
+@staff_required
 def users_list(request):
     """List all users with search and filter."""
     search_query = request.GET.get('search', '')
@@ -71,7 +108,7 @@ def users_list(request):
     return render(request, 'admin_panel/users.html', context)
 
 
-@staff_member_required
+@staff_required
 def videos_list(request):
     """List all videos."""
     videos = Video.objects.select_related('category', 'min_tier').order_by('-created_at')
@@ -83,7 +120,7 @@ def videos_list(request):
     return render(request, 'admin_panel/videos.html', context)
 
 
-@staff_member_required
+@staff_required
 def withdrawals_list(request):
     """List all withdrawal requests."""
     status_filter = request.GET.get('status', 'all')
@@ -100,7 +137,7 @@ def withdrawals_list(request):
     return render(request, 'admin_panel/withdrawals.html', context)
 
 
-@staff_member_required
+@staff_required
 def approve_withdrawal(request, withdrawal_id):
     """Approve a withdrawal request."""
     withdrawal = get_object_or_404(WithdrawalRequest, id=withdrawal_id)
@@ -114,7 +151,7 @@ def approve_withdrawal(request, withdrawal_id):
     return redirect('admin_panel:withdrawals')
 
 
-@staff_member_required
+@staff_required
 def reject_withdrawal(request, withdrawal_id):
     """Reject a withdrawal request."""
     withdrawal = get_object_or_404(WithdrawalRequest, id=withdrawal_id)
@@ -129,7 +166,7 @@ def reject_withdrawal(request, withdrawal_id):
     return redirect('admin_panel:withdrawals')
 
 
-@staff_member_required
+@staff_required
 def deposits_list(request):
     """List all deposits."""
     deposits = Deposit.objects.select_related('user').order_by('-created_at')
@@ -141,7 +178,7 @@ def deposits_list(request):
     return render(request, 'admin_panel/deposits.html', context)
 
 
-@staff_member_required
+@staff_required
 def referrals_list(request):
     """List all referrals."""
     referrals = ReferralLink.objects.select_related('user', 'user__profile').order_by('-user__profile__referrals_count')
@@ -153,7 +190,7 @@ def referrals_list(request):
     return render(request, 'admin_panel/referrals.html', context)
 
 
-@staff_member_required
+@staff_required
 def tiers_list(request):
     """List all tiers."""
     tiers = Tier.objects.annotate(user_count=Count('profile')).all()
@@ -165,7 +202,7 @@ def tiers_list(request):
     return render(request, 'admin_panel/tiers.html', context)
 
 
-@staff_member_required
+@staff_required
 def settings_view(request):
     """Admin settings page."""
     if request.method == 'POST':
@@ -177,7 +214,7 @@ def settings_view(request):
     return render(request, 'admin_panel/settings.html', context)
 
 
-@staff_member_required
+@staff_required
 def logout_view(request):
     """Logout admin user."""
     auth_logout(request)
