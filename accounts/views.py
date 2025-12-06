@@ -181,7 +181,12 @@ def notifications(request):
 @login_required
 def settings(request):
     """Display account settings page."""
-    return render(request, "accounts/settings.html")
+    password_form = PasswordChangeForm(request.user)
+    context = {
+        'password_form': password_form,
+        'user': request.user,
+    }
+    return render(request, "accounts/settings.html", context)
 
 
 @login_required
@@ -189,10 +194,28 @@ def update_profile(request):
     """Update user profile information."""
     if request.method == "POST":
         user = request.user
-        user.username = request.POST.get("username", user.username)
-        user.email = request.POST.get("email", user.email)
-        user.first_name = request.POST.get("first_name", "")
-        user.last_name = request.POST.get("last_name", "")
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip()
+        
+        # Validation
+        if not username or not email:
+            messages.error(request, "Username and email are required.")
+            return redirect("accounts:settings")
+        
+        # Check if username is taken by another user
+        if User.objects.filter(username=username).exclude(id=user.id).exists():
+            messages.error(request, "Username already taken.")
+            return redirect("accounts:settings")
+        
+        # Check if email is taken by another user
+        if User.objects.filter(email=email).exclude(id=user.id).exists():
+            messages.error(request, "Email already in use.")
+            return redirect("accounts:settings")
+        
+        user.username = username
+        user.email = email
+        user.first_name = request.POST.get("first_name", "").strip()
+        user.last_name = request.POST.get("last_name", "").strip()
         user.save()
         messages.success(request, "Profile updated successfully!")
         return redirect("accounts:settings")
@@ -210,7 +233,10 @@ def change_password(request):
             messages.success(request, "Password changed successfully!")
             return redirect("accounts:settings")
         else:
-            messages.error(request, "Please correct the errors below.")
+            # Display specific error messages
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, error)
             return redirect("accounts:settings")
     return redirect("accounts:settings")
 
