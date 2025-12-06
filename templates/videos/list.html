@@ -1,14 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Videos — Browse{% endblock %}
 {% block content %}
-  <h2 class="text-4xl font-bold gradient-text mb-12">Browse Videos</h2>
+  <h2 class="text-4xl font-bold gradient-text mb-12 slide-in-up">Browse Videos</h2>
   
   <div class="grid md:grid-cols-3 gap-6">
     {% for v in videos %}
-    <div class="dark-glass rounded-2xl overflow-hidden border border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/50 transition transform hover:-translate-y-2 group">
+    <div class="video-card dark-glass rounded-2xl overflow-hidden border border-purple-500/30 hover:shadow-2xl hover:shadow-purple-500/50 group fade-in" style="animation-delay: {{ forloop.counter0|add:0|multiply:0.1 }}s;">
       <!-- Video Cover -->
       <div class="h-40 bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center relative overflow-hidden">
-        <div class="text-6xl group-hover:scale-110 transition">🎬</div>
+        <svg class="w-16 h-16 text-white/80 group-hover:scale-110 transition video-play-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
         <div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition"></div>
       </div>
       
@@ -33,14 +36,19 @@
         </div>
         {% endif %}
         
-        <a href="{% url 'videos:detail' v.id %}" class="w-full block text-center px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition mt-4">
-          Watch Now ▶️
+        <a href="{% url 'videos:detail' v.id %}" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition mt-4 shadow-modern">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+          </svg>
+          <span>Watch Now</span>
         </a>
       </div>
     </div>
     {% empty %}
       <div class="col-span-3 text-center py-12">
-        <div class="text-6xl mb-4">📺</div>
+        <svg class="w-20 h-20 mx-auto mb-4 text-purple-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+        </svg>
         <p class="text-gray-400 text-lg">No videos available yet. Check back soon!</p>
       </div>
     {% endfor %}

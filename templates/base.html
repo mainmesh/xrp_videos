@@ -44,6 +44,91 @@
       .glass-effect { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
       .dark-glass { background: rgba(30, 27, 75, 0.5); backdrop-filter: blur(10px); }
       
+      /* Video-focused animations */
+      @keyframes playPulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+      }
+      
+      @keyframes slideInUp {
+        from { 
+          opacity: 0; 
+          transform: translateY(30px); 
+        }
+        to { 
+          opacity: 1; 
+          transform: translateY(0); 
+        }
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+      }
+      
+      /* Video play button animation */
+      .video-play-icon {
+        animation: playPulse 2s ease-in-out infinite;
+      }
+      
+      /* Hover animation for video cards */
+      .video-card {
+        transition: all 0.3s ease;
+      }
+      
+      .video-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+      }
+      
+      /* Slide in animations for content */
+      .slide-in-up {
+        animation: slideInUp 0.6s ease-out;
+      }
+      
+      .fade-in {
+        animation: fadeIn 0.8s ease-out;
+      }
+      
+      /* Shimmer effect for loading */
+      .shimmer {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite;
+      }
+      
+      /* Modern shadow effects */
+      .shadow-modern {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+      }
+      
+      .shadow-modern-lg {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+      }
+      
+      /* Smooth transitions for all interactive elements */
+      button, a, input, select, textarea {
+        transition: all 0.3s ease;
+      }
+      
+      /* Enhanced focus states */
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #8b5cf6 !important;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+      }
+      
+      /* Backdrop blur for modern cards */
+      .backdrop-blur-card {
+        backdrop-filter: blur(20px);
+        background: rgba(30, 27, 75, 0.7);
+      }
+      
       /* Mobile responsive text */
       @media (max-width: 640px) {
         h1 { font-size: 1.875rem !important; line-height: 2.25rem !important; }
@@ -229,24 +314,24 @@
 
         {% if user.is_authenticated %}
         <!-- User Profile Card -->
-        <div class="mb-8 p-4 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-lg">
+        <div class="mb-6 p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-white font-bold text-sm">
               {{ user.username|first|upper }}
             </div>
             <div class="flex-1 min-w-0">
-              <p class="font-semibold text-white truncate">{{ user.username }}</p>
-              <p class="text-xs text-gray-400 truncate">{{ user.email }}</p>
+              <p class="font-semibold text-sm truncate">{{ user.username }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ user.email }}</p>
             </div>
           </div>
-          <div class="mt-3 pt-3 border-t border-purple-500/20 flex justify-between text-xs">
-            <div>
-              <p class="text-gray-400">Balance</p>
-              <p class="font-bold text-green-400">${{ user.profile.balance|floatformat:2 }}</p>
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-purple-500/10">
+            <div class="text-center">
+              <p class="text-xs text-gray-500 dark:text-gray-400">Balance</p>
+              <p class="font-bold text-sm text-green-500">${{ user.profile.balance|floatformat:2 }}</p>
             </div>
-            <div class="text-right">
-              <p class="text-gray-400">Tier</p>
-              <p class="font-bold text-yellow-400">{{ user.profile.current_tier|default:"Bronze" }}</p>
+            <div class="text-center">
+              <p class="text-xs text-gray-500 dark:text-gray-400">Tier</p>
+              <p class="font-bold text-sm text-yellow-500">{{ user.profile.current_tier|default:"Bronze" }}</p>
             </div>
           </div>
         </div>
@@ -371,10 +456,10 @@
           <!-- Right Side Actions -->
           <div class="flex items-center gap-4">
             {% if user.is_authenticated %}
-              <!-- Balance -->
-              <a href="{% url 'accounts:deposit' %}" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 border border-purple-500/30 transition group">
-                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span class="font-semibold text-green-400">${{ user.profile.balance|floatformat:2 }}</span>
+              <!-- Balance - Compact -->
+              <a href="{% url 'accounts:deposit' %}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 border border-purple-500/30 transition group">
+                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="font-semibold text-green-400 text-sm">${{ user.profile.balance|floatformat:2 }}</span>
               </a>
               
               <!-- Notifications -->
