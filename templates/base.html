@@ -144,6 +144,21 @@
         p, span, div {
           word-break: break-word;
         }
+        
+        /* Compact wallet container on mobile */
+        .mobile-wallet-compact {
+          padding: 0.375rem 0.625rem !important;
+          gap: 0.375rem !important;
+        }
+        
+        .mobile-wallet-compact svg {
+          width: 0.875rem !important;
+          height: 0.875rem !important;
+        }
+        
+        .mobile-wallet-compact span {
+          font-size: 0.75rem !important;
+        }
       }
       
       /* Sidebar Styles */
@@ -324,14 +339,14 @@
               <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ user.email }}</p>
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-purple-500/10">
-            <div class="text-center">
+          <div class="grid grid-cols-2 gap-1.5 pt-2 border-t border-purple-500/10">
+            <div class="text-center px-1">
               <p class="text-xs text-gray-500 dark:text-gray-400">Balance</p>
-              <p class="font-bold text-sm text-green-500">${{ user.profile.balance|floatformat:2 }}</p>
+              <p class="font-bold text-xs text-green-500">${{ user.profile.balance|floatformat:2 }}</p>
             </div>
-            <div class="text-center">
+            <div class="text-center px-1">
               <p class="text-xs text-gray-500 dark:text-gray-400">Tier</p>
-              <p class="font-bold text-sm text-yellow-500">{{ user.profile.current_tier|default:"Bronze" }}</p>
+              <p class="font-bold text-xs text-yellow-500 truncate">{{ user.profile.current_tier|default:"Bronze" }}</p>
             </div>
           </div>
         </div>
