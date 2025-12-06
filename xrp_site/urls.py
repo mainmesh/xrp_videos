@@ -8,6 +8,7 @@ from . import admin as custom_admin
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('admin-panel/', include('admin_panel.urls')),
     path('', home, name='home'),
     path('about/', about, name='about'),
     path('tiers/', tiers, name='tiers'),

@@ -1,0 +1,70 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Withdrawal Requests{% endblock %}
+{% block page_title %}Withdrawal Requests{% endblock %}
+
+{% block content %}
+<!-- Filter -->
+<div class="bg-white rounded-xl shadow-sm p-4 border border-gray-200 mb-6">
+    <div class="flex gap-2">
+        <a href="?status=all" class="px-4 py-2 rounded-lg {% if status_filter == 'all' %}bg-purple-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} font-medium transition">All</a>
+        <a href="?status=pending" class="px-4 py-2 rounded-lg {% if status_filter == 'pending' %}bg-yellow-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} font-medium transition">Pending</a>
+        <a href="?status=approved" class="px-4 py-2 rounded-lg {% if status_filter == 'approved' %}bg-green-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} font-medium transition">Approved</a>
+        <a href="?status=rejected" class="px-4 py-2 rounded-lg {% if status_filter == 'rejected' %}bg-red-600 text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} font-medium transition">Rejected</a>
+    </div>
+</div>
+
+<!-- Withdrawals Table -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for withdrawal in withdrawals %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">
+                                {{ withdrawal.user.username|slice:":1"|upper }}
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ withdrawal.user.username }}</p>
+                                <p class="text-xs text-gray-500">{{ withdrawal.user.email }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4"><span class="text-sm font-bold">${{ withdrawal.amount|floatformat:2 }}</span></td>
+                    <td class="px-6 py-4">
+                        {% if withdrawal.status == 'pending' %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                        {% elif withdrawal.status == 'approved' %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Approved</span>
+                        {% else %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Rejected</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">{{ withdrawal.created_at|date:"M d, Y H:i" }}</td>
+                    <td class="px-6 py-4">
+                        {% if withdrawal.status == 'pending' %}
+                        <a href="{% url 'admin_panel:approve_withdrawal' withdrawal.id %}" class="text-green-600 hover:text-green-800 font-medium text-sm mr-3">Approve</a>
+                        <a href="{% url 'admin_panel:reject_withdrawal' withdrawal.id %}" class="text-red-600 hover:text-red-800 font-medium text-sm">Reject</a>
+                        {% else %}
+                        <span class="text-gray-400 text-sm">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="px-6 py-12 text-center text-gray-500">No withdrawals found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

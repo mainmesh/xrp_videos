@@ -11,7 +11,7 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 # Allowed Hosts
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,xrp-videos.onrender.com', cast=Csv())
 
-INSTALLED_APPS=['django.contrib.admin','django.contrib.auth','django.contrib.contenttypes','django.contrib.sessions','django.contrib.messages','django.contrib.staticfiles','core','accounts','videos','referrals']
+INSTALLED_APPS=['django.contrib.admin','django.contrib.auth','django.contrib.contenttypes','django.contrib.sessions','django.contrib.messages','django.contrib.staticfiles','core','accounts','videos','referrals','admin_panel']
 
 MIDDLEWARE=[
     'django.middleware.security.SecurityMiddleware',

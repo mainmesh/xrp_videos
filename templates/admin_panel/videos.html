@@ -1,0 +1,40 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Videos{% endblock %}
+{% block page_title %}Videos Management{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reward</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for video in videos %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4"><p class="text-sm font-medium text-gray-900">{{ video.title }}</p></td>
+                    <td class="px-6 py-4"><span class="text-sm text-gray-600">{{ video.category.name }}</span></td>
+                    <td class="px-6 py-4"><span class="text-sm font-bold text-green-600">${{ video.reward|floatformat:4 }}</span></td>
+                    <td class="px-6 py-4">
+                        {% if video.is_active %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                        {% else %}
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">{{ video.created_at|date:"M d, Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="px-6 py-12 text-center text-gray-500">No videos found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
