@@ -34,23 +34,22 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Video)
 class VideoAdmin(admin.ModelAdmin):
-    list_display = ("title", "category", "min_tier", "reward_display", "watch_count", "is_active_badge", "created_at")
-    list_filter = ("category", "min_tier", "is_active", "created_at")
-    search_fields = ("title", "description", "youtube_video_id")
-    readonly_fields = ("created_at",)
-    date_hierarchy = "created_at"
-    ordering = ("-created_at",)
+    list_display = ("title", "category", "min_tier", "reward_display", "watch_count", "is_active_badge", "created_by")
+    list_filter = ("category", "min_tier", "is_active", "created_by")
+    search_fields = ("title", "url")
+    readonly_fields = ("created_by",)
+    ordering = ("title",)
     actions = ["activate_videos", "deactivate_videos"]
     
     fieldsets = (
         ("Video Information", {
-            "fields": ("title", "description", "youtube_video_id", "category")
+            "fields": ("title", "url", "category")
         }),
         ("Earning Settings", {
             "fields": ("min_tier", "reward", "duration_seconds")
         }),
         ("Status", {
-            "fields": ("is_active", "created_at")
+            "fields": ("is_active", "created_by")
         }),
     )
     

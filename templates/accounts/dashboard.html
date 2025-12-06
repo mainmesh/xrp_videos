@@ -94,7 +94,7 @@
               <p class="text-xs text-gray-400">{{ w.created_at|date:"M d, Y" }}</p>
             </div>
             <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold {% if w.status == 'pending' %}bg-yellow-500/20 text-yellow-300{% elif w.status == 'approved' %}bg-green-500/20 text-green-300{% else %}bg-red-500/20 text-red-300{% endif %}">
-              {{ w.status|title }}
+              {% if w.status == 'pending' %}Processing{% elif w.status == 'approved' %}Completed{% else %}{{ w.status|title }}{% endif %}
             </span>
           </div>
         {% empty %}
