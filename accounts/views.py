@@ -81,9 +81,8 @@ def register(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Auto-create referral link for new user
-            code = str(uuid.uuid4())[:8].upper()
-            ReferralLink.objects.create(user=user, code=code)
+            # Note: Profile and ReferralLink are auto-created by signals
+            
             # attach referral if exists
             ref_code = request.session.pop('referral_code', None)
             if ref_code:
