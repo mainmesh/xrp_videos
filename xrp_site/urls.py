@@ -3,6 +3,9 @@ from core.views import home, about, tiers
 from accounts.views import stripe_webhook
 from django.contrib import admin
 
+# Import custom admin configuration
+from . import admin as custom_admin
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
