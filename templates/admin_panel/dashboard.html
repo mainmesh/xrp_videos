@@ -52,6 +52,66 @@
         <p class="text-3xl font-bold text-gray-800">${{ stats.total_revenue|floatformat:2 }}</p>
         <p class="text-sm text-green-600 mt-2">${{ stats.revenue_today|floatformat:2 }} today</p>
     </div>
+    
+    <!-- Active Users (Last 7 Days) -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition">
+        <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-indigo-100 rounded-lg">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            </div>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium mb-1">Active Users</h3>
+        <p class="text-3xl font-bold text-gray-800">{{ stats.active_users_week }}</p>
+        <p class="text-sm text-indigo-600 mt-2">Last 7 days</p>
+    </div>
+    
+    <!-- Total Withdrawals Paid -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition">
+        <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-red-100 rounded-lg">
+                <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            </div>
+        </div>
+        <h3 class="text-gray-500 text-sm font-medium mb-1">Withdrawals Paid</h3>
+        <p class="text-3xl font-bold text-gray-800">${{ stats.total_withdrawals_paid|floatformat:2 }}</p>
+        <p class="text-sm text-red-600 mt-2">All time</p>
+    </div>
+</div>
+
+<!-- Analytics Charts -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- User Growth Chart -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">User Growth (Last 7 Days)</h3>
+        <canvas id="userGrowthChart" height="200"></canvas>
+    </div>
+    
+    <!-- Revenue Chart -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Revenue Trend (Last 7 Days)</h3>
+        <canvas id="revenueChart" height="200"></canvas>
+    </div>
+</div>
+
+<!-- Top Videos by Watch Count -->
+<div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-8">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Top 5 Videos by Views</h3>
+    <div class="space-y-3">
+        {% for video in video_stats %}
+        <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-900">{{ video.title }}</p>
+                <p class="text-xs text-gray-500">{{ video.category.name }}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-sm font-bold text-purple-600">{{ video.watch_count }} views</p>
+                <p class="text-xs text-gray-500">${{ video.reward|floatformat:2 }}/view</p>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 text-center py-8">No video data available</p>
+        {% endfor %}
+    </div>
 </div>
 
 <!-- Charts Row -->
@@ -165,4 +225,72 @@
         </table>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// User Growth Chart
+const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+const userGrowthData = {{ user_growth_data|safe }};
+new Chart(userGrowthCtx, {
+    type: 'line',
+    data: {
+        labels: userGrowthData.map(d => d.date),
+        datasets: [{
+            label: 'New Users',
+            data: userGrowthData.map(d => d.count),
+            borderColor: 'rgb(147, 51, 234)',
+            backgroundColor: 'rgba(147, 51, 234, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { stepSize: 1 }
+            }
+        }
+    }
+});
+
+// Revenue Chart
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+const revenueData = {{ revenue_data|safe }};
+new Chart(revenueCtx, {
+    type: 'bar',
+    data: {
+        labels: revenueData.map(d => d.date),
+        datasets: [{
+            label: 'Revenue ($)',
+            data: revenueData.map(d => d.amount),
+            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+            borderColor: 'rgb(34, 197, 94)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value.toFixed(2);
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
 {% endblock %}

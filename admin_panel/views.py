@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.http import HttpResponseForbidden, JsonResponse
 from functools import wraps
 from datetime import timedelta
+import json
 
 from accounts.models import Profile, Deposit, WithdrawalRequest
 from videos.models import Video, WatchHistory, Tier, Category
@@ -86,6 +87,8 @@ def admin_login(request):
 def dashboard(request):
     """Admin dashboard with statistics and recent activity."""
     today = timezone.now().date()
+    week_ago = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
     
     stats = {
         'total_users': User.objects.count(),
@@ -96,7 +99,24 @@ def dashboard(request):
         'pending_amount': WithdrawalRequest.objects.filter(status='pending').aggregate(total=Sum('amount'))['total'] or 0,
         'total_revenue': Deposit.objects.filter(success=True).aggregate(total=Sum('amount'))['total'] or 0,
         'revenue_today': Deposit.objects.filter(success=True, created_at__date=today).aggregate(total=Sum('amount'))['total'] or 0,
+        'active_users_week': User.objects.filter(last_login__gte=week_ago).count(),
+        'total_withdrawals_paid': WithdrawalRequest.objects.filter(status='approved').aggregate(total=Sum('amount'))['total'] or 0,
     }
+    
+    # User growth data (last 7 days)
+    user_growth_data = []
+    revenue_data = []
+    for i in range(6, -1, -1):
+        date = today - timedelta(days=i)
+        users_count = User.objects.filter(date_joined__date=date).count()
+        revenue = Deposit.objects.filter(success=True, created_at__date=date).aggregate(total=Sum('amount'))['total'] or 0
+        user_growth_data.append({'date': date.strftime('%b %d'), 'count': users_count})
+        revenue_data.append({'date': date.strftime('%b %d'), 'amount': float(revenue)})
+    
+    # Video watch stats
+    video_stats = Video.objects.annotate(
+        watch_count=Count('watchhistory')
+    ).order_by('-watch_count')[:5]
     
     # Recent activity (watch history)
     recent_activity = WatchHistory.objects.select_related('user', 'video').order_by('-watched_at')[:10]
@@ -109,6 +129,9 @@ def dashboard(request):
     
     context = {
         'stats': stats,
+        'user_growth_data': json.dumps(user_growth_data),
+        'revenue_data': json.dumps(revenue_data),
+        'video_stats': video_stats,
         'recent_activity': recent_activity,
         'top_earners': top_earners,
         'recent_withdrawals': recent_withdrawals,
@@ -143,11 +166,33 @@ def users_list(request):
 
 @staff_required
 def videos_list(request):
-    """List all videos."""
+    """List all videos and handle add video."""
+    if request.method == 'POST':
+        try:
+            video = Video.objects.create(
+                title=request.POST.get('title'),
+                url=request.POST.get('url'),
+                thumbnail_url=request.POST.get('thumbnail', ''),
+                description=request.POST.get('description', ''),
+                category_id=request.POST.get('category'),
+                min_tier_id=request.POST.get('min_tier'),
+                reward=request.POST.get('reward'),
+                duration=request.POST.get('duration', 0),
+                is_active=request.POST.get('is_active') == 'on'
+            )
+            messages.success(request, f'Video "{video.title}" added successfully!')
+        except Exception as e:
+            messages.error(request, f'Error adding video: {str(e)}')
+        return redirect('admin_panel:videos')
+    
     videos = Video.objects.select_related('category', 'min_tier').order_by('-created_at')
+    categories = Category.objects.all()
+    tiers = Tier.objects.all().order_by('price')
     
     context = {
         'videos': videos,
+        'categories': categories,
+        'tiers': tiers,
     }
     
     return render(request, 'admin_panel/videos.html', context)
