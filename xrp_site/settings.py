@@ -11,7 +11,7 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 # Allowed Hosts
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,xrp-videos.onrender.com', cast=Csv())
 
-INSTALLED_APPS=['django.contrib.admin','django.contrib.auth','django.contrib.contenttypes','django.contrib.sessions','django.contrib.messages','django.contrib.staticfiles','core','accounts','videos','referrals','admin_panel']
+INSTALLED_APPS=['django.contrib.admin','django.contrib.auth','django.contrib.contenttypes','django.contrib.sessions','django.contrib.messages','django.contrib.staticfiles','core','accounts','videos','referrals','admin_panel.apps.AdminPanelConfig']
 
 MIDDLEWARE=[
     'django.middleware.security.SecurityMiddleware',
@@ -33,6 +33,7 @@ TEMPLATES=[{
 WSGI_APPLICATION='xrp_site.wsgi.application'
 
 # Database Configuration
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATABASE_URL = config('DATABASE_URL', default=None)
 if DATABASE_URL:
     DATABASES = {
@@ -45,7 +46,7 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'db.sqlite3'
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3')
         }
     }
 
