@@ -30,7 +30,7 @@
         }
         
         .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
         .admin-sidebar { transition: transform 0.3s ease; }
         
         @media (max-width: 1024px) {
@@ -69,7 +69,7 @@
             <div class="mb-8 flex items-center gap-3">
                 <img src="{% static 'images/logo.svg' %}" alt="xrpvideos" class="w-10 h-10">
                 <div>
-                    <h1 class="text-xl font-bold gradient-text" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Admin Panel</h1>
+                    <h1 class="text-xl font-bold gradient-text" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Admin Panel</h1>
                     <p class="text-xs text-gray-400">Management Dashboard</p>
                 </div>
             </div>

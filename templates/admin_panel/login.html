@@ -13,7 +13,7 @@
     <style>
         * { font-family: 'Inter', sans-serif; }
         .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen flex items-center justify-center p-4">
@@ -24,7 +24,7 @@
             <div class="inline-flex items-center gap-3 mb-4">
                 <img src="{% static 'images/logo.svg' %}" alt="xrpvideos" class="w-16 h-16">
                 <div class="text-left">
-                    <h1 class="text-3xl font-bold gradient-text" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Admin Panel</h1>
+                    <h1 class="text-3xl font-bold gradient-text" style="background: linear-gradient(135deg, #a78bfa 0%, #c084fc 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Admin Panel</h1>
                     <p class="text-gray-400 text-sm">Management Dashboard</p>
                 </div>
             </div>
