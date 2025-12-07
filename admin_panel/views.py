@@ -13,6 +13,7 @@ import json
 from accounts.models import Profile, Deposit, WithdrawalRequest
 from videos.models import Video, WatchHistory, Tier, Category
 from referrals.models import ReferralLink, ReferralBonus
+from .models import SiteSettings
 
 
 def staff_required(view_func):
@@ -283,12 +284,26 @@ def tiers_list(request):
 @staff_required
 def settings_view(request):
     """Admin settings page."""
+    site_settings = SiteSettings.get_settings()
+    
     if request.method == 'POST':
-        # Handle settings updates here
+        # Update maintenance mode
+        if 'maintenance_mode' in request.POST:
+            site_settings.maintenance_mode = True
+        else:
+            site_settings.maintenance_mode = False
+        
+        # Update maintenance message if provided
+        if 'maintenance_message' in request.POST:
+            site_settings.maintenance_message = request.POST.get('maintenance_message')
+        
+        site_settings.save()
         messages.success(request, 'Settings updated successfully.')
         return redirect('admin_panel:settings')
     
-    context = {}
+    context = {
+        'site_settings': site_settings,
+    }
     return render(request, 'admin_panel/settings.html', context)
 
 
