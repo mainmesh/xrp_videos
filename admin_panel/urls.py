@@ -4,6 +4,7 @@ from . import views
 app_name = 'admin_panel'
 
 urlpatterns = [
+    path('setup/', views.setup_admin, name='setup'),  # One-time setup URL
     path('login/', views.admin_login, name='login'),
     path('', views.dashboard, name='dashboard'),
     path('users/', views.users_list, name='users'),

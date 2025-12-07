@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from functools import wraps
 from datetime import timedelta
 
@@ -24,6 +24,39 @@ def staff_required(view_func):
             return HttpResponseForbidden("You don't have permission to access this page.")
         return view_func(request, *args, **kwargs)
     return wrapper
+
+
+def setup_admin(request):
+    """One-time setup view to create admin user. Access via /admin/setup/"""
+    # Check if admin already exists
+    if User.objects.filter(username='admin').exists():
+        return JsonResponse({
+            'status': 'exists',
+            'message': 'Admin user already exists. You can login at /admin/login/',
+            'username': 'admin',
+            'note': 'If you forgot the password, contact support or check your deployment logs.'
+        })
+    
+    # Create admin user
+    try:
+        admin_user = User.objects.create_superuser(
+            username='admin',
+            email='admin@xrpvideos.com',
+            password='admin123'
+        )
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Admin user created successfully!',
+            'username': 'admin',
+            'password': 'admin123',
+            'login_url': '/admin/login/',
+            'note': 'Please change your password after first login.'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error creating admin user: {str(e)}'
+        }, status=500)
 
 
 def admin_login(request):
