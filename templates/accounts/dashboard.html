@@ -33,11 +33,19 @@
         </div>
       </div>
       {% if profile.current_tier %}
-        <div class="text-2xl font-bold text-yellow-400 mb-2">{{ profile.current_tier.name }}</div>
+        {% if profile.current_tier.name == 'Bronze' %}
+          <div class="text-2xl font-bold text-orange-400 mb-2">{{ profile.current_tier.name }}</div>
+        {% elif profile.current_tier.name == 'Silver' %}
+          <div class="text-2xl font-bold text-blue-400 mb-2">{{ profile.current_tier.name }}</div>
+        {% elif profile.current_tier.name == 'Gold' %}
+          <div class="text-2xl font-bold text-yellow-400 mb-2">{{ profile.current_tier.name }}</div>
+        {% else %}
+          <div class="text-2xl font-bold text-gray-400 mb-2">{{ profile.current_tier.name }}</div>
+        {% endif %}
         <p class="text-sm text-gray-400 mb-6">${{ profile.current_tier.price }} tier unlocked</p>
         <p class="text-xs text-gray-400">You have access to all videos up to this tier.</p>
       {% else %}
-        <div class="text-2xl font-bold text-yellow-400 mb-2">Bronze (Free)</div>
+        <div class="text-2xl font-bold text-orange-400 mb-2">Bronze (Free)</div>
         <p class="text-sm text-gray-400 mb-6">No deposit needed</p>
         <p class="text-xs text-gray-400">Upgrade your tier to access premium videos.</p>
       {% endif %}

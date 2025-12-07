@@ -23,8 +23,8 @@
         <div class="p-4 bg-slate-800/30 border border-purple-500/20 rounded-lg">
           <p class="text-xs text-gray-400 mb-3">Quick select:</p>
           <div class="grid grid-cols-2 gap-2">
-            <button type="button" onclick="document.getElementById('amount').value = '50'" class="px-3 py-2 text-xs bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 rounded text-purple-300 transition font-semibold">$50 → Silver</button>
-            <button type="button" onclick="document.getElementById('amount').value = '100'" class="px-3 py-2 text-xs bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 rounded text-purple-300 transition font-semibold">$100 → Gold</button>
+            <button type="button" onclick="document.getElementById('amount').value = '50'" class="px-3 py-2 text-xs bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 rounded text-blue-300 transition font-semibold">$50 → Silver</button>
+            <button type="button" onclick="document.getElementById('amount').value = '100'" class="px-3 py-2 text-xs bg-yellow-600/20 hover:bg-yellow-600/40 border border-yellow-500/30 rounded text-yellow-300 transition font-semibold">$100 → Gold</button>
           </div>
         </div>
 
@@ -45,10 +45,14 @@
       <h3 class="text-2xl font-bold gradient-text mb-6 text-center">Choose Your Tier</h3>
       <div class="grid md:grid-cols-3 gap-6">
         <!-- Bronze -->
-        <div class="glass-effect rounded-2xl p-6 border border-yellow-400/50">
-          <div class="text-5xl mb-3">🥉</div>
-          <h4 class="text-xl font-bold text-white mb-1">Bronze</h4>
-          <p class="text-2xl font-bold text-yellow-400 mb-4">FREE</p>
+        <div class="glass-effect rounded-2xl p-6 border border-orange-400/50 bg-gradient-to-br from-orange-500/10 to-orange-600/5">
+          <div class="mb-3">
+            <svg class="w-12 h-12 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+          </div>
+          <h4 class="text-xl font-bold text-orange-300 mb-1">Bronze</h4>
+          <p class="text-2xl font-bold text-orange-400 mb-4">FREE</p>
           <ul class="space-y-2 text-sm text-gray-300 mb-6">
             <li class="flex gap-2"><span class="text-green-400">✓</span> Free videos</li>
             <li class="flex gap-2"><span class="text-green-400">✓</span> $0.50 per video</li>
@@ -57,13 +61,17 @@
         </div>
 
         <!-- Silver -->
-        <div class="glass-effect rounded-2xl p-6 border border-gray-300/50 relative">
+        <div class="glass-effect rounded-2xl p-6 border border-blue-400/50 bg-gradient-to-br from-blue-500/10 to-blue-600/5 relative">
           <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold rounded-full">
             POPULAR
           </div>
-          <div class="text-5xl mb-3">🥈</div>
-          <h4 class="text-xl font-bold text-white mb-1">Silver</h4>
-          <p class="text-2xl font-bold text-gray-300 mb-4">$50</p>
+          <div class="mb-3">
+            <svg class="w-12 h-12 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+          </div>
+          <h4 class="text-xl font-bold text-blue-300 mb-1">Silver</h4>
+          <p class="text-2xl font-bold text-blue-400 mb-4">$50</p>
           <ul class="space-y-2 text-sm text-gray-300 mb-6">
             <li class="flex gap-2"><span class="text-green-400">✓</span> All Bronze benefits</li>
             <li class="flex gap-2"><span class="text-green-400">✓</span> Premium videos</li>
@@ -73,10 +81,14 @@
         </div>
 
         <!-- Gold -->
-        <div class="glass-effect rounded-2xl p-6 border border-yellow-500/50">
-          <div class="text-5xl mb-3">🥇</div>
-          <h4 class="text-xl font-bold text-white mb-1">Gold</h4>
-          <p class="text-2xl font-bold text-yellow-500 mb-4">$100</p>
+        <div class="glass-effect rounded-2xl p-6 border border-yellow-400/50 bg-gradient-to-br from-yellow-500/10 to-yellow-600/5">
+          <div class="mb-3">
+            <svg class="w-12 h-12 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+          </div>
+          <h4 class="text-xl font-bold text-yellow-300 mb-1">Gold</h4>
+          <p class="text-2xl font-bold text-yellow-400 mb-4">$100</p>
           <ul class="space-y-2 text-sm text-gray-300 mb-6">
             <li class="flex gap-2"><span class="text-green-400">✓</span> All Silver benefits</li>
             <li class="flex gap-2"><span class="text-green-400">✓</span> Exclusive videos</li>
