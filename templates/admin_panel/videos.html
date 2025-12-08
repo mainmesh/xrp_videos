@@ -79,24 +79,41 @@
         </div>
         
         <!-- Tier Access & Pricing -->
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 class="font-semibold text-gray-800 mb-3">Tier Access & Rewards</h4>
+        <div class="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-300 rounded-lg p-5 shadow-md">
+            <h4 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Select Tiers & Set Rewards
+            </h4>
+            <p class="text-sm text-gray-600 mb-4">Choose which membership tiers can watch this video and set the reward amount for each tier</p>
+            
             <div class="space-y-3">
                 {% for tier in tiers %}
-                <div class="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+                <div class="flex items-center justify-between bg-white rounded-lg p-4 border-2 border-gray-200 hover:border-purple-400 transition shadow-sm">
                     <div class="flex items-center gap-3">
-                        <input type="checkbox" name="tier_{{ tier.id }}" id="tier_{{ tier.id }}" class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500">
-                        <label for="tier_{{ tier.id }}" class="font-medium text-gray-700">{{ tier.name }}</label>
-                        <span class="text-xs text-gray-500">(Tier Cost: ${{ tier.price }})</span>
+                        <input type="checkbox" name="tier_{{ tier.id }}" id="tier_{{ tier.id }}" class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 cursor-pointer">
+                        <label for="tier_{{ tier.id }}" class="font-bold text-gray-800 cursor-pointer text-base">{{ tier.name }}</label>
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Tier: ${{ tier.price }}</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-600">Reward: $</label>
-                        <input type="number" name="reward_{{ tier.id }}" step="0.01" min="0" class="w-24 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" placeholder="0.50">
+                        <label class="text-sm font-medium text-gray-700">Reward Price:</label>
+                        <span class="text-green-600 font-bold text-lg">$</span>
+                        <input type="number" name="reward_{{ tier.id }}" step="0.01" min="0" class="w-28 px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base font-semibold" placeholder="0.00">
                     </div>
+                </div>
+                {% empty %}
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                    <p class="text-yellow-800">No tiers found. Please create tiers first in the Tiers section.</p>
                 </div>
                 {% endfor %}
             </div>
-            <p class="text-xs text-gray-500 mt-3">💡 Select which tiers can access this video and set the reward amount for each tier</p>
+            
+            <div class="mt-4 bg-blue-100 border border-blue-300 rounded-lg p-3">
+                <p class="text-sm text-blue-800 font-medium">
+                    💡 <strong>How it works:</strong> Check the tier boxes and enter how much users of that tier will earn for watching this video. Leave unchecked if a tier shouldn't have access.
+                </p>
+            </div>
         </div>
         
         <!-- Status -->
