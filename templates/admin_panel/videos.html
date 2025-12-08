@@ -89,6 +89,7 @@
             <p class="text-sm text-gray-600 mb-4">Choose which membership tiers can watch this video and set the reward amount for each tier</p>
             
             <div class="space-y-3">
+                {% if tiers %}
                 {% for tier in tiers %}
                 <div class="flex items-center justify-between bg-white rounded-lg p-4 border-2 border-gray-200 hover:border-purple-400 transition shadow-sm">
                     <div class="flex items-center gap-3">
@@ -102,11 +103,12 @@
                         <input type="number" name="reward_{{ tier.id }}" step="0.01" min="0" class="w-28 px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base font-semibold" placeholder="0.00">
                     </div>
                 </div>
-                {% empty %}
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                    <p class="text-yellow-800">No tiers found. Please create tiers first in the Tiers section.</p>
-                </div>
                 {% endfor %}
+                {% else %}
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                    <p class="text-yellow-800">⚠️ No tiers available. Go to <a href="{% url 'tiers' %}" class="text-blue-600 underline font-bold">Tiers Page</a> to view existing tiers or contact support.</p>
+                </div>
+                {% endif %}
             </div>
             
             <div class="mt-4 bg-blue-100 border border-blue-300 rounded-lg p-3">
