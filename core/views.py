@@ -125,4 +125,4 @@ def get_chatbot_response(message):
         return "You can check your current balance and earnings history in your dashboard. Your balance updates automatically after watching videos."
     
     else:
-        return "I'm here to help! You can ask me about: deposits, withdrawals, tiers, watching videos, referrals, or general support. What would you like to know?"
+        return "I'm here to assist you with XRP Videos! 🎥\n\nI can help with:\n• 💰 Deposits & Withdrawals\n• 🎯 Tier Upgrades\n• 📹 Watching Videos & Rewards\n• 👥 Referral Program\n• 💬 General Support\n\nWhat would you like to know?"

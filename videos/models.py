@@ -24,7 +24,8 @@ class Video(models.Model):
     thumbnail_url = models.URLField(blank=True, default='')
     description = models.TextField(blank=True, default='')
     reward = models.FloatField(default=0.1)
-    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL)
+    categories = models.ManyToManyField(Category, blank=True, related_name='videos')
+    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL, related_name='primary_videos', help_text="Primary category (deprecated - use categories)")
     min_tier = models.ForeignKey(Tier, null=True, blank=True, on_delete=models.SET_NULL,
                                  help_text="Minimum tier required to access this video")
     duration_seconds = models.IntegerField(default=0, help_text="Approx. duration in seconds")

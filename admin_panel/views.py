@@ -177,11 +177,18 @@ def videos_list(request):
                 title=request.POST.get('title'),
                 url=request.POST.get('url', ''),
                 thumbnail_url=request.POST.get('thumbnail', ''),
-                category_id=request.POST.get('category'),
                 duration_seconds=request.POST.get('duration', 0),
                 is_active=request.POST.get('is_active') == 'on',
                 created_by=request.user
             )
+            
+            # Handle categories (multiple selection)
+            category_ids = request.POST.getlist('category')
+            if category_ids:
+                video.categories.set(category_ids)
+                # Set primary category to first selected
+                video.category_id = category_ids[0]
+                video.save()
             
             # Handle tier-specific pricing
             tiers = Tier.objects.all()
@@ -206,12 +213,12 @@ def videos_list(request):
                     video.reward = lowest_tier.reward
                     video.save()
             
-            messages.success(request, f'Video "{video.title}" added successfully with tier-specific pricing!')
+            messages.success(request, f'Video "{video.title}" added successfully with {len(category_ids)} categories!')
         except Exception as e:
             messages.error(request, f'Error adding video: {str(e)}')
         return redirect('admin_panel:videos')
     
-    videos = Video.objects.select_related('category', 'min_tier').prefetch_related('tier_prices__tier').order_by('-created_at')
+    videos = Video.objects.select_related('category', 'min_tier').prefetch_related('tier_prices__tier', 'categories').order_by('-created_at')
     categories = Category.objects.all()
     tiers = Tier.objects.all().order_by('price')
     
