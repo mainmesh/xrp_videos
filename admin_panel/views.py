@@ -11,7 +11,7 @@ from datetime import timedelta
 import json
 
 from accounts.models import Profile, Deposit, WithdrawalRequest
-from videos.models import Video, WatchHistory, Tier, Category
+from videos.models import Video, WatchHistory, Tier, Category, VideoTierPrice
 from referrals.models import ReferralLink, ReferralBonus
 from .models import SiteSettings
 from core.models import Message, Announcement
@@ -172,24 +172,46 @@ def videos_list(request):
     """List all videos and handle add video."""
     if request.method == 'POST':
         try:
+            # Create video
             video = Video.objects.create(
                 title=request.POST.get('title'),
-                url=request.POST.get('url'),
+                url=request.POST.get('url', ''),
                 thumbnail_url=request.POST.get('thumbnail', ''),
-                description=request.POST.get('description', ''),
                 category_id=request.POST.get('category'),
-                min_tier_id=request.POST.get('min_tier'),
-                reward=request.POST.get('reward'),
                 duration_seconds=request.POST.get('duration', 0),
                 is_active=request.POST.get('is_active') == 'on',
                 created_by=request.user
             )
-            messages.success(request, f'Video "{video.title}" added successfully!')
+            
+            # Handle tier-specific pricing
+            tiers = Tier.objects.all()
+            tier_added = False
+            for tier in tiers:
+                tier_checkbox = request.POST.get(f'tier_{tier.id}')
+                if tier_checkbox:
+                    reward = request.POST.get(f'reward_{tier.id}', 0)
+                    VideoTierPrice.objects.create(
+                        video=video,
+                        tier=tier,
+                        reward=float(reward) if reward else 0.0
+                    )
+                    tier_added = True
+            
+            # Set minimum tier to the lowest selected tier
+            if tier_added:
+                lowest_tier = VideoTierPrice.objects.filter(video=video).select_related('tier').order_by('tier__price').first()
+                if lowest_tier:
+                    video.min_tier = lowest_tier.tier
+                    # Set default reward to first tier's reward
+                    video.reward = lowest_tier.reward
+                    video.save()
+            
+            messages.success(request, f'Video "{video.title}" added successfully with tier-specific pricing!')
         except Exception as e:
             messages.error(request, f'Error adding video: {str(e)}')
         return redirect('admin_panel:videos')
     
-    videos = Video.objects.select_related('category', 'min_tier').order_by('-created_at')
+    videos = Video.objects.select_related('category', 'min_tier').prefetch_related('tier_prices__tier').order_by('-created_at')
     categories = Category.objects.all()
     tiers = Tier.objects.all().order_by('price')
     

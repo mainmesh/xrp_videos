@@ -10,20 +10,40 @@
         Add New Video
     </button>
     
-    <form id="addVideoForm" method="post" class="mt-6 hidden space-y-4">
+    <form id="addVideoForm" method="post" enctype="multipart/form-data" class="mt-6 hidden space-y-6">
         {% csrf_token %}
+        
+        <!-- Video Source Selection -->
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <label class="block text-sm font-medium text-gray-700 mb-3">Video Source *</label>
+            <div class="flex gap-4">
+                <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="video_source" value="url" checked onchange="toggleVideoSource()" class="w-4 h-4 text-purple-600 focus:ring-purple-500">
+                    <span class="ml-2 text-sm font-medium text-gray-700">Video URL (YouTube, Vimeo, etc.)</span>
+                </label>
+                <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="video_source" value="upload" onchange="toggleVideoSource()" class="w-4 h-4 text-purple-600 focus:ring-purple-500">
+                    <span class="ml-2 text-sm font-medium text-gray-700">Upload Video File</span>
+                </label>
+            </div>
+            
+            <!-- URL Input -->
+            <div id="url-input" class="mt-4">
+                <input type="url" name="url" id="video-url" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="https://youtube.com/watch?v=... or https://vimeo.com/...">
+            </div>
+            
+            <!-- File Upload -->
+            <div id="file-input" class="mt-4 hidden">
+                <input type="file" name="video_file" accept="video/*" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                <p class="text-xs text-gray-500 mt-1">Supported formats: MP4, WebM, MOV (Max 500MB)</p>
+            </div>
+        </div>
+        
+        <!-- Basic Info -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Video Title *</label>
                 <input type="text" name="title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Enter video title">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Video URL *</label>
-                <input type="url" name="url" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="https://youtube.com/watch?v=...">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Thumbnail URL</label>
-                <input type="url" name="thumbnail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="https://...">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
@@ -34,37 +54,51 @@
                 </select>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Tier *</label>
-                <select name="min_tier" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                    {% for tier in tiers %}
-                    <option value="{{ tier.id }}">{{ tier.name }} - ${{ tier.price }}</option>
-                    {% endfor %}
-                </select>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Duration (seconds) *</label>
+                <input type="number" name="duration" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="120">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Reward Amount ($) *</label>
-                <input type="number" name="reward" step="0.01" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="0.50">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Duration (seconds)</label>
-                <input type="number" name="duration" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="120">
-            </div>
-            <div class="flex items-center">
-                <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" name="is_active" checked class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
-                    <span class="ml-2 text-sm font-medium text-gray-700">Active</span>
-                </label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Thumbnail URL (Optional)</label>
+                <input type="url" name="thumbnail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="https://...">
             </div>
         </div>
-        <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-            <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Video description..."></textarea>
+        
+        <!-- Tier Access & Pricing -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-800 mb-3">Tier Access & Rewards</h4>
+            <div class="space-y-3">
+                {% for tier in tiers %}
+                <div class="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-200">
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" name="tier_{{ tier.id }}" id="tier_{{ tier.id }}" class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500">
+                        <label for="tier_{{ tier.id }}" class="font-medium text-gray-700">{{ tier.name }}</label>
+                        <span class="text-xs text-gray-500">(Tier Cost: ${{ tier.price }})</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-gray-600">Reward: $</label>
+                        <input type="number" name="reward_{{ tier.id }}" step="0.01" min="0" class="w-24 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" placeholder="0.50">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <p class="text-xs text-gray-500 mt-3">💡 Select which tiers can access this video and set the reward amount for each tier</p>
         </div>
+        
+        <!-- Status -->
+        <div class="flex items-center gap-4">
+            <label class="flex items-center cursor-pointer">
+                <input type="checkbox" name="is_active" checked class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500">
+                <span class="ml-2 text-sm font-medium text-gray-700">Active (Visible to users)</span>
+            </label>
+        </div>
+        
+        <!-- Submit Buttons -->
         <div class="flex gap-3">
-            <button type="submit" class="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition">
+            <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition shadow-md">
+                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                 Save Video
             </button>
-            <button type="button" onclick="toggleAddForm()" class="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition">
+            <button type="button" onclick="toggleAddForm()" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg transition">
                 Cancel
             </button>
         </div>
@@ -118,6 +152,23 @@
 function toggleAddForm() {
     const form = document.getElementById('addVideoForm');
     form.classList.toggle('hidden');
+}
+
+function toggleVideoSource() {
+    const urlInput = document.getElementById('url-input');
+    const fileInput = document.getElementById('file-input');
+    const videoUrl = document.getElementById('video-url');
+    const selectedSource = document.querySelector('input[name="video_source"]:checked').value;
+    
+    if (selectedSource === 'url') {
+        urlInput.classList.remove('hidden');
+        fileInput.classList.add('hidden');
+        videoUrl.required = true;
+    } else {
+        urlInput.classList.add('hidden');
+        fileInput.classList.remove('hidden');
+        videoUrl.required = false;
+    }
 }
 </script>
 {% endblock %}

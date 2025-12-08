@@ -41,6 +41,19 @@ class Video(models.Model):
         return self.title
 
 
+class VideoTierPrice(models.Model):
+    """Tier-specific pricing and access for videos."""
+    video = models.ForeignKey(Video, on_delete=models.CASCADE, related_name='tier_prices')
+    tier = models.ForeignKey(Tier, on_delete=models.CASCADE)
+    reward = models.FloatField(default=0.0, help_text="Reward amount for this tier")
+    
+    class Meta:
+        unique_together = ('video', 'tier')
+    
+    def __str__(self):
+        return f"{self.video.title} - {self.tier.name}: ${self.reward}"
+
+
 class WatchHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     video = models.ForeignKey(Video, on_delete=models.CASCADE)
