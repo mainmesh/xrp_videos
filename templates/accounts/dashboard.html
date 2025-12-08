@@ -43,11 +43,19 @@
           <div class="text-2xl font-bold text-gray-400 mb-2">{{ profile.current_tier.name }}</div>
         {% endif %}
         <p class="text-sm text-gray-400 mb-6">${{ profile.current_tier.price }} tier unlocked</p>
-        <p class="text-xs text-gray-400">You have access to all videos up to this tier.</p>
+        {% if profile.current_tier.price < 100 %}
+          <a href="{% url 'tiers' %}" class="text-xs px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition inline-block">
+            Upgrade Tier
+          </a>
+        {% else %}
+          <p class="text-xs text-gray-400">You have the highest tier!</p>
+        {% endif %}
       {% else %}
         <div class="text-2xl font-bold text-orange-400 mb-2">Bronze (Free)</div>
-        <p class="text-sm text-gray-400 mb-6">No deposit needed</p>
-        <p class="text-xs text-gray-400">Upgrade your tier to access premium videos.</p>
+        <p class="text-sm text-gray-400 mb-4">No deposit needed</p>
+        <a href="{% url 'tiers' %}" class="text-xs px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition inline-block">
+          Upgrade Tier
+        </a>
       {% endif %}
     </div>
 

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Inbox{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Inbox</h1>
+        <a href="{% url 'compose_message' %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Compose
+        </a>
+    </div>
+
+    {% if unread_count > 0 %}
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <p class="text-blue-800">You have <strong>{{ unread_count }}</strong> unread message{{ unread_count|pluralize }}.</p>
+    </div>
+    {% endif %}
+
+    {% if messages %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="divide-y divide-gray-200">
+            {% for message in messages %}
+            <a href="{% url 'view_message' message.id %}" class="block hover:bg-gray-50 transition">
+                <div class="p-4 {% if not message.is_read %}bg-blue-50{% endif %}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3">
+                                {% if not message.is_read %}
+                                <span class="w-2 h-2 bg-blue-600 rounded-full"></span>
+                                {% endif %}
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <p class="font-semibold text-gray-800">{{ message.sender.username }}</p>
+                                        <span class="text-sm text-gray-500">{{ message.created_at|timesince }} ago</span>
+                                    </div>
+                                    <p class="text-gray-700 font-medium mt-1">{{ message.subject }}</p>
+                                    <p class="text-gray-600 text-sm mt-1 truncate">{{ message.message|truncatewords:15 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+        </svg>
+        <p class="text-gray-600 text-lg">No messages yet</p>
+        <p class="text-gray-500 mt-2">When admins send you messages, they'll appear here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

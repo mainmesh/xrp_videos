@@ -83,13 +83,17 @@
     <!-- User Growth Chart -->
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <h3 class="text-lg font-bold text-gray-800 mb-4">User Growth (Last 7 Days)</h3>
-        <canvas id="userGrowthChart" height="200"></canvas>
+        <div style="height: 250px;">
+            <canvas id="userGrowthChart"></canvas>
+        </div>
     </div>
     
     <!-- Revenue Chart -->
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <h3 class="text-lg font-bold text-gray-800 mb-4">Revenue Trend (Last 7 Days)</h3>
-        <canvas id="revenueChart" height="200"></canvas>
+        <div style="height: 250px;">
+            <canvas id="revenueChart"></canvas>
+        </div>
     </div>
 </div>
 
@@ -246,14 +250,18 @@ new Chart(userGrowthCtx, {
     },
     options: {
         responsive: true,
-        maintainAspectRatio: false,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
         plugins: {
             legend: { display: false }
         },
         scales: {
             y: {
                 beginAtZero: true,
-                ticks: { stepSize: 1 }
+                ticks: { 
+                    stepSize: 1,
+                    precision: 0
+                }
             }
         }
     }
@@ -276,7 +284,8 @@ new Chart(revenueCtx, {
     },
     options: {
         responsive: true,
-        maintainAspectRatio: false,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
         plugins: {
             legend: { display: false }
         },

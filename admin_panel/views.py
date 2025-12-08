@@ -14,6 +14,7 @@ from accounts.models import Profile, Deposit, WithdrawalRequest
 from videos.models import Video, WatchHistory, Tier, Category
 from referrals.models import ReferralLink, ReferralBonus
 from .models import SiteSettings
+from core.models import Message, Announcement
 
 
 def staff_required(view_func):
@@ -313,3 +314,96 @@ def logout_view(request):
     auth_logout(request)
     messages.success(request, 'You have been logged out successfully.')
     return redirect('login')
+
+
+@staff_required
+def messages_list(request):
+    """Admin messages inbox."""
+    admin_messages = Message.objects.filter(receiver=request.user)
+    unread_count = admin_messages.filter(is_read=False).count()
+    
+    context = {
+        'messages': admin_messages,
+        'unread_count': unread_count,
+    }
+    return render(request, 'admin_panel/messages.html', context)
+
+
+@staff_required
+def view_admin_message(request, message_id):
+    """View a specific message."""
+    message = get_object_or_404(Message, id=message_id, receiver=request.user)
+    message.is_read = True
+    message.save()
+    
+    return render(request, 'admin_panel/message_detail.html', {'message': message})
+
+
+@staff_required
+def send_message_to_user(request, user_id):
+    """Send message to a specific user."""
+    recipient = get_object_or_404(User, id=user_id)
+    
+    if request.method == 'POST':
+        subject = request.POST.get('subject')
+        message_text = request.POST.get('message')
+        
+        Message.objects.create(
+            sender=request.user,
+            receiver=recipient,
+            subject=subject,
+            message=message_text
+        )
+        
+        messages.success(request, f'Message sent to {recipient.username} successfully.')
+        return redirect('admin_panel:users')
+    
+    return render(request, 'admin_panel/send_message.html', {'recipient': recipient})
+
+
+@staff_required
+def announcements_list(request):
+    """Manage site-wide announcements."""
+    all_announcements = Announcement.objects.all()
+    
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        message_text = request.POST.get('message')
+        is_active = 'is_active' in request.POST
+        
+        Announcement.objects.create(
+            title=title,
+            message=message_text,
+            is_active=is_active,
+            created_by=request.user
+        )
+        
+        messages.success(request, 'Announcement created successfully.')
+        return redirect('admin_panel:announcements')
+    
+    context = {
+        'announcements': all_announcements,
+    }
+    return render(request, 'admin_panel/announcements.html', context)
+
+
+@staff_required
+def toggle_announcement(request, announcement_id):
+    """Toggle announcement active status."""
+    announcement = get_object_or_404(Announcement, id=announcement_id)
+    announcement.is_active = not announcement.is_active
+    announcement.save()
+    
+    status = 'activated' if announcement.is_active else 'deactivated'
+    messages.success(request, f'Announcement {status} successfully.')
+    return redirect('admin_panel:announcements')
+
+
+@staff_required
+def delete_announcement(request, announcement_id):
+    """Delete an announcement."""
+    announcement = get_object_or_404(Announcement, id=announcement_id)
+    announcement.delete()
+    
+    messages.success(request, 'Announcement deleted successfully.')
+    return redirect('admin_panel:announcements')

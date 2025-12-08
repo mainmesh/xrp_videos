@@ -1,0 +1,40 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}{{ message.subject }}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <a href="{% url 'admin_panel:messages' %}" class="text-blue-600 hover:text-blue-700 inline-flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+        Back to Messages
+    </a>
+</div>
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+    <div class="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+        <h1 class="text-2xl font-bold text-gray-800 dark:text-white mb-3">{{ message.subject }}</h1>
+        <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+            <div class="flex items-center space-x-4">
+                <span class="font-semibold">From: {{ message.sender.username }}</span>
+                <span>•</span>
+                <span>{{ message.created_at|date:"F j, Y, g:i a" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="prose max-w-none dark:text-gray-300">
+        <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ message.message }}</p>
+    </div>
+
+    <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <a href="{% url 'admin_panel:send_message' message.sender.id %}" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+            </svg>
+            Reply to {{ message.sender.username }}
+        </a>
+    </div>
+</div>
+{% endblock %}

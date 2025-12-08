@@ -16,5 +16,13 @@ urlpatterns = [
     path('referrals/', views.referrals_list, name='referrals'),
     path('tiers/', views.tiers_list, name='tiers'),
     path('settings/', views.settings_view, name='settings'),
+    # Messaging
+    path('messages/', views.messages_list, name='messages'),
+    path('messages/<int:message_id>/', views.view_admin_message, name='view_admin_message'),
+    path('send-message/<int:user_id>/', views.send_message_to_user, name='send_message'),
+    # Announcements
+    path('announcements/', views.announcements_list, name='announcements'),
+    path('announcements/<int:announcement_id>/toggle/', views.toggle_announcement, name='toggle_announcement'),
+    path('announcements/<int:announcement_id>/delete/', views.delete_announcement, name='delete_announcement'),
     path('logout/', views.logout_view, name='logout'),
 ]

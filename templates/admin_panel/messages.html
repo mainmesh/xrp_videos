@@ -1,0 +1,57 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Messages{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white">Messages</h1>
+    <p class="text-gray-600 dark:text-gray-400 mt-2">View and respond to user messages</p>
+</div>
+
+{% if unread_count > 0 %}
+<div class="bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
+    <p class="text-blue-800 dark:text-blue-200">You have <strong>{{ unread_count }}</strong> unread message{{ unread_count|pluralize }}.</p>
+</div>
+{% endif %}
+
+{% if messages %}
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+    <div class="divide-y divide-gray-200 dark:divide-gray-700">
+        {% for message in messages %}
+        <a href="{% url 'admin_panel:view_admin_message' message.id %}" class="block hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+            <div class="p-4 {% if not message.is_read %}bg-blue-50 dark:bg-blue-900{% endif %}">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3">
+                            {% if not message.is_read %}
+                            <span class="w-2 h-2 bg-blue-600 rounded-full"></span>
+                            {% endif %}
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <p class="font-semibold text-gray-800 dark:text-white">{{ message.sender.username }}</p>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ message.created_at|timesince }} ago</span>
+                                </div>
+                                <p class="text-gray-700 dark:text-gray-300 font-medium mt-1">{{ message.subject }}</p>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm mt-1 truncate">{{ message.message|truncatewords:15 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <svg class="w-5 h-5 text-gray-400 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-12 text-center">
+    <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+    </svg>
+    <p class="text-gray-600 dark:text-gray-400 text-lg">No messages yet</p>
+    <p class="text-gray-500 dark:text-gray-500 mt-2">User messages will appear here.</p>
+</div>
+{% endif %}
+{% endblock %}
