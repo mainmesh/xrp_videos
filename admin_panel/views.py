@@ -172,35 +172,37 @@ def videos_list(request):
     """List all videos and handle add video."""
     if request.method == 'POST':
         try:
+            # Get selected category and its price
+            category_id = request.POST.get('category')
+            category_price_key = f'category_price_{category_id}'
+            reward_price = request.POST.get(category_price_key, 0)
+            
             # Create video
             video = Video.objects.create(
                 title=request.POST.get('title'),
                 url=request.POST.get('url', ''),
                 thumbnail_url=request.POST.get('thumbnail', ''),
+                category_id=category_id,
+                reward=float(reward_price) if reward_price else 0.0,
                 duration_seconds=request.POST.get('duration', 0),
                 is_active=request.POST.get('is_active') == 'on',
                 created_by=request.user
             )
             
-            # Handle categories (multiple selection)
-            category_ids = request.POST.getlist('category')
-            if category_ids:
-                video.categories.set(category_ids)
-                # Set primary category to first selected
-                video.category_id = category_ids[0]
-                video.save()
+            # Add category to many-to-many field
+            video.categories.add(category_id)
             
-            # Handle tier-specific pricing
+            # Handle tier-specific pricing (keep existing functionality)
             tiers = Tier.objects.all()
             tier_added = False
             for tier in tiers:
                 tier_checkbox = request.POST.get(f'tier_{tier.id}')
                 if tier_checkbox:
-                    reward = request.POST.get(f'reward_{tier.id}', 0)
+                    tier_reward = request.POST.get(f'reward_{tier.id}', reward_price)
                     VideoTierPrice.objects.create(
                         video=video,
                         tier=tier,
-                        reward=float(reward) if reward else 0.0
+                        reward=float(tier_reward) if tier_reward else float(reward_price)
                     )
                     tier_added = True
             
@@ -209,11 +211,10 @@ def videos_list(request):
                 lowest_tier = VideoTierPrice.objects.filter(video=video).select_related('tier').order_by('tier__price').first()
                 if lowest_tier:
                     video.min_tier = lowest_tier.tier
-                    # Set default reward to first tier's reward
-                    video.reward = lowest_tier.reward
                     video.save()
             
-            messages.success(request, f'Video "{video.title}" added successfully with {len(category_ids)} categories!')
+            category_name = Category.objects.get(id=category_id).name
+            messages.success(request, f'Video "{video.title}" added successfully in {category_name} with ${reward_price} reward!')
         except Exception as e:
             messages.error(request, f'Error adding video: {str(e)}')
         return redirect('admin_panel:videos')

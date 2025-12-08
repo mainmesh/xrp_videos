@@ -40,34 +40,41 @@
         </div>
         
         <!-- Basic Info -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Video Title *</label>
                 <input type="text" name="title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Enter video title">
             </div>
-            <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-3">Categories *</label>
-                <div class="flex flex-wrap gap-3">
-                    <label class="flex items-center cursor-pointer bg-white px-4 py-2 border border-gray-300 rounded-lg hover:bg-purple-50 transition">
-                        <input type="checkbox" name="category_all" id="category_all" onchange="toggleAllCategories()" class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500">
-                        <span class="ml-2 text-sm font-medium text-gray-700">All Categories</span>
-                    </label>
+            
+            <!-- Categories with Pricing -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-3">Category & Reward Price *</label>
+                <div class="space-y-3">
                     {% for cat in categories %}
-                    <label class="flex items-center cursor-pointer bg-white px-4 py-2 border border-gray-300 rounded-lg hover:bg-purple-50 transition">
-                        <input type="checkbox" name="category" value="{{ cat.id }}" class="category-checkbox w-4 h-4 text-purple-600 rounded focus:ring-purple-500">
-                        <span class="ml-2 text-sm font-medium text-gray-700">{{ cat.name }}</span>
-                    </label>
+                    <div class="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-300 hover:border-purple-400 transition">
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="category" value="{{ cat.id }}" id="cat_{{ cat.id }}" required class="w-4 h-4 text-purple-600 focus:ring-purple-500">
+                            <label for="cat_{{ cat.id }}" class="font-medium text-gray-700 cursor-pointer">{{ cat.name }}</label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-sm text-gray-600">Reward Price: $</label>
+                            <input type="number" name="category_price_{{ cat.id }}" step="0.01" min="0" class="w-28 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" placeholder="0.50">
+                        </div>
+                    </div>
                     {% endfor %}
                 </div>
-                <p class="text-xs text-gray-500 mt-2">Select one or more categories, or choose 'All Categories'</p>
+                <p class="text-xs text-gray-500 mt-2">💡 Select ONE category for this video and set its reward price</p>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Duration (seconds) *</label>
-                <input type="number" name="duration" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="120">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Thumbnail URL (Optional)</label>
-                <input type="url" name="thumbnail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="https://...">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Duration (seconds) *</label>
+                    <input type="number" name="duration" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="120">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Thumbnail URL (Optional)</label>
+                    <input type="url" name="thumbnail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="https://...">
+                </div>
             </div>
         </div>
         
