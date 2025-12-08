@@ -655,15 +655,15 @@
       let sessionId = localStorage.getItem('chatbot_session') || null;
 
       function toggleChatbot() {
-        const window = document.getElementById('chatbot-window');
+        const chatWindow = document.getElementById('chatbot-window');
         const button = document.getElementById('chatbot-toggle');
         
-        if (window.classList.contains('hidden')) {
-          window.classList.remove('hidden');
-          window.classList.add('slide-in-up');
+        if (chatWindow.classList.contains('hidden')) {
+          chatWindow.classList.remove('hidden');
+          chatWindow.classList.add('slide-in-up');
           button.classList.add('hidden');
         } else {
-          window.classList.add('hidden');
+          chatWindow.classList.add('hidden');
           button.classList.remove('hidden');
         }
       }
