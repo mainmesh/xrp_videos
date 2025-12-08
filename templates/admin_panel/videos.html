@@ -53,17 +53,17 @@
                     {% for cat in categories %}
                     <div class="flex items-center justify-between bg-white rounded-lg p-3 border border-gray-300 hover:border-purple-400 transition">
                         <div class="flex items-center gap-3">
-                            <input type="radio" name="category" value="{{ cat.id }}" id="cat_{{ cat.id }}" required class="w-4 h-4 text-purple-600 focus:ring-purple-500">
+                            <input type="radio" name="category" value="{{ cat.id }}" id="cat_{{ cat.id }}" required class="w-4 h-4 text-purple-600 focus:ring-purple-500" onchange="enablePriceInput('{{ cat.id }}')">
                             <label for="cat_{{ cat.id }}" class="font-medium text-gray-700 cursor-pointer">{{ cat.name }}</label>
                         </div>
                         <div class="flex items-center gap-2">
-                            <label class="text-sm text-gray-600">Reward Price: $</label>
-                            <input type="number" name="category_price_{{ cat.id }}" step="0.01" min="0" class="w-28 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" placeholder="0.50">
+                            <label class="text-sm text-gray-600">Reward: $</label>
+                            <input type="number" id="price_{{ cat.id }}" name="category_price_{{ cat.id }}" step="0.01" min="0" disabled class="w-28 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm bg-gray-100" placeholder="0.00">
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-                <p class="text-xs text-gray-500 mt-2">💡 Select ONE category for this video and set its reward price</p>
+                <p class="text-xs text-gray-500 mt-2">💡 Select a category and enter the reward price for this video</p>
             </div>
             
             <div class="grid grid-cols-2 gap-4">
@@ -191,6 +191,27 @@ function toggleVideoSource() {
         urlInput.classList.add('hidden');
         fileInput.classList.remove('hidden');
         videoUrl.required = false;
+    }
+}
+
+function enablePriceInput(categoryId) {
+    // Disable all price inputs
+    const allPriceInputs = document.querySelectorAll('input[id^="price_"]');
+    allPriceInputs.forEach(input => {
+        input.disabled = true;
+        input.classList.add('bg-gray-100');
+        input.classList.remove('bg-white');
+        input.value = '';
+    });
+    
+    // Enable selected category price input
+    const selectedInput = document.getElementById('price_' + categoryId);
+    if (selectedInput) {
+        selectedInput.disabled = false;
+        selectedInput.classList.remove('bg-gray-100');
+        selectedInput.classList.add('bg-white');
+        selectedInput.required = true;
+        selectedInput.focus();
     }
 }
 
