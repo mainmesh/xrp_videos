@@ -34,27 +34,47 @@
 <!-- Platform Settings -->
 <div class="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
     <h3 class="text-xl font-bold text-gray-800 mb-6">Platform Settings</h3>
-    <form method="post" class="space-y-6">
+    <form method="post" action="{% url 'admin_panel:settings' %}" class="space-y-6">
         {% csrf_token %}
+        <input type="hidden" name="settings_type" value="platform">
+        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Site Name</label>
-                <input type="text" value="xrpvideos" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <input type="text" name="site_name" value="{{ site_settings.site_name }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Contact Email</label>
-                <input type="email" value="admin@xrpvideos.com" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <input type="email" name="contact_email" value="{{ site_settings.contact_email }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Withdrawal Amount ($)</label>
-                <input type="number" value="10" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <input type="number" name="min_withdrawal_amount" value="{{ site_settings.min_withdrawal_amount }}" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <p class="mt-1 text-xs text-gray-500">Users must have at least this amount to withdraw</p>
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Withdrawal Amount ($)</label>
-                <input type="number" value="5000" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Min Referrals for Withdrawal</label>
+                <input type="number" name="min_referrals_for_withdrawal" value="{{ site_settings.min_referrals_for_withdrawal }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <p class="mt-1 text-xs text-gray-500">Required referrals before users can withdraw</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Withdrawal Fee (%)</label>
+                <input type="number" name="withdrawal_fee_percentage" value="{{ site_settings.withdrawal_fee_percentage }}" step="0.01" min="0" max="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <p class="mt-1 text-xs text-gray-500">Fee charged on withdrawals (0-100%)</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Referral Commission (%)</label>
+                <input type="number" name="referral_bonus_percentage" value="{{ site_settings.referral_bonus_percentage }}" step="0.01" min="0" max="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <p class="mt-1 text-xs text-gray-500">Percentage referrer earns from referee's earnings</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Default Video Reward ($)</label>
+                <input type="number" name="default_video_reward" value="{{ site_settings.default_video_reward }}" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <p class="mt-1 text-xs text-gray-500">Default reward amount for watching videos</p>
             </div>
         </div>
-        <button type="submit" class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition">
+        
+        <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
             Save Platform Settings
         </button>
     </form>

@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 
 class Tier(models.Model):
@@ -20,13 +21,21 @@ class Category(models.Model):
 class Video(models.Model):
     title = models.CharField(max_length=200)
     url = models.URLField()
+    thumbnail_url = models.URLField(blank=True, default='')
+    description = models.TextField(blank=True, default='')
     reward = models.FloatField(default=0.1)
     category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL)
     min_tier = models.ForeignKey(Tier, null=True, blank=True, on_delete=models.SET_NULL,
                                  help_text="Minimum tier required to access this video")
     duration_seconds = models.IntegerField(default=0, help_text="Approx. duration in seconds")
+    created_at = models.DateTimeField(default=timezone.now)
     created_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
     is_active = models.BooleanField(default=True)
+    
+    @property
+    def duration(self):
+        """Alias for duration_seconds for template compatibility."""
+        return self.duration_seconds
 
     def __str__(self):
         return self.title

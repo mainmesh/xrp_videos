@@ -167,6 +167,7 @@ def users_list(request):
 
 
 @staff_required
+@staff_required
 def videos_list(request):
     """List all videos and handle add video."""
     if request.method == 'POST':
@@ -179,8 +180,9 @@ def videos_list(request):
                 category_id=request.POST.get('category'),
                 min_tier_id=request.POST.get('min_tier'),
                 reward=request.POST.get('reward'),
-                duration=request.POST.get('duration', 0),
-                is_active=request.POST.get('is_active') == 'on'
+                duration_seconds=request.POST.get('duration', 0),
+                is_active=request.POST.get('is_active') == 'on',
+                created_by=request.user
             )
             messages.success(request, f'Video "{video.title}" added successfully!')
         except Exception as e:
@@ -288,18 +290,32 @@ def settings_view(request):
     site_settings = SiteSettings.get_settings()
     
     if request.method == 'POST':
-        # Update maintenance mode
-        if 'maintenance_mode' in request.POST:
-            site_settings.maintenance_mode = True
-        else:
-            site_settings.maintenance_mode = False
+        settings_type = request.POST.get('settings_type', 'maintenance')
         
-        # Update maintenance message if provided
-        if 'maintenance_message' in request.POST:
-            site_settings.maintenance_message = request.POST.get('maintenance_message')
+        if settings_type == 'platform':
+            # Update all platform settings
+            site_settings.site_name = request.POST.get('site_name', site_settings.site_name)
+            site_settings.contact_email = request.POST.get('contact_email', site_settings.contact_email)
+            site_settings.min_withdrawal_amount = request.POST.get('min_withdrawal_amount', site_settings.min_withdrawal_amount)
+            site_settings.min_referrals_for_withdrawal = request.POST.get('min_referrals_for_withdrawal', site_settings.min_referrals_for_withdrawal)
+            site_settings.withdrawal_fee_percentage = request.POST.get('withdrawal_fee_percentage', site_settings.withdrawal_fee_percentage)
+            site_settings.referral_bonus_percentage = request.POST.get('referral_bonus_percentage', site_settings.referral_bonus_percentage)
+            site_settings.default_video_reward = request.POST.get('default_video_reward', site_settings.default_video_reward)
+            messages.success(request, 'Platform settings updated successfully.')
+        else:
+            # Update maintenance mode
+            if 'maintenance_mode' in request.POST:
+                site_settings.maintenance_mode = True
+            else:
+                site_settings.maintenance_mode = False
+            
+            # Update maintenance message if provided
+            if 'maintenance_message' in request.POST:
+                site_settings.maintenance_message = request.POST.get('maintenance_message')
+            
+            messages.success(request, 'Maintenance settings updated successfully.')
         
         site_settings.save()
-        messages.success(request, 'Settings updated successfully.')
         return redirect('admin_panel:settings')
     
     context = {
