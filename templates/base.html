@@ -715,12 +715,17 @@
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken')
             },
             body: JSON.stringify({
               message: message,
               session_id: sessionId
             })
           });
+          
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
           
           const data = await response.json();
           
@@ -733,16 +738,38 @@
           // Remove typing indicator
           removeTypingIndicator(typingId);
           
-          // Add bot response
-          addMessage(data.response, 'bot');
+          // Add bot response - check if response exists
+          const botResponse = data.response || data.message || 'Sorry, I could not process your request.';
+          addMessage(botResponse, 'bot');
           
         } catch (error) {
+          console.error('Chatbot error:', error);
           removeTypingIndicator(typingId);
           addMessage('Sorry, I encountered an error. Please try again.', 'bot');
         }
       }
+      
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
 
       function addMessage(text, sender) {
+        // Safety check for undefined text
+        if (!text || text === 'undefined') {
+          text = 'I\'m here to help! Ask me about deposits, withdrawals, tiers, videos, or referrals.';
+        }
+        
         const messagesContainer = document.getElementById('chat-messages');
         const messageDiv = document.createElement('div');
         messageDiv.className = 'flex items-start space-x-2';
