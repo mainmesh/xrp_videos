@@ -79,41 +79,71 @@
         </div>
         
         <!-- Tier Access & Pricing -->
-        <div class="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-300 rounded-lg p-5 shadow-md">
-            <h4 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 border-2 border-purple-500/30 rounded-2xl p-6 shadow-2xl">
+            <h4 class="text-2xl font-bold text-white mb-3 flex items-center gap-3">
+                <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                Select Tiers & Set Rewards
+                <span class="gradient-text">Select Tiers & Set Rewards</span>
             </h4>
-            <p class="text-sm text-gray-600 mb-4">Choose which membership tiers can watch this video and set the reward amount for each tier</p>
+            <p class="text-base text-gray-300 mb-6">Choose which membership tiers can watch this video and set the reward amount for each tier</p>
             
-            <div class="space-y-3">
-                {% if tiers %}
+            {% if tiers %}
+            <div class="grid md:grid-cols-3 gap-6 mb-6">
                 {% for tier in tiers %}
-                <div class="flex items-center justify-between bg-white rounded-lg p-4 border-2 border-gray-200 hover:border-purple-400 transition shadow-sm">
-                    <div class="flex items-center gap-3">
-                        <input type="checkbox" name="tier_{{ tier.id }}" id="tier_{{ tier.id }}" class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500 cursor-pointer">
-                        <label for="tier_{{ tier.id }}" class="font-bold text-gray-800 cursor-pointer text-base">{{ tier.name }}</label>
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Tier: ${{ tier.price }}</span>
+                <label for="tier_{{ tier.id }}" class="cursor-pointer group">
+                    <div class="dark-glass rounded-2xl p-6 border-2 {% if tier.name == 'Bronze' %}border-orange-400/50 bg-gradient-to-br from-orange-500/10 to-yellow-500/10 hover:shadow-2xl hover:shadow-orange-400/50{% elif tier.name == 'Silver' %}border-blue-400/50 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 hover:shadow-2xl hover:shadow-blue-400/50{% elif tier.name == 'Gold' %}border-yellow-400/50 bg-gradient-to-br from-yellow-500/10 to-amber-500/10 hover:shadow-2xl hover:shadow-yellow-400/50{% else %}border-purple-400/50 bg-gradient-to-br from-purple-500/10 to-pink-500/10 hover:shadow-2xl hover:shadow-purple-400/50{% endif %} transition-all duration-300 transform group-hover:scale-105">
+                        
+                        <!-- Tier Header -->
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" name="tier_{{ tier.id }}" id="tier_{{ tier.id }}" class="w-6 h-6 text-purple-600 rounded-lg focus:ring-2 focus:ring-purple-500 cursor-pointer border-2 border-gray-400">
+                                <div>
+                                    <h5 class="text-xl font-bold {% if tier.name == 'Bronze' %}text-orange-300{% elif tier.name == 'Silver' %}text-blue-300{% elif tier.name == 'Gold' %}text-yellow-300{% else %}text-purple-300{% endif %}">{{ tier.name }}</h5>
+                                    <p class="text-sm text-gray-400">Tier Price: ${{ tier.price }}</p>
+                                </div>
+                            </div>
+                            <svg class="w-12 h-12 {% if tier.name == 'Bronze' %}text-orange-300{% elif tier.name == 'Silver' %}text-blue-300{% elif tier.name == 'Gold' %}text-yellow-300{% else %}text-purple-300{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </div>
+                        
+                        <!-- Reward Input -->
+                        <div class="bg-white/10 rounded-lg p-4 border border-white/20">
+                            <label class="block text-sm font-semibold text-gray-300 mb-2">User Earns Per Watch:</label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-green-400 font-bold text-2xl">$</span>
+                                <input type="number" name="reward_{{ tier.id }}" step="0.01" min="0" class="flex-1 px-4 py-3 bg-slate-800/50 border-2 border-purple-500/30 rounded-lg text-white font-bold text-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="0.00">
+                            </div>
+                        </div>
+                        
+                        <!-- Check indicator -->
+                        <div class="mt-4 text-center">
+                            <span class="text-xs font-semibold text-gray-400 uppercase">✓ Check box above to enable</span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm font-medium text-gray-700">Reward Price:</label>
-                        <span class="text-green-600 font-bold text-lg">$</span>
-                        <input type="number" name="reward_{{ tier.id }}" step="0.01" min="0" class="w-28 px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base font-semibold" placeholder="0.00">
-                    </div>
-                </div>
+                </label>
                 {% endfor %}
-                {% else %}
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
-                    <p class="text-yellow-800">⚠️ No tiers available. Go to <a href="{% url 'tiers' %}" class="text-blue-600 underline font-bold">Tiers Page</a> to view existing tiers or contact support.</p>
-                </div>
-                {% endif %}
             </div>
+            {% else %}
+            <div class="dark-glass rounded-2xl border-2 border-yellow-500/50 p-6 text-center">
+                <svg class="w-16 h-16 text-yellow-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <p class="text-yellow-300 text-lg font-bold mb-2">⚠️ No tiers available</p>
+                <p class="text-gray-300 mb-4">You need to create tiers first before adding videos</p>
+                <a href="{% url 'admin_panel:tiers' %}" class="inline-block px-6 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white font-bold rounded-lg transition shadow-lg">
+                    Go to Tiers Page
+                </a>
+            </div>
+            {% endif %}
             
-            <div class="mt-4 bg-blue-100 border border-blue-300 rounded-lg p-3">
-                <p class="text-sm text-blue-800 font-medium">
-                    💡 <strong>How it works:</strong> Check the tier boxes and enter how much users of that tier will earn for watching this video. Leave unchecked if a tier shouldn't have access.
+            <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                <p class="text-sm text-blue-300 font-medium">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <strong>How it works:</strong> Check the tier boxes and enter how much users of that tier will earn for watching this video. Leave unchecked if a tier shouldn't have access.
                 </p>
             </div>
         </div>
