@@ -683,18 +683,18 @@
         <!-- Input Area -->
         <div class="p-3 bg-white dark:bg-slate-900 border-t-2 border-purple-500/30">
           <form id="chat-form" onsubmit="sendMessage(event)" class="flex gap-2">
-            <input type="text" id="chat-input" placeholder="Type a message or use /commands..." 
+            <input type="text" id="chat-input" placeholder="Type message..." 
                    autocomplete="off"
                    style="color: #ffffff !important; background-color: rgb(51 65 85) !important;"
-                   class="flex-1 px-4 py-2.5 bg-slate-700 border-2 border-purple-500/30 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-white placeholder-gray-400 transition">
-            <button type="submit" id="send-btn" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-5 py-2.5 rounded-xl transition shadow-lg hover:shadow-xl transform hover:scale-105">
+                   class="flex-1 px-3 py-2 bg-slate-700 border-2 border-purple-500/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-white text-sm placeholder-gray-400 transition">
+            <button type="submit" id="send-btn" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-4 py-2 rounded-lg transition shadow-lg hover:shadow-xl flex-shrink-0">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
               </svg>
             </button>
           </form>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-            \ud83d\udca1 Tip: Type <code class="bg-purple-100 dark:bg-slate-700 px-1 rounded">/help</code> for commands
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5 text-center">
+            💡 Tip: Type <code class="bg-purple-100 dark:bg-slate-700 px-1 rounded text-xs">/help</code>
           </p>
         </div>
       </div>
