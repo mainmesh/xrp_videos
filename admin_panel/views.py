@@ -303,6 +303,7 @@ def referrals_list(request):
 
 
 @staff_required
+@staff_required
 def tiers_list(request):
     """List all tiers."""
     tiers = Tier.objects.annotate(user_count=Count('profile')).all()
