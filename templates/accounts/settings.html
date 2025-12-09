@@ -137,6 +137,30 @@
     </div>
   </div>
 
+  <!-- Appearance Settings -->
+  <div class="dark-glass rounded-2xl p-6 md:p-8 border border-purple-500/30 hover:border-purple-500/50 transition-all duration-300 mt-6">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="p-2 bg-purple-500/20 rounded-lg">
+        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"></path></svg>
+      </div>
+      <h3 class="text-xl font-bold text-purple-300">Appearance</h3>
+    </div>
+    <div class="flex items-center justify-between p-4 bg-gradient-to-br from-white/5 to-white/10 rounded-lg border border-purple-500/20">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-purple-500/20 rounded-lg">
+          <svg id="theme-icon-settings" class="w-6 h-6 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </div>
+        <div>
+          <p class="font-semibold text-white" id="theme-text-settings">Dark Mode</p>
+          <p class="text-sm text-gray-400">Toggle between light and dark themes</p>
+        </div>
+      </div>
+      <button onclick="toggleTheme()" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition transform hover:scale-105 shadow-lg hover:shadow-purple-500/50">
+        Toggle Theme
+      </button>
+    </div>
+  </div>
+
   <!-- Danger Zone -->
   <div class="dark-glass rounded-2xl p-6 md:p-8 border border-red-500/30 hover:border-red-500/50 transition-all duration-300 mt-6">
     <div class="flex items-center gap-3 mb-4">

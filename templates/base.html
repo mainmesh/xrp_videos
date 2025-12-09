@@ -421,22 +421,11 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
             <span class="font-medium">Inbox</span>
           </a>
-          <a href="{% url 'accounts:notifications' %}" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition relative">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-            <span class="font-medium">Notifications</span>
-            <span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full badge-pulse">0</span>
-          </a>
         </div>
         {% endif %}
 
         <!-- Settings -->
         <div class="space-y-2 pt-6 border-t border-purple-500/20">
-          <h3 class="text-xs uppercase text-gray-400 font-semibold mb-3 section-header px-4">Settings</h3>
-          <button onclick="toggleTheme()" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition w-full text-left">
-            <svg id="theme-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-            <span id="theme-text" class="font-medium">Dark Mode</span>
-          </button>
-          
           {% if user.is_authenticated %}
           <form method="post" action="{% url 'logout' %}" class="w-full">
             {% csrf_token %}
@@ -475,10 +464,6 @@
         </a>
         {% if user.is_authenticated %}
         <div class="flex items-center gap-2">
-          <a href="{% url 'accounts:notifications' %}" class="relative p-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full font-bold">0</span>
-          </a>
           <a href="{% url 'accounts:settings' %}">
             <div class="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">
               {{ user.username|slice:":1"|upper }}
@@ -507,12 +492,6 @@
               <a href="{% url 'accounts:deposit' %}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 border border-purple-500/30 transition group">
                 <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <span class="font-semibold text-green-400 text-sm">${{ user.profile.balance|floatformat:2 }}</span>
-              </a>
-              
-              <!-- Notifications -->
-              <a href="{% url 'accounts:notifications' %}" class="relative p-2 rounded-lg hover:bg-white/10 transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">0</span>
               </a>
               
               <!-- Account -->
@@ -580,34 +559,43 @@
 
       function toggleTheme() {
         const body = document.body;
-        const themeIcon = document.getElementById('theme-icon');
-        const themeText = document.getElementById('theme-text');
+        const themeIconSettings = document.getElementById('theme-icon-settings');
+        const themeTextSettings = document.getElementById('theme-text-settings');
         
         if (body.classList.contains('dark-mode')) {
           body.classList.remove('dark-mode');
           body.classList.add('light-mode');
-          themeText.textContent = 'Light Mode';
           localStorage.setItem('theme', 'light');
-          // Update icon to sun
-          themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+          // Update settings page elements if they exist
+          if (themeTextSettings) themeTextSettings.textContent = 'Light Mode';
+          if (themeIconSettings) {
+            themeIconSettings.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+          }
         } else {
           body.classList.remove('light-mode');
           body.classList.add('dark-mode');
-          themeText.textContent = 'Dark Mode';
           localStorage.setItem('theme', 'dark');
-          // Update icon to moon
-          themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
+          // Update settings page elements if they exist
+          if (themeTextSettings) themeTextSettings.textContent = 'Dark Mode';
+          if (themeIconSettings) {
+            themeIconSettings.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
+          }
         }
       }
 
       // Load theme preference on page load
       document.addEventListener('DOMContentLoaded', function() {
         const savedTheme = localStorage.getItem('theme') || 'dark';
+        const themeIconSettings = document.getElementById('theme-icon-settings');
+        const themeTextSettings = document.getElementById('theme-text-settings');
+        
         if (savedTheme === 'light') {
           document.body.classList.remove('dark-mode');
           document.body.classList.add('light-mode');
-          document.getElementById('theme-text').textContent = 'Light Mode';
-          document.getElementById('theme-icon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+          if (themeTextSettings) themeTextSettings.textContent = 'Light Mode';
+          if (themeIconSettings) {
+            themeIconSettings.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+          }
         }
       });
     </script>
