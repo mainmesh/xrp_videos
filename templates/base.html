@@ -650,7 +650,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
               </svg>
             </button>
-            <button onclick="toggleChatbot()" class="hover:bg-white/20 rounded p-1.5 transition">
+            <button onclick="minimizeChatbot()" id="chatbot-minimize" class="hover:bg-white/20 rounded p-1.5 transition" title="Minimize chat">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12h16"></path>
+              </svg>
+            </button>
+            <button onclick="toggleChatbot()" class="hover:bg-white/20 rounded p-1.5 transition" title="Close chat">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
@@ -710,35 +715,64 @@
 
       function toggleChatbot() {
         const chatWindow = document.getElementById('chatbot-window');
-        const button = document.getElementById('chatbot-toggle');
-        
+        // Toggle visibility only; keep the floating button visible so user can always reopen
+        if (!chatWindow) return;
         if (chatWindow.classList.contains('hidden')) {
           chatWindow.classList.remove('hidden');
           chatWindow.classList.add('slide-in-up');
-          button.classList.add('hidden');
         } else {
           chatWindow.classList.add('hidden');
-          button.classList.remove('hidden');
         }
       }
 
       function minimizeChatbot() {
         const chatWindow = document.getElementById('chatbot-window');
-        chatWindow.classList.add('hidden');
-        // leave the toggle button visible so user can re-open
-        const button = document.getElementById('chatbot-toggle');
-        if (button) button.classList.remove('hidden');
-        localStorage.setItem('chatbot_minimized', '1');
+        if (!chatWindow) return;
+        const quick = document.getElementById('quick-actions');
+        const messages = document.getElementById('chat-messages');
+        const form = document.getElementById('chat-form');
+        const inputArea = form ? form.parentElement : null;
+        const isCollapsed = chatWindow.classList.toggle('chatbot-collapsed');
+        try {
+          if (isCollapsed) {
+            if (quick) quick.style.display = 'none';
+            if (messages) messages.style.display = 'none';
+            if (inputArea) inputArea.style.display = 'none';
+            chatWindow.style.width = '280px';
+            chatWindow.style.height = '64px';
+            localStorage.setItem('chatbot_minimized', '1');
+          } else {
+            if (quick) quick.style.display = '';
+            if (messages) messages.style.display = '';
+            if (inputArea) inputArea.style.display = '';
+            chatWindow.style.width = '';
+            chatWindow.style.height = '';
+            localStorage.setItem('chatbot_minimized', '0');
+          }
+        } catch (e) {
+          console.warn('Minimize toggle error', e);
+        }
       }
 
-      // restore minimized state on load
+      // restore minimized/collapsed state on load
       document.addEventListener('DOMContentLoaded', () => {
         try {
           const minimized = localStorage.getItem('chatbot_minimized');
           const chatWindow = document.getElementById('chatbot-window');
           const button = document.getElementById('chatbot-toggle');
-          if (minimized === '1') {
-            if (chatWindow) chatWindow.classList.add('hidden');
+          if (minimized === '1' && chatWindow) {
+            // apply collapsed view without toggling (idempotent)
+            if (!chatWindow.classList.contains('chatbot-collapsed')) chatWindow.classList.add('chatbot-collapsed');
+            const quick = document.getElementById('quick-actions');
+            const messages = document.getElementById('chat-messages');
+            const form = document.getElementById('chat-form');
+            const inputArea = form ? form.parentElement : null;
+            if (quick) quick.style.display = 'none';
+            if (messages) messages.style.display = 'none';
+            if (inputArea) inputArea.style.display = 'none';
+            chatWindow.style.width = '280px';
+            chatWindow.style.height = '64px';
+            // ensure the floating button is visible so user can expand
             if (button) button.classList.remove('hidden');
           }
         } catch (e) {
