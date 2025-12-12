@@ -15,6 +15,8 @@ from videos.models import Video, WatchHistory, Tier, Category, VideoTierPrice
 from referrals.models import ReferralLink, ReferralBonus
 from .models import SiteSettings
 from core.models import Message, Announcement
+from django.core.files.storage import default_storage
+from django.utils.text import get_valid_filename
 
 
 def staff_required(view_func):
@@ -190,15 +192,34 @@ def videos_list(request):
             category_id = request.POST.get('category')
             category_price_key = f'category_price_{category_id}'
             reward_price = request.POST.get(category_price_key, 0)
+            # Admin can specify a video-level reward which overrides category default
+            video_reward = request.POST.get('video_reward')
             
+            # Handle uploaded file (if provided)
+            uploaded_file = request.FILES.get('video_file')
+            video_url = request.POST.get('url', '')
+            if uploaded_file:
+                # sanitize filename and save under media/videos/
+                filename = get_valid_filename(uploaded_file.name)
+                save_path = f'videos/{filename}'
+                saved_name = default_storage.save(save_path, uploaded_file)
+                try:
+                    video_url = default_storage.url(saved_name)
+                except Exception:
+                    # fallback to media-relative path
+                    video_url = f"{settings.MEDIA_URL}{saved_name}"
+
+            # determine default reward: video_reward overrides category reward
+            default_reward = video_reward if video_reward else reward_price
+
             # Create video
             video = Video.objects.create(
                 title=request.POST.get('title'),
-                url=request.POST.get('url', ''),
+                url=video_url,
                 thumbnail_url=request.POST.get('thumbnail', ''),
                 category_id=category_id,
-                reward=float(reward_price) if reward_price else 0.0,
-                duration_seconds=request.POST.get('duration', 0),
+                reward=float(default_reward) if default_reward else 0.0,
+                duration_seconds=int(request.POST.get('duration', 0) or 0),
                 is_active=request.POST.get('is_active') == 'on',
                 created_by=request.user
             )

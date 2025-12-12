@@ -56,6 +56,10 @@ STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'staticfi
 STATICFILES_DIRS = [os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# Media files (uploaded by admin)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'media')
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Security Settings for Production
