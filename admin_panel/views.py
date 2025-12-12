@@ -29,6 +29,20 @@ def staff_required(view_func):
     return wrapper
 
 
+@staff_required
+def api_tiers(request):
+    """Return tiers as JSON for admin UI fallback."""
+    try:
+        tiers = Tier.objects.all().order_by('price')
+        data = [
+            {"id": t.id, "name": t.name, "price": float(t.price) if t.price is not None else 0}
+            for t in tiers
+        ]
+        return JsonResponse({"ok": True, "tiers": data})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": str(e)})
+
+
 def setup_admin(request):
     """One-time setup view to create admin user. Access via /admin/setup/"""
     # Check if admin already exists

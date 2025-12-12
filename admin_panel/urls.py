@@ -15,6 +15,7 @@ urlpatterns = [
     path('deposits/', views.deposits_list, name='deposits'),
     path('referrals/', views.referrals_list, name='referrals'),
     path('tiers/', views.tiers_list, name='tiers'),
+    path('api/tiers/', views.api_tiers, name='api_tiers'),
     path('settings/', views.settings_view, name='settings'),
     # Messaging
     path('messages/', views.messages_list, name='messages'),

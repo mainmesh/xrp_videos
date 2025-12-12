@@ -95,7 +95,7 @@
             </div>
             
             {% if tiers %}
-            <div class="grid md:grid-cols-3 gap-6 mb-6">
+            <div id="tiers-grid" class="grid md:grid-cols-3 gap-6 mb-6">
                 {% for tier in tiers %}
                 <label for="tier_{{ tier.id }}" class="cursor-pointer group">
                     <div class="dark-glass rounded-2xl p-6 border-2 {% if tier.name == 'Bronze' %}border-orange-400/50 bg-gradient-to-br from-orange-500/10 to-yellow-500/10 hover:shadow-2xl hover:shadow-orange-400/50{% elif tier.name == 'Silver' %}border-blue-400/50 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 hover:shadow-2xl hover:shadow-blue-400/50{% elif tier.name == 'Gold' %}border-yellow-400/50 bg-gradient-to-br from-yellow-500/10 to-amber-500/10 hover:shadow-2xl hover:shadow-yellow-400/50{% else %}border-purple-400/50 bg-gradient-to-br from-purple-500/10 to-pink-500/10 hover:shadow-2xl hover:shadow-purple-400/50{% endif %} transition-all duration-300 transform group-hover:scale-105">
@@ -131,6 +131,52 @@
                 </label>
                 {% endfor %}
             </div>
+            <script>
+                // If server provided no tiers, fetch via API fallback and render
+                (function(){
+                    const tierCount = {{ tiers|length }};
+                    if (tierCount === 0) {
+                        const grid = document.getElementById('tiers-grid');
+                        const url = "{% url 'admin_panel:api_tiers' %}";
+                        fetch(url)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (!data.ok) return console.error('Failed to fetch tiers', data.error);
+                            const tiers = data.tiers || [];
+                            if (tiers.length === 0) return;
+                            grid.innerHTML = '';
+                            tiers.forEach(t => {
+                                const label = document.createElement('label');
+                                label.className = 'cursor-pointer group';
+                                label.innerHTML = `
+                                    <div class="dark-glass rounded-2xl p-6 border-2 border-purple-400/50 bg-gradient-to-br from-purple-500/10 to-pink-500/10 transition-all duration-300 transform group-hover:scale-105">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <div class="flex items-center gap-3">
+                                                <input type="checkbox" name="tier_${t.id}" id="tier_${t.id}" class="w-6 h-6 text-purple-600 rounded-lg focus:ring-2 focus:ring-purple-500 cursor-pointer border-2 border-gray-400">
+                                                <div>
+                                                    <h5 class="text-xl font-bold text-purple-300">${t.name}</h5>
+                                                    <p class="text-sm text-gray-400">Tier Price: $${t.price}</p>
+                                                </div>
+                                            </div>
+                                            <svg class="w-12 h-12 text-purple-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                        </div>
+                                        <div class="bg-white/10 rounded-lg p-4 border border-white/20">
+                                            <label class="block text-sm font-semibold text-gray-300 mb-2">User Earns Per Watch:</label>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-green-400 font-bold text-2xl">$</span>
+                                                <input type="number" name="reward_${t.id}" step="0.01" min="0" class="flex-1 px-4 py-3 bg-slate-800/50 border-2 border-purple-500/30 rounded-lg text-white font-bold text-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="0.00">
+                                            </div>
+                                        </div>
+                                        <div class="mt-4 text-center"><span class="text-xs font-semibold text-gray-400 uppercase">✓ Check box above to enable</span></div>
+                                    </div>
+                                `;
+                                grid.appendChild(label);
+                            });
+                        })
+                        .catch(err=>console.error('tiers fetch error',err));
+                    }
+                })();
+            </script>
             <script>
                 // Debug helper: log number of tier checkboxes found on page
                 try {
