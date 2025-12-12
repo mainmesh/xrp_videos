@@ -87,6 +87,12 @@
                 <span class="gradient-text">Select Tiers & Set Rewards</span>
             </h4>
             <p class="text-base text-gray-300 mb-6">Choose which membership tiers can watch this video and set the reward amount for each tier</p>
+
+            <!-- DEBUG: show tiers count and names (temporary) -->
+            <div class="mb-4">
+                <p class="text-sm text-yellow-300 font-medium">DEBUG: tiers count = {{ tiers|length }}</p>
+                <p class="text-xs text-gray-400">DEBUG: tiers list: {% for t in tiers %}{{ t.name }}{% if not forloop.last %}, {% endif %}{% empty %}None{% endfor %}</p>
+            </div>
             
             {% if tiers %}
             <div class="grid md:grid-cols-3 gap-6 mb-6">
@@ -125,6 +131,14 @@
                 </label>
                 {% endfor %}
             </div>
+            <script>
+                // Debug helper: log number of tier checkboxes found on page
+                try {
+                    console.log('Admin Videos Page: tier checkboxes found ->', document.querySelectorAll('[id^="tier_"]').length);
+                } catch (e) {
+                    console.log('Admin Videos Page: tier debug script error', e);
+                }
+            </script>
             {% else %}
             <div class="dark-glass rounded-2xl border-2 border-yellow-500/50 p-6 text-center">
                 <svg class="w-16 h-16 text-yellow-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
