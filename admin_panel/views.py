@@ -9,6 +9,7 @@ from django.http import HttpResponseForbidden, JsonResponse
 from functools import wraps
 from datetime import timedelta
 import json
+from django.conf import settings
 
 from accounts.models import Profile, Deposit, WithdrawalRequest
 from videos.models import Video, WatchHistory, Tier, Category, VideoTierPrice
@@ -338,15 +339,17 @@ def referrals_list(request):
 
 
 @staff_required
-@staff_required
 def tiers_list(request):
     """List all tiers."""
-    tiers = Tier.objects.annotate(user_count=Count('profile')).all()
-    
+    # Use a simple query and let the template access reverse relation counts.
+    # Annotating with Count('profile') was incorrect because the reverse relation
+    # from `Profile.current_tier` uses the default related name `profile_set`.
+    tiers = Tier.objects.all().order_by('price')
+
     context = {
         'tiers': tiers,
     }
-    
+
     return render(request, 'admin_panel/tiers.html', context)
 
 
