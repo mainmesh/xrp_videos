@@ -78,20 +78,35 @@ def watch_complete(request, pk):
             return JsonResponse({"error": "insufficient_tier"}, status=403)
     
     # Check if already verified (prevent double-crediting)
-    wh = WatchHistory.objects.filter(user=request.user, video=video, verified=True).first()
-    if wh:
+    existing_wh = WatchHistory.objects.filter(user=request.user, video=video, verified=True).first()
+    if existing_wh:
         return JsonResponse({"error": "already_credited"}, status=400)
-    
-    # Get or create watch history
+
+    # Determine reward amount: prefer tier-specific reward if configured
+    reward_to_credit = float(video.reward or 0)
+    try:
+        user_tier = request.user.profile.current_tier
+        if user_tier:
+            # try exact tier first
+            vtp = video.tier_prices.filter(tier=user_tier).first()
+            if not vtp:
+                # try the highest tier price that the user qualifies for (tier price <= user tier price)
+                vtp = video.tier_prices.filter(tier__price__lte=user_tier.price).select_related('tier').order_by('-tier__price').first()
+            if vtp:
+                reward_to_credit = float(vtp.reward)
+    except Exception:
+        # fallback to video.reward if any errors
+        reward_to_credit = float(video.reward or 0)
+
+    # Create or update watch history (mark verified only after successful credit)
     wh, created = WatchHistory.objects.get_or_create(user=request.user, video=video)
     wh.watched_seconds = video.duration_seconds
-    wh.verified = True
     wh.save()
 
-    # Credit user
+    # Credit user profile
     try:
         profile = request.user.profile
-        profile.credit(video.reward, reason=f"watch:{video.id}")
+        profile.credit(reward_to_credit, reason=f"watch:{video.id}")
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -99,7 +114,7 @@ def watch_complete(request, pk):
     try:
         referred_by = request.user.profile.referred_by
         if referred_by:
-            bonus_amount = round(video.reward * 0.10, 4)
+            bonus_amount = round(reward_to_credit * 0.10, 4)
             ReferralBonus.objects.create(to_user=referred_by, from_user=request.user, amount=bonus_amount)
             # credit referrer's profile
             try:
@@ -110,4 +125,8 @@ def watch_complete(request, pk):
     except Exception:
         pass
 
-    return JsonResponse({"status": "credited", "reward": video.reward})
+    # mark watch as verified after successful crediting
+    wh.verified = True
+    wh.save()
+
+    return JsonResponse({"status": "credited", "reward": reward_to_credit})
