@@ -14,8 +14,13 @@ def video_list(request):
     videos = Video.objects.filter(is_active=True)
     
     # If logged in, filter by tier access
+    user_tier = None
     if request.user.is_authenticated:
-        user_tier = request.user.profile.current_tier
+        try:
+            user_tier = request.user.profile.current_tier
+        except (AttributeError, Profile.DoesNotExist):
+            user_tier = None
+        
         if user_tier:
             # Show videos that don't require a tier OR require this tier or lower
             videos = videos.filter(
@@ -32,7 +37,7 @@ def video_list(request):
     
     context = {
         "videos": videos,
-        "user_tier": request.user.profile.current_tier if request.user.is_authenticated else None,
+        "user_tier": user_tier,
         "all_tiers": Tier.objects.all().order_by('price')
     }
     return render(request, "videos/list.html", context)
@@ -44,11 +49,17 @@ def video_detail(request, pk):
     
     # Check tier access
     has_access = False
+    user_tier = None
+    
     if video.min_tier is None:
         # Free video, everyone can access
         has_access = True
     elif request.user.is_authenticated:
-        user_tier = request.user.profile.current_tier
+        try:
+            user_tier = request.user.profile.current_tier
+        except (AttributeError, Profile.DoesNotExist):
+            user_tier = None
+        
         if user_tier and user_tier.price >= video.min_tier.price:
             has_access = True
     
@@ -56,7 +67,7 @@ def video_detail(request, pk):
         "video": video,
         "has_access": has_access,
         "required_tier": video.min_tier,
-        "user_tier": request.user.profile.current_tier if request.user.is_authenticated else None
+        "user_tier": user_tier
     }
     return render(request, "videos/detail.html", context)
 

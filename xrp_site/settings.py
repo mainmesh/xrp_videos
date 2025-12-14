@@ -6,7 +6,8 @@ import dj_database_url
 SECRET_KEY = config('SECRET_KEY', default='dummy-key-change-this-in-production')
 
 # Debug Mode
-DEBUG = config('DEBUG', default=False, cast=bool)
+# Default to True for local development when env var is not set.
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 # Allowed Hosts
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,xrp-videos.onrender.com', cast=Csv())
