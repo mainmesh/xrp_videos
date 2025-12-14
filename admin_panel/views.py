@@ -184,18 +184,10 @@ def users_list(request):
 
 
 @staff_required
-@staff_required
 def videos_list(request):
     """List all videos and handle add video."""
     if request.method == 'POST':
         try:
-            # Get selected category and its price
-            category_id = request.POST.get('category')
-            category_price_key = f'category_price_{category_id}'
-            reward_price = request.POST.get(category_price_key, 0)
-            # Admin can specify a video-level reward which overrides category default
-            video_reward = request.POST.get('video_reward')
-            
             # Handle uploaded file (if provided)
             uploaded_file = request.FILES.get('video_file')
             video_url = request.POST.get('url', '')
@@ -210,47 +202,49 @@ def videos_list(request):
                     # fallback to media-relative path
                     video_url = f"{settings.MEDIA_URL}{saved_name}"
 
-            # determine default reward: video_reward overrides category reward
-            default_reward = video_reward if video_reward else reward_price
-
-            # Create video
+            # Create video with default values (tier rewards will be set below)
             video = Video.objects.create(
                 title=request.POST.get('title'),
                 url=video_url,
                 thumbnail_url=request.POST.get('thumbnail', ''),
-                category_id=category_id,
-                reward=float(default_reward) if default_reward else 0.0,
+                reward=0.0,  # Default to 0, tier-specific rewards take precedence
                 duration_seconds=int(request.POST.get('duration', 0) or 0),
                 is_active=request.POST.get('is_active') == 'on',
                 created_by=request.user
             )
             
-            # Add category to many-to-many field
-            video.categories.add(category_id)
-            
-            # Handle tier-specific pricing (keep existing functionality)
+            # Handle tier-specific pricing - this is the PRIMARY way to set rewards
             tiers = Tier.objects.all()
             tier_added = False
+            tier_info = []
             for tier in tiers:
                 tier_checkbox = request.POST.get(f'tier_{tier.id}')
                 if tier_checkbox:
-                    tier_reward = request.POST.get(f'reward_{tier.id}', reward_price)
-                    VideoTierPrice.objects.create(
-                        video=video,
-                        tier=tier,
-                        reward=float(tier_reward) if tier_reward else float(reward_price)
-                    )
-                    tier_added = True
+                    tier_reward = request.POST.get(f'reward_{tier.id}', 0)
+                    reward_value = float(tier_reward) if tier_reward else 0.0
+                    if reward_value > 0:  # Only create if reward is set
+                        VideoTierPrice.objects.create(
+                            video=video,
+                            tier=tier,
+                            reward=reward_value
+                        )
+                        tier_added = True
+                        tier_info.append(f"{tier.name}: ${reward_value:.2f}")
+            
+            if not tier_added:
+                # No tiers selected with rewards - delete the video and show error
+                video.delete()
+                messages.error(request, 'Please select at least one tier and set a reward amount greater than $0')
+                return redirect('admin_panel:videos')
             
             # Set minimum tier to the lowest selected tier
-            if tier_added:
-                lowest_tier = VideoTierPrice.objects.filter(video=video).select_related('tier').order_by('tier__price').first()
-                if lowest_tier:
-                    video.min_tier = lowest_tier.tier
-                    video.save()
+            lowest_tier = VideoTierPrice.objects.filter(video=video).select_related('tier').order_by('tier__price').first()
+            if lowest_tier:
+                video.min_tier = lowest_tier.tier
+                video.save()
             
-            category_name = Category.objects.get(id=category_id).name
-            messages.success(request, f'Video "{video.title}" added successfully in {category_name} with ${reward_price} reward!')
+            tier_summary = ", ".join(tier_info)
+            messages.success(request, f'Video "{video.title}" added successfully! Rewards: {tier_summary}')
         except Exception as e:
             messages.error(request, f'Error adding video: {str(e)}')
         return redirect('admin_panel:videos')
