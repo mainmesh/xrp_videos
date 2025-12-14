@@ -83,6 +83,7 @@
 
         <form id="watch-complete" method="post" action="{% url 'videos:complete' video.id %}">
           {% csrf_token %}
+          <input type="hidden" id="watched-seconds-input" name="watched_seconds" value="0">
           <button type="submit" id="submit-btn" class="w-full px-6 py-4 bg-slate-700 text-gray-300 font-bold rounded-lg cursor-not-allowed transition disabled:opacity-50" disabled>
             ⏳ Watch the video to claim your reward...
           </button>
@@ -105,6 +106,7 @@
         const progressBar = document.getElementById('progress-bar');
         const submitBtn = document.getElementById('submit-btn');
         const watchForm = document.getElementById('watch-complete');
+        const watchedSecondsInput = document.getElementById('watched-seconds-input');
         let watchedSeconds = 0;
         
         // Increment timer every second
@@ -112,6 +114,11 @@
           if (watchedSeconds < videoDuration) {
             watchedSeconds += 1;
             watchTimer.textContent = watchedSeconds;
+            
+            // Update hidden input
+            if (watchedSecondsInput) {
+              watchedSecondsInput.value = watchedSeconds;
+            }
             
             // Update progress bar
             const percentage = (watchedSeconds / videoDuration) * 100;
@@ -134,4 +141,4 @@
       </script>
     {% endif %}
   </div>
-
+{% endblock %}

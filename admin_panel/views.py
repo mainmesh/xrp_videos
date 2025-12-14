@@ -263,6 +263,24 @@ def videos_list(request):
 
 
 @staff_required
+def edit_video(request, video_id):
+    """Edit an existing video's details."""
+    video = get_object_or_404(Video, id=video_id)
+    
+    if request.method == 'POST':
+        try:
+            video.title = request.POST.get('edit_title')
+            video.duration_seconds = int(request.POST.get('edit_duration', 0))
+            video.save()
+            
+            messages.success(request, f'Video "{video.title}" updated successfully!')
+        except Exception as e:
+            messages.error(request, f'Error updating video: {str(e)}')
+    
+    return redirect('admin_panel:videos')
+
+
+@staff_required
 def withdrawals_list(request):
     """List all withdrawal requests."""
     status_filter = request.GET.get('status', 'all')

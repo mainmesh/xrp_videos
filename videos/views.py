@@ -79,8 +79,22 @@ def watch_complete(request, pk):
     """Called by frontend when a user finishes watching a video.
     Credits reward and referral bonus if applicable.
     Prevents double-crediting by checking WatchHistory.verified flag.
+    Validates that user watched minimum duration (80% of video).
     """
     video = get_object_or_404(Video, pk=pk)
+    
+    # Get watched seconds from POST data
+    watched_seconds = int(request.POST.get('watched_seconds', 0))
+    
+    # Validate minimum watch duration (80% of video duration)
+    min_watch_seconds = int(video.duration_seconds * 0.8)
+    if watched_seconds < min_watch_seconds:
+        return JsonResponse({
+            "error": "insufficient_watch_time",
+            "message": f"Please watch at least {min_watch_seconds} seconds (80% of video)",
+            "required": min_watch_seconds,
+            "watched": watched_seconds
+        }, status=400)
     
     # Check tier access
     user_tier = request.user.profile.current_tier
@@ -111,7 +125,7 @@ def watch_complete(request, pk):
 
     # Create or update watch history (mark verified only after successful credit)
     wh, created = WatchHistory.objects.get_or_create(user=request.user, video=video)
-    wh.watched_seconds = video.duration_seconds
+    wh.watched_seconds = watched_seconds  # Use actual watched time from client
     wh.save()
 
     # Credit user profile
