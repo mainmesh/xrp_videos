@@ -102,12 +102,13 @@
                         </div>
                         
                         <!-- Reward Input -->
-                        <div class="bg-white/10 rounded-lg p-4 border border-white/20">
-                            <label class="block text-sm font-semibold text-gray-300 mb-2">User Earns Per Watch:</label>
+                        <div class="bg-slate-800 rounded-lg p-4 border-2 border-green-500/50">
+                            <label class="block text-sm font-bold text-white mb-3">💰 User Earns Per Watch:</label>
                             <div class="flex items-center gap-2">
-                                <span class="text-green-400 font-bold text-2xl">$</span>
-                                <input type="number" name="reward_{{ tier.id }}" step="0.01" min="0" class="flex-1 px-4 py-3 bg-slate-800/50 border-2 border-purple-500/30 rounded-lg text-white font-bold text-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="0.00">
+                                <span class="text-green-400 font-bold text-3xl">$</span>
+                                <input type="number" name="reward_{{ tier.id }}" step="0.01" min="0" required class="flex-1 px-4 py-3 bg-white text-gray-900 border-2 border-green-500 rounded-lg font-bold text-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 shadow-lg" placeholder="0.00">
                             </div>
+                            <p class="text-xs text-gray-300 mt-2">Enter amount users will earn for watching this video at this tier level</p>
                         </div>
                         
                         <!-- Check indicator -->
@@ -147,12 +148,13 @@
                                             </div>
                                             <svg class="w-12 h-12 text-purple-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
                                         </div>
-                                        <div class="bg-white/10 rounded-lg p-4 border border-white/20">
-                                            <label class="block text-sm font-semibold text-gray-300 mb-2">User Earns Per Watch:</label>
+                                        <div class="bg-slate-800 rounded-lg p-4 border-2 border-green-500/50">
+                                            <label class="block text-sm font-bold text-white mb-3">💰 User Earns Per Watch:</label>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-green-400 font-bold text-2xl">$</span>
-                                                <input type="number" name="reward_${t.id}" step="0.01" min="0" class="flex-1 px-4 py-3 bg-slate-800/50 border-2 border-purple-500/30 rounded-lg text-white font-bold text-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="0.00">
+                                                <span class="text-green-400 font-bold text-3xl">$</span>
+                                                <input type="number" name="reward_${t.id}" step="0.01" min="0" required class="flex-1 px-4 py-3 bg-white text-gray-900 border-2 border-green-500 rounded-lg font-bold text-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 shadow-lg" placeholder="0.00">
                                             </div>
+                                            <p class="text-xs text-gray-300 mt-2">Enter amount users will earn for watching this video at this tier level</p>
                                         </div>
                                         <div class="mt-4 text-center"><span class="text-xs font-semibold text-gray-400 uppercase">✓ Check box above to enable</span></div>
                                     </div>
@@ -249,12 +251,13 @@
                                             </div>
                                             <svg class="w-12 h-12 text-purple-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
                                         </div>
-                                        <div class="bg-white/10 rounded-lg p-4 border border-white/20">
-                                            <label class="block text-sm font-semibold text-gray-300 mb-2">User Earns Per Watch:</label>
+                                        <div class="bg-slate-800 rounded-lg p-4 border-2 border-green-500/50">
+                                            <label class="block text-sm font-bold text-white mb-3">💰 User Earns Per Watch:</label>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-green-400 font-bold text-2xl">$</span>
-                                                <input type="number" name="reward_${t.id}" step="0.01" min="0" class="flex-1 px-4 py-3 bg-slate-800/50 border-2 border-purple-500/30 rounded-lg text-white font-bold text-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="0.00">
+                                                <span class="text-green-400 font-bold text-3xl">$</span>
+                                                <input type="number" name="reward_${t.id}" step="0.01" min="0" required class="flex-1 px-4 py-3 bg-white text-gray-900 border-2 border-green-500 rounded-lg font-bold text-xl focus:ring-2 focus:ring-green-400 focus:border-green-400 shadow-lg" placeholder="0.00">
                                             </div>
+                                            <p class="text-xs text-gray-300 mt-2">Enter amount users will earn for watching this video at this tier level</p>
                                         </div>
                                         <div class="mt-4 text-center"><span class="text-xs font-semibold text-gray-400 uppercase">✓ Check box above to enable</span></div>
                                     </div>
