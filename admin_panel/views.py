@@ -281,6 +281,22 @@ def edit_video(request, video_id):
 
 
 @staff_required
+def delete_video(request, video_id):
+    """Delete a video and its associated tier prices."""
+    video = get_object_or_404(Video, id=video_id)
+    
+    if request.method == 'POST':
+        try:
+            video_title = video.title
+            video.delete()  # Will cascade delete VideoTierPrice and WatchHistory entries
+            messages.success(request, f'Video "{video_title}" deleted successfully!')
+        except Exception as e:
+            messages.error(request, f'Error deleting video: {str(e)}')
+    
+    return redirect('admin_panel:videos')
+
+
+@staff_required
 def withdrawals_list(request):
     """List all withdrawal requests."""
     status_filter = request.GET.get('status', 'all')

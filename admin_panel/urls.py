@@ -10,6 +10,7 @@ urlpatterns = [
     path('users/', views.users_list, name='users'),
     path('videos/', views.videos_list, name='videos'),
     path('videos/edit/<int:video_id>/', views.edit_video, name='edit_video'),
+    path('videos/delete/<int:video_id>/', views.delete_video, name='delete_video'),
     path('withdrawals/', views.withdrawals_list, name='withdrawals'),
     path('withdrawals/<int:withdrawal_id>/approve/', views.approve_withdrawal, name='approve_withdrawal'),
     path('withdrawals/<int:withdrawal_id>/reject/', views.reject_withdrawal, name='reject_withdrawal'),
