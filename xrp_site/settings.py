@@ -10,7 +10,12 @@ SECRET_KEY = config('SECRET_KEY', default='dummy-key-change-this-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 # Allowed Hosts
+
+# Add Vercel default host if running on Vercel
+VERCEL_URL = os.environ.get('VERCEL_URL')
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,xrp-videos.onrender.com', cast=Csv())
+if VERCEL_URL:
+    ALLOWED_HOSTS += [VERCEL_URL, '.vercel.app']
 
 INSTALLED_APPS=['django.contrib.admin','django.contrib.auth','django.contrib.contenttypes','django.contrib.sessions','django.contrib.messages','django.contrib.staticfiles','core','accounts','videos','referrals','admin_panel.apps.AdminPanelConfig']
 
@@ -52,14 +57,16 @@ else:
     }
 
 # Static files configuration
+
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'staticfiles')
-STATICFILES_DIRS = [os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files (uploaded by admin)
+
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
