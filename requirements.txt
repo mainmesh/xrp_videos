@@ -1,8 +1,9 @@
 Django==4.2.7
+django-colorfield>=0.10.0
 stripe>=5.0
-vercel-wsgi
-gunicorn==20.1.0
-whitenoise==6.4.0
 python-decouple==3.8
 psycopg2-binary==2.9.9
 dj-database-url==2.1.0
+whitenoise==6.4.0
+vercel-wsgi
+Pillow
