@@ -919,6 +919,16 @@
       }
     </script>
     {% endif %}
+    <script>
+      // Global handler to capture unhandled promise rejections (improves debugging)
+      window.addEventListener('unhandledrejection', function (event) {
+        try {
+          console.warn('Unhandled promise rejection:', event.reason && (event.reason.message || event.reason), event);
+        } catch (e) {
+          console.warn('Unhandled rejection (failed to stringify):', event);
+        }
+      });
+    </script>
   </body>
 </html>
 

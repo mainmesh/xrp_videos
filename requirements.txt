@@ -5,5 +5,4 @@ python-decouple==3.8
 psycopg2-binary==2.9.9
 dj-database-url==2.1.0
 whitenoise==6.4.0
-vercel-wsgi
 Pillow

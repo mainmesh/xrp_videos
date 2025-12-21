@@ -1,6 +1,9 @@
 import os
 from django.core.wsgi import get_wsgi_application
-os.environ.setdefault('DJANGO_SETTINGS_MODULE','xrp_site.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'xrp_videos.settings')
 
-application=get_wsgi_application()
+application = get_wsgi_application()
+
+# Vercel compatibility: expose 'app' variable
+app = application
 app = application  # For Vercel Python runtime compatibility
