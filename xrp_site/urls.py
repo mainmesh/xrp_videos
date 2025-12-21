@@ -1,6 +1,8 @@
 from django.urls import path, include
 from core.views import home, about, tiers, inbox, view_message, compose_message, chatbot
 from accounts.views import stripe_webhook
+from django.views.generic.base import RedirectView
+from django.contrib.staticfiles.storage import staticfiles_storage
 
 urlpatterns = [
     path('admin/', include('admin_panel.urls')),
@@ -21,4 +23,5 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('videos/', include('videos.urls')),
     path('referrals/', include('referrals.urls')),
+    path('favicon.ico', RedirectView.as_view(url=staticfiles_storage.url('images/favicon.ico'))),
 ]
