@@ -25,10 +25,19 @@ def staff_required(view_func):
     """Custom decorator to check if user is staff and redirect to admin login."""
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
+        # Detect requests expecting JSON (fetch/XHR) so we can return JSON errors
+        accept = request.headers.get('Accept', '') if hasattr(request, 'headers') else request.META.get('HTTP_ACCEPT', '')
+        xreq = request.headers.get('X-Requested-With', '') if hasattr(request, 'headers') else request.META.get('HTTP_X_REQUESTED_WITH', '')
+        is_json_request = (xreq == 'XMLHttpRequest') or ('application/json' in accept)
+
         if not request.user.is_authenticated:
+            if is_json_request:
+                return JsonResponse({'ok': False, 'error': 'not_authenticated'}, status=401)
             login_url = reverse('admin_panel:login')
             return redirect(f"{login_url}?next={request.path}")
         if not request.user.is_staff:
+            if is_json_request:
+                return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
             return HttpResponseForbidden("You don't have permission to access this page.")
         return view_func(request, *args, **kwargs)
     return wrapper
