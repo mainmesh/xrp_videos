@@ -10,6 +10,7 @@ from functools import wraps
 from datetime import timedelta
 import json
 from django.conf import settings
+from django.urls import reverse
 
 from accounts.models import Profile, Deposit, WithdrawalRequest
 from videos.models import Video, WatchHistory, Tier, Category, VideoTierPrice
@@ -25,7 +26,8 @@ def staff_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return redirect('admin_panel:login' + '?next=' + request.path)
+            login_url = reverse('admin_panel:login')
+            return redirect(f"{login_url}?next={request.path}")
         if not request.user.is_staff:
             return HttpResponseForbidden("You don't have permission to access this page.")
         return view_func(request, *args, **kwargs)
