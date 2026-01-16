@@ -178,6 +178,24 @@ def notifications(request):
 
 
 @login_required
+def profile(request):
+    """User profile page (redirect target after login)."""
+    profile = request.user.profile
+    referral_link = None
+    try:
+        from referrals.models import ReferralLink
+        referral_link = ReferralLink.objects.filter(user=request.user).first()
+    except Exception:
+        referral_link = None
+    context = {
+        'user': request.user,
+        'profile': profile,
+        'referral_link': referral_link,
+    }
+    return render(request, 'accounts/profile.html', context)
+
+
+@login_required
 def settings(request):
     """Display account settings page."""
     password_form = PasswordChangeForm(request.user)

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-12">
+  <div class="bg-white rounded-xl shadow p-6">
+    <h2 class="text-2xl font-bold mb-4">Profile</h2>
+    <p class="text-sm text-gray-600 mb-2">Username: {{ user.username }}</p>
+    <p class="text-sm text-gray-600 mb-2">Email: {{ user.email }}</p>
+    <p class="text-sm text-gray-600 mb-4">Balance: ${{ profile.balance }}</p>
+    {% if referral_link %}
+    <p class="text-sm text-gray-600">Referral link: <a href="{{ referral_link.get_full_url }}">{{ referral_link.get_full_url }}</a></p>
+    {% endif %}
+    <div class="mt-6">
+      <a href="{% url 'accounts:settings' %}" class="px-4 py-2 bg-purple-600 text-white rounded">Account Settings</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
