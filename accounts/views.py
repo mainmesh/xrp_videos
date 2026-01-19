@@ -120,6 +120,72 @@ def deposit_mpesa(request):
     return render(request, 'accounts/deposit_mpesa.html', {})
 
 
+@require_http_methods(["POST"])
+def mpesa_webhook(request):
+    """Webhook endpoint for payment provider/aggregator to confirm transactions.
+
+    Expected JSON body: {"tx_id": "ABC123", "amount": 50.0, "phone": "079...", "country": "KE"}
+    A header `X-MPESA-WEBHOOK-SECRET` must match settings.MPESA_WEBHOOK_SECRET.
+    If a matching pending PaymentAttempt exists (same amount, phone or tx id in raw_message), it will be marked verified.
+    """
+    import json
+    from django.conf import settings
+
+    secret = request.META.get('HTTP_X_MPESA_WEBHOOK_SECRET') or request.META.get('HTTP_X_MPESA_SECRET')
+    expected = getattr(settings, 'MPESA_WEBHOOK_SECRET', None)
+    if expected and (not secret or secret != expected):
+        return JsonResponse({"error": "unauthorized"}, status=401)
+
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        return JsonResponse({"error": "invalid_json"}, status=400)
+
+    tx_id = (payload.get('tx_id') or '').strip()
+    amount = payload.get('amount')
+    phone = (payload.get('phone') or '').strip()
+    country = (payload.get('country') or '').strip().upper()
+
+    # Find matching pending PaymentAttempt
+    candidates = PaymentAttempt.objects.filter(status='pending')
+
+    matched = None
+    # match by tx id in raw_message
+    if tx_id:
+        candidates = candidates.filter(raw_message__icontains=tx_id)
+        matched = candidates.first()
+
+    # fallback: match by phone and approximate amount
+    if not matched and phone:
+        cand2 = PaymentAttempt.objects.filter(status='pending', phone__icontains=phone)
+        for pa in cand2:
+            try:
+                if abs(float(pa.amount) - float(amount)) <= max(1.0, 0.02 * float(amount)):
+                    matched = pa
+                    break
+            except Exception:
+                continue
+
+    if not matched and amount is not None:
+        # try matching by amount alone (last recent)
+        try:
+            amt = float(amount)
+            cand3 = PaymentAttempt.objects.filter(status='pending').order_by('-created_at')
+            for pa in cand3:
+                if abs(float(pa.amount) - amt) <= max(1.0, 0.02 * amt):
+                    matched = pa
+                    break
+        except Exception:
+            pass
+
+    if not matched:
+        return JsonResponse({"status": "no_match"}, status=200)
+
+    # Mark verified
+    matched.mark_verified(verifier_note=f"Webhook verified tx:{tx_id} phone:{phone}")
+    return JsonResponse({"status": "verified", "payment_attempt_id": matched.id})
+
+
 @login_required
 def dashboard(request):
     profile = request.user.profile

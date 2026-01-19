@@ -7,6 +7,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('deposit/', views.placeholder_deposit, name='deposit'),
     path('deposit/mpesa/', views.deposit_mpesa, name='deposit_mpesa'),
+    path('deposit/mpesa/webhook/', views.mpesa_webhook, name='mpesa_webhook'),
     path('deposit/intent/', views.create_payment_intent, name='create_payment_intent'),
     path('withdraw/', views.request_withdrawal, name='withdraw'),
     path('register/', views.register, name='register'),

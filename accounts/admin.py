@@ -1,3 +1,35 @@
+from django.contrib import admin, messages
+from .models import PaymentAttempt
+
+
+@admin.action(description="Mark selected attempts as verified and credit users")
+def mark_verified(modeladmin, request, queryset):
+    count = 0
+    for pa in queryset:
+        if pa.status != 'verified':
+            pa.mark_verified(verifier_note=f"Verified by {request.user.username}")
+            count += 1
+    messages.success(request, f"{count} attempts marked as verified and credited.")
+
+
+@admin.action(description="Mark selected attempts as rejected")
+def mark_rejected(modeladmin, request, queryset):
+    count = 0
+    for pa in queryset:
+        if pa.status != 'rejected':
+            pa.mark_rejected(note=f"Rejected by {request.user.username}")
+            count += 1
+    messages.success(request, f"{count} attempts marked as rejected.")
+
+
+@admin.register(PaymentAttempt)
+class PaymentAttemptAdmin(admin.ModelAdmin):
+    list_display = ("user", "amount", "country", "phone", "status", "created_at", "verified_at")
+    list_filter = ("status", "country")
+    search_fields = ("user__username", "phone", "raw_message")
+    actions = (mark_verified, mark_rejected)
+    readonly_fields = ("created_at", "verified_at")
+    ordering = ("-created_at",)
 from django.contrib import admin
 from django.utils.html import format_html
 from django.db.models import Sum
