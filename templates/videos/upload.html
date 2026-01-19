@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Upload Video{% endblock %}
+{% block content %}
+  <div class="max-w-3xl mx-auto py-8">
+    <h2 class="text-2xl font-bold mb-4">Quick Video Upload (staff only)</h2>
+    {% if error %}
+      <div class="p-4 mb-4 bg-red-600 text-white rounded">{{ error }}</div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label class="block text-sm text-gray-400">Title</label>
+        <input type="text" name="title" value="{{ title|default:'' }}" class="w-full p-2 rounded bg-slate-800 border border-slate-700" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-400">File (MP4, WebM)</label>
+        <input type="file" name="file" class="w-full p-2 bg-slate-900 rounded" />
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-400">Or external URL (YouTube link OK)</label>
+        <input type="text" name="url" value="{{ url|default:'' }}" class="w-full p-2 rounded bg-slate-800 border border-slate-700" />
+      </div>
+      <div class="mb-6">
+        <label class="block text-sm text-gray-400">Duration (minutes, optional)</label>
+        <input type="text" name="duration_minutes" class="w-32 p-2 rounded bg-slate-800 border border-slate-700" />
+      </div>
+      <div>
+        <button type="submit" class="px-6 py-3 bg-green-600 rounded text-white font-bold">Upload / Save</button>
+      </div>
+    </form>
+    <p class="text-xs text-gray-500 mt-4">Uploaded files are stored in your configured `MEDIA_ROOT` under `videos/uploads/`.</p>
+  </div>
+{% endblock %}

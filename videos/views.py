@@ -4,9 +4,16 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 from .models import Video, WatchHistory, Tier
+from .models import WatchHeartbeat
 from accounts.models import Profile
 from referrals.models import ReferralBonus
 from django.db import transaction
+import json
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.conf import settings
+from django.shortcuts import redirect
+from django.contrib.admin.views.decorators import staff_member_required
 
 
 def video_list(request):
@@ -34,6 +41,40 @@ def video_list(request):
     else:
         # Anonymous users only see free videos
         videos = videos.filter(min_tier__isnull=True)
+
+    # Geo-filter: try to infer country from headers set by CDNs or proxies
+    def _infer_country(req):
+        headers = [
+            'HTTP_CF_IPCOUNTRY',
+            'HTTP_X_COUNTRY',
+            'HTTP_GEOIP_COUNTRY_CODE',
+            'GEOIP_COUNTRY_CODE',
+            'HTTP_X_APPENGINE_COUNTRY',
+        ]
+        for h in headers:
+            val = req.META.get(h)
+            if val:
+                return val.strip().upper()
+        # fallback to user profile if available
+        try:
+            if req.user.is_authenticated:
+                prof = getattr(req.user, 'profile', None)
+                if prof is not None and hasattr(prof, 'country'):
+                    return (prof.country or '').strip().upper()
+        except Exception:
+            pass
+        return None
+
+    country = _infer_country(request)
+    # if country inferred, filter videos by availability
+    if country:
+        videos = [v for v in videos if v.matches_country(country)]
+
+    # Available filter: show only unwatched videos for logged in users
+    show_available = request.GET.get('available') == '1'
+    if show_available and request.user.is_authenticated:
+        watched_vid_ids = WatchHistory.objects.filter(user=request.user, verified=True).values_list('video_id', flat=True)
+        videos = [v for v in videos if v.id not in set(watched_vid_ids)]
     
     context = {
         "videos": videos,
@@ -72,6 +113,99 @@ def video_detail(request, pk):
     return render(request, "videos/detail.html", context)
 
 
+
+@login_required
+@require_http_methods(["POST"])
+@transaction.atomic
+def heartbeat(request):
+    """Receive periodic heartbeats from the client while watching.
+    Expects JSON: {"seconds": <int>, "video_id": <int>}.
+    Records a WatchHeartbeat row for the user/video.
+    """
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except Exception:
+        payload = {}
+
+    seconds = int(payload.get('seconds', 0) or 0)
+    video_id = payload.get('video_id')
+    if not video_id:
+        return JsonResponse({"error": "missing_video_id"}, status=400)
+
+    try:
+        video = Video.objects.get(pk=int(video_id))
+    except Exception:
+        return JsonResponse({"error": "invalid_video"}, status=400)
+
+    # create heartbeat record (do not fail client on DB errors)
+    try:
+        WatchHeartbeat.objects.create(user=request.user, video=video, seconds=seconds)
+    except Exception:
+        return JsonResponse({"status": "error"}, status=500)
+
+    return JsonResponse({"status": "ok"})
+
+
+
+@staff_member_required
+def video_upload(request):
+    """Simple staff-only uploader: accepts a file upload or a URL and creates a Video.
+    This is intentionally permissive so you can add videos quickly.
+    """
+    if request.method == 'POST':
+        title = request.POST.get('title') or 'Untitled'
+        file_obj = request.FILES.get('file')
+        url = (request.POST.get('url') or '').strip()
+        duration_minutes = request.POST.get('duration_minutes')
+
+        if not file_obj and not url:
+            return render(request, 'videos/upload.html', { 'error': 'Provide a file or a URL', 'title': title, 'url': url })
+
+        video = Video(title=title)
+
+        # Save uploaded file to MEDIA via default storage
+        if file_obj:
+            save_path = f'videos/uploads/{file_obj.name}'
+            try:
+                path = default_storage.save(save_path, ContentFile(file_obj.read()))
+                media_url = (settings.MEDIA_URL.rstrip('/') + '/' + path).replace('\\', '/')
+                video.url = media_url
+            except Exception:
+                video.url = ''
+
+        # Normalize common YouTube URLs to embed form
+        if not video.url and url:
+            normalized = url
+            try:
+                if 'youtube.com/watch' in url and 'embed' not in url:
+                    import re
+                    m = re.search(r'v=([^&]+)', url)
+                    if m:
+                        vid = m.group(1)
+                        normalized = f'https://www.youtube.com/embed/{vid}'
+                elif 'youtu.be/' in url:
+                    vid = url.rstrip('/').split('/')[-1]
+                    normalized = f'https://www.youtube.com/embed/{vid}'
+            except Exception:
+                normalized = url
+            video.url = normalized
+
+        # Duration (minutes) -> seconds
+        if duration_minutes:
+            try:
+                video.duration_seconds = int(float(duration_minutes) * 60)
+            except Exception:
+                pass
+
+        # Try to save the video record
+        video.created_by = request.user
+        video.save()
+
+        return redirect('videos:detail', pk=video.pk)
+
+    return render(request, 'videos/upload.html')
+
+
 @login_required
 @require_http_methods(["POST"])
 @transaction.atomic
@@ -95,6 +229,11 @@ def watch_complete(request, pk):
             "required": min_watch_seconds,
             "watched": watched_seconds
         }, status=400)
+
+    # Require at least 3 heartbeats recorded for this user/video in recent session
+    recent_heartbeats = WatchHeartbeat.objects.filter(user=request.user, video=video).order_by('-created_at')[:10]
+    if recent_heartbeats.count() < 3:
+        return JsonResponse({"error": "insufficient_heartbeats", "message": "Playback not validated by server heartbeats."}, status=400)
     
     # Check tier access
     user_tier = request.user.profile.current_tier

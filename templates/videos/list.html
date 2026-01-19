@@ -3,13 +3,57 @@
 {% block content %}
   <h2 class="text-4xl font-bold gradient-text mb-12 slide-in-up">Browse Videos</h2>
   
+  <div class="flex items-center justify-between mb-6 gap-4">
+    <div class="flex items-center gap-3">
+      <a href="?available=1" class="px-3 py-1 rounded bg-purple-600 text-white text-sm">Available for you</a>
+      <a href="?" class="px-3 py-1 rounded bg-slate-800 text-gray-300 text-sm">Show all</a>
+    </div>
+    <div class="text-sm text-gray-400">Compact grid — tap a card to preview</div>
+  </div>
+  
+  <!-- Compact modal for preview -->
+  <div id="video-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60">
+    <div class="bg-slate-900 rounded-lg w-full max-w-3xl mx-4 overflow-hidden">
+      <div class="p-4 flex items-center justify-between border-b border-slate-800">
+        <div id="modal-title" class="font-semibold text-white">Preview</div>
+        <button id="modal-close" class="text-gray-400">Close</button>
+      </div>
+      <div class="aspect-video bg-black" id="modal-body">
+        <!-- iframe injected here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('click', function(e){
+      const btn = e.target.closest('.open-video-modal');
+      if(btn){
+        const url = btn.dataset.videoUrl;
+        const title = btn.dataset.videoTitle;
+        const modal = document.getElementById('video-modal');
+        const body = document.getElementById('modal-body');
+        const mt = document.getElementById('modal-title');
+        mt.textContent = title;
+        // inject iframe
+        body.innerHTML = '<iframe src="'+url+'" class="w-full h-full" allowfullscreen></iframe>';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+      if(e.target.id === 'modal-close' || e.target.id === 'video-modal'){
+        const modal = document.getElementById('video-modal');
+        modal.classList.remove('flex'); modal.classList.add('hidden');
+        document.getElementById('modal-body').innerHTML = '';
+      }
+    });
+  </script>
+
   <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
     {% for v in videos %}
     <div class="video-card dark-glass rounded-xl overflow-hidden border border-purple-500/20 hover:shadow-xl group transition">
       <!-- Video Cover -->
       <div class="h-28 bg-black/5 flex items-center justify-center relative overflow-hidden">
         {% if v.thumbnail_url %}
-          <img src="{{ v.thumbnail_url }}" alt="{{ v.title }} thumbnail" class="w-full h-full object-cover" />
+          <img src="{{ v.thumbnail_url }}" alt="{{ v.title }} thumbnail" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://img.youtube.com/vi/'+ ('{{ v.url|split:'/'|last }}') +'/hqdefault.jpg'" />
         {% else %}
           <div class="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
             <svg class="w-10 h-10 text-white/90 group-hover:scale-105 transition video-play-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,12 +86,12 @@
         </div>
         {% endif %}
         
-        <a href="{% url 'videos:detail' v.id %}" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition mt-3">
+        <button data-video-id="{{ v.id }}" data-video-url="{{ v.url }}" data-video-title="{{ v.title|escapejs }}" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition mt-3 open-video-modal">
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
             <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
           </svg>
           <span>Watch Now</span>
-        </a>
+        </button>
       </div>
     </div>
     {% empty %}

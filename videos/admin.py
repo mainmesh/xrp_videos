@@ -7,16 +7,28 @@ from .models import Tier, Category, Video, WatchHistory
 
 class VideoAdminForm(forms.ModelForm):
     duration_minutes = forms.IntegerField(required=False, min_value=0, label="Duration (minutes)")
+    # countries multi-select (stored as comma-separated codes)
+    COUNTRY_CHOICES = [
+        ("KE", "Kenya"),
+        ("TZ", "Tanzania"),
+        ("UG", "Uganda"),
+        ("US", "United States"),
+        ("GB", "United Kingdom"),
+    ]
+    countries_select = forms.MultipleChoiceField(required=False, choices=COUNTRY_CHOICES, widget=forms.CheckboxSelectMultiple, label="Available Countries")
 
     class Meta:
         model = Video
-        fields = ["title", "url", "category", "min_tier", "reward", "duration_minutes", "is_active"]
+        fields = ["title", "file", "url", "category", "min_tier", "reward", "duration_minutes", "is_active"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Initialize duration_minutes from duration_seconds
         if self.instance and getattr(self.instance, 'duration_seconds', None) is not None:
             self.fields['duration_minutes'].initial = int(self.instance.duration_seconds // 60)
+        # init countries_select from instance.countries
+        if self.instance and getattr(self.instance, 'countries', None):
+            self.fields['countries_select'].initial = self.instance.countries_list()
 
     def clean_url(self):
         url = self.cleaned_data.get('url', '').strip()
@@ -66,6 +78,12 @@ class VideoAdminForm(forms.ModelForm):
             cleaned['duration_seconds'] = 0
         else:
             cleaned['duration_seconds'] = int(minutes) * 60
+        # convert countries_select to comma-separated string
+        countries_sel = self.cleaned_data.get('countries_select')
+        if countries_sel:
+            cleaned['countries'] = ','.join([c.upper() for c in countries_sel])
+        else:
+            cleaned['countries'] = ''
         return cleaned
 
     def save(self, commit=True):
@@ -80,8 +98,26 @@ class VideoAdminForm(forms.ModelForm):
                 inst.thumbnail_url = f'https://img.youtube.com/vi/{vid}/maxresdefault.jpg'
         except Exception:
             pass
+        # set countries value if provided
+        countries_val = self.cleaned_data.get('countries')
+        if countries_val is not None:
+            inst.countries = countries_val
+        # If an uploaded file was provided, prefer it as the video source
+        try:
+            uploaded = self.cleaned_data.get('file')
+            if uploaded:
+                inst.file = uploaded
+        except Exception:
+            pass
         if commit:
             inst.save()
+            # after saving, ensure url points to uploaded file if present
+            try:
+                if inst.file and (not inst.url or inst.url.strip() == ''):
+                    inst.url = inst.file.url
+                    inst.save()
+            except Exception:
+                pass
             self.save_m2m()
         return inst
 

@@ -120,7 +120,18 @@
         const watchedSecondsInput = document.getElementById('watched-seconds-input');
         let watchedSeconds = 0;
         
-        // Increment timer every second
+        // Heartbeat: POST to server every 10s and increment timer every second
+        function sendHeartbeat(sec){
+          fetch("{% url 'videos:heartbeat' %}", {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({seconds: sec, video_id: {{ video.id }}})
+          }).catch(()=>{});
+        }
+
         setInterval(() => {
           if (watchedSeconds < videoDuration) {
             watchedSeconds += 1;
@@ -136,6 +147,9 @@
             progressBar.style.width = percentage + '%';
           }
           
+          // Send heartbeat every 10 seconds
+          if (watchedSeconds % 10 === 0) sendHeartbeat(watchedSeconds);
+
           // Enable submit button when full duration watched
           if (watchedSeconds >= videoDuration) {
             submitBtn.disabled = false;

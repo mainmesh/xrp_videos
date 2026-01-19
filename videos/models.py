@@ -21,6 +21,8 @@ class Category(models.Model):
 class Video(models.Model):
     title = models.CharField(max_length=200)
     url = models.URLField()
+    # Optional uploaded file stored in MEDIA_ROOT (prefer this for admin uploads)
+    file = models.FileField(upload_to='videos/uploads/', blank=True, null=True)
     thumbnail_url = models.URLField(blank=True, default='')
     countries = models.CharField(max_length=200, blank=True, default='', help_text="Comma-separated ISO country codes where this video is available. Blank = global")
     description = models.TextField(blank=True, default='')
@@ -86,3 +88,17 @@ class WatchHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.video.title} @ {self.watched_at}"
+
+
+class WatchHeartbeat(models.Model):
+    """Periodic heartbeat records from the client while watching a video."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    video = models.ForeignKey(Video, on_delete=models.CASCADE)
+    seconds = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Heartbeat {self.user.username} {self.video.title} @ {self.seconds}s"
