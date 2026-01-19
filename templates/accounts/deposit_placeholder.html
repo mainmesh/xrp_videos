@@ -40,6 +40,14 @@
       </div>
     </div>
 
+    <!-- Payment Options (targeted by region) -->
+    <div class="mt-6">
+      <h3 class="text-lg font-bold text-white mb-3">Available Payment Options</h3>
+      {% load payments_extras %}
+      {% get_payment_options_for_request as payment_html %}
+      {{ payment_html|safe }}
+    </div>
+
     <!-- Tier Comparison -->
     <div>
       <h3 class="text-2xl font-bold gradient-text mb-6 text-center">Choose Your Tier</h3>
@@ -108,4 +116,11 @@
       </div>
     </div>
   </div>
+{% endblock %}
+
+{# Render payment options (country-sensitive) below the deposit form #}
+{% load payments_extras %}
+{% get_payment_options_for_request as payment_html %}
+{% block payment_options %}
+  <div class="max-w-2xl mx-auto mt-6">{{ payment_html|safe }}</div>
 {% endblock %}
