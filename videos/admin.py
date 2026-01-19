@@ -1,7 +1,65 @@
 from django.contrib import admin
+from django import forms
 from django.utils.html import format_html
 from django.db.models import Count, Sum
 from .models import Tier, Category, Video, WatchHistory
+
+
+class VideoAdminForm(forms.ModelForm):
+    duration_minutes = forms.IntegerField(required=False, min_value=0, label="Duration (minutes)")
+
+    class Meta:
+        model = Video
+        fields = ["title", "url", "category", "min_tier", "reward", "duration_minutes", "is_active"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Initialize duration_minutes from duration_seconds
+        if self.instance and getattr(self.instance, 'duration_seconds', None) is not None:
+            self.fields['duration_minutes'].initial = int(self.instance.duration_seconds // 60)
+
+    def clean_url(self):
+        url = self.cleaned_data.get('url', '').strip()
+        # If user pasted a YouTube watch URL, convert to embed URL
+        try:
+            if 'youtube.com/watch' in url and 'v=' in url:
+                # extract v param
+                import urllib.parse as _up
+                parsed = _up.urlparse(url)
+                qs = _up.parse_qs(parsed.query)
+                vid = qs.get('v', [None])[0]
+                if vid:
+                    return f'https://www.youtube.com/embed/{vid}'
+            if 'youtu.be/' in url:
+                # youtu.be/VIDEO
+                parts = url.split('/')
+                vid = parts[-1]
+                if vid:
+                    # strip query params
+                    vid = vid.split('?')[0]
+                    return f'https://www.youtube.com/embed/{vid}'
+        except Exception:
+            pass
+        return url
+
+    def clean(self):
+        cleaned = super().clean()
+        minutes = cleaned.get('duration_minutes')
+        if minutes is None:
+            cleaned['duration_seconds'] = 0
+        else:
+            cleaned['duration_seconds'] = int(minutes) * 60
+        return cleaned
+
+    def save(self, commit=True):
+        # Ensure duration_seconds is set on instance before saving
+        inst = super().save(commit=False)
+        minutes = self.cleaned_data.get('duration_minutes')
+        inst.duration_seconds = int(minutes or 0) * 60
+        if commit:
+            inst.save()
+            self.save_m2m()
+        return inst
 
 
 @admin.register(Tier)
@@ -34,6 +92,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Video)
 class VideoAdmin(admin.ModelAdmin):
+    form = VideoAdminForm
     list_display = ("title", "category", "min_tier", "reward_display", "watch_count", "is_active_badge", "created_by")
     list_filter = ("category", "min_tier", "is_active", "created_by")
     search_fields = ("title", "url")
@@ -46,7 +105,7 @@ class VideoAdmin(admin.ModelAdmin):
             "fields": ("title", "url", "category")
         }),
         ("Earning Settings", {
-            "fields": ("min_tier", "reward", "duration_seconds")
+            "fields": ("min_tier", "reward", "duration_minutes")
         }),
         ("Status", {
             "fields": ("is_active", "created_by")
@@ -82,6 +141,12 @@ class VideoAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related("category", "min_tier")
+
+    def save_model(self, request, obj, form, change):
+        # Set created_by if not present
+        if not obj.created_by:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(WatchHistory)
