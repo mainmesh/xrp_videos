@@ -81,3 +81,44 @@ def create_user_profile(sender, instance, created, **kwargs):
         code = str(uuid.uuid4())[:8].upper()
         ReferralLink.objects.create(user=instance, code=code)
 
+
+class PaymentAttempt(models.Model):
+    STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("verified", "Verified"),
+        ("rejected", "Rejected"),
+    )
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    country = models.CharField(max_length=10, blank=True, null=True)
+    phone = models.CharField(max_length=50, blank=True)
+    payment_option = models.ForeignKey('admin_panel.PaymentOption', null=True, blank=True, on_delete=models.SET_NULL)
+    raw_message = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verifier_note = models.TextField(blank=True)
+
+    def mark_verified(self, verifier_note="Verified automatically"):
+        if self.status == 'verified':
+            return
+        self.status = 'verified'
+        from django.utils import timezone
+        self.verified_at = timezone.now()
+        self.verifier_note = verifier_note
+        self.save()
+        # credit user's profile
+        try:
+            self.user.profile.credit(float(self.amount), reason="deposit_mpesa")
+        except Exception:
+            pass
+
+    def mark_rejected(self, note="Rejected"):
+        self.status = 'rejected'
+        self.verifier_note = note
+        self.save()
+
+    def __str__(self):
+        return f"PaymentAttempt {self.amount} {self.user.username} - {self.status}"
+

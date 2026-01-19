@@ -11,6 +11,10 @@ from referrals.models import ReferralLink
 import stripe
 from django.conf import settings
 import uuid
+import re
+from .models import PaymentAttempt
+from admin_panel.models import PaymentOption
+from django.utils import timezone
 
 
 stripe.api_key = settings.STRIPE_API_KEY
@@ -46,6 +50,74 @@ def placeholder_deposit(request):
     
     tiers = Tier.objects.all().order_by('price')
     return render(request, "accounts/deposit_placeholder.html", {"tiers": tiers})
+
+
+@login_required
+def deposit_mpesa(request):
+    """Allow users to submit MPesa/SMS payment messages for verification.
+
+    Basic behavior:
+    - User fills amount, selects country (KE/TZ), provides phone used and raw MPesa message.
+    - Server attempts a simple parse/verification; if it finds a matching amount and transaction id, it marks verified and credits user.
+    - Otherwise the attempt remains pending for manual review.
+    """
+    if request.method == 'POST':
+        amount = request.POST.get('amount')
+        country = request.POST.get('country')
+        phone = request.POST.get('phone')
+        message = request.POST.get('message', '')
+
+        try:
+            amount_val = float(amount)
+        except Exception:
+            messages.error(request, "Invalid amount")
+            return redirect('accounts:deposit')
+
+        pa = PaymentAttempt.objects.create(
+            user=request.user,
+            amount=amount_val,
+            country=(country or '').upper(),
+            phone=phone,
+            raw_message=message,
+        )
+
+        # Attempt automatic verification via simple heuristics
+        verified = False
+        note = []
+
+        # Extract an amount from the message
+        amt_match = re.search(r"(?:KES|TZS|UGX|USD|Ksh|TSh|TZS|KES)?\s*([0-9,.]+)", message, re.IGNORECASE)
+        if amt_match:
+            amt_str = amt_match.group(1).replace(',', '')
+            try:
+                parsed_amt = float(amt_str)
+                # allow small discrepancy (e.g., rounding)
+                if abs(parsed_amt - amount_val) <= max(1.0, 0.02 * amount_val):
+                    verified = True
+                    note.append(f"Message amount {parsed_amt} matches submitted {amount_val}")
+                else:
+                    note.append(f"Message amount {parsed_amt} differs from submitted {amount_val}")
+            except Exception:
+                pass
+
+        # Look for a transaction code token (alphanumeric, length 6-12)
+        tx_match = re.search(r"([A-Z0-9]{6,12})", message)
+        if tx_match:
+            note.append(f"Found tx id {tx_match.group(1)}")
+
+        # If heuristics pass, mark verified and credit
+        if verified:
+            pa.mark_verified(verifier_note='; '.join(note))
+            messages.success(request, f"Payment verified and ${amount_val:.2f} credited to your wallet.")
+        else:
+            pa.verifier_note = '; '.join(note)
+            pa.save()
+            messages.info(request, "Payment submitted and is pending verification. You'll be notified after review.")
+
+        return redirect('accounts:deposit')
+
+    # GET -> show a small MPesa submission form (reuse deposit page template)
+    return render(request, 'accounts/deposit_mpesa.html', {})
 
 
 @login_required

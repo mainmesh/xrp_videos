@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Submit MPesa Payment{% endblock %}
+{% block content %}
+  <div class="max-w-lg mx-auto">
+    <div class="dark-glass rounded-2xl p-6 border border-purple-500/30 mb-6">
+      <h2 class="text-2xl font-bold gradient-text mb-2">Submit MPesa / Mobile Payment</h2>
+      <p class="text-gray-400 mb-4">Paste the SMS/mpesa message you received after sending funds. We'll try to verify it automatically.</p>
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Amount (USD)</label>
+          <input name="amount" type="number" step="0.01" required class="w-full px-3 py-2 rounded bg-slate-800/60 border border-purple-500/20 text-white" />
+        </div>
+
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Country</label>
+          <select name="country" class="w-full px-3 py-2 rounded bg-slate-800/60 border border-purple-500/20 text-white">
+            <option value="KE">Kenya</option>
+            <option value="TZ">Tanzania</option>
+            <option value="UG">Uganda</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Phone used</label>
+          <input name="phone" type="text" placeholder="e.g. 07XXXXXXXX" class="w-full px-3 py-2 rounded bg-slate-800/60 border border-purple-500/20 text-white" />
+        </div>
+
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">MPesa / SMS message</label>
+          <textarea name="message" rows="5" required class="w-full px-3 py-2 rounded bg-slate-800/60 border border-purple-500/20 text-white" placeholder="Paste full message here"></textarea>
+        </div>
+
+        <button type="submit" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded">Submit for Verification</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}
