@@ -22,6 +22,7 @@ class Video(models.Model):
     title = models.CharField(max_length=200)
     url = models.URLField()
     thumbnail_url = models.URLField(blank=True, default='')
+    countries = models.CharField(max_length=200, blank=True, default='', help_text="Comma-separated ISO country codes where this video is available. Blank = global")
     description = models.TextField(blank=True, default='')
     reward = models.FloatField(default=0.1)
     categories = models.ManyToManyField(Category, blank=True, related_name='videos')
@@ -45,6 +46,19 @@ class Video(models.Model):
             return int(self.duration_seconds // 60)
         except Exception:
             return 0
+
+    def countries_list(self):
+        if not self.countries:
+            return []
+        return [c.strip().upper() for c in self.countries.split(',') if c.strip()]
+
+    def matches_country(self, country_code: str | None) -> bool:
+        """Return True if the video is available for the given country code (ISO), or globally when countries is blank."""
+        if not self.countries:
+            return True
+        if not country_code:
+            return False
+        return country_code.strip().upper() in self.countries_list()
 
     def __str__(self):
         return self.title

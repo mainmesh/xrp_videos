@@ -40,6 +40,23 @@ class VideoAdminForm(forms.ModelForm):
                     return f'https://www.youtube.com/embed/{vid}'
         except Exception:
             pass
+        # Attempt to set a YouTube embed URL and populate thumbnail when possible
+        try:
+            if 'youtube.com/watch' in url and 'v=' in url:
+                import urllib.parse as _up
+                parsed = _up.urlparse(url)
+                qs = _up.parse_qs(parsed.query)
+                vid = qs.get('v', [None])[0]
+                if vid:
+                    return f'https://www.youtube.com/embed/{vid}'
+            if 'youtu.be/' in url:
+                parts = url.split('/')
+                vid = parts[-1]
+                if vid:
+                    vid = vid.split('?')[0]
+                    return f'https://www.youtube.com/embed/{vid}'
+        except Exception:
+            pass
         return url
 
     def clean(self):
@@ -56,6 +73,13 @@ class VideoAdminForm(forms.ModelForm):
         inst = super().save(commit=False)
         minutes = self.cleaned_data.get('duration_minutes')
         inst.duration_seconds = int(minutes or 0) * 60
+        # Auto-fill YouTube thumbnail if possible and thumbnail_url is empty
+        try:
+            if 'youtube.com/embed/' in inst.url and not inst.thumbnail_url:
+                vid = inst.url.split('youtube.com/embed/')[-1].split('?')[0]
+                inst.thumbnail_url = f'https://img.youtube.com/vi/{vid}/maxresdefault.jpg'
+        except Exception:
+            pass
         if commit:
             inst.save()
             self.save_m2m()
