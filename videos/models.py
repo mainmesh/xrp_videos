@@ -38,6 +38,14 @@ class Video(models.Model):
         """Alias for duration_seconds for template compatibility."""
         return self.duration_seconds
 
+    @property
+    def duration_minutes(self):
+        """Duration rounded down to whole minutes for admin/display convenience."""
+        try:
+            return int(self.duration_seconds // 60)
+        except Exception:
+            return 0
+
     def __str__(self):
         return self.title
 
