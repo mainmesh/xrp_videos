@@ -27,13 +27,9 @@ def divide(value, arg):
 
 @register.filter(name='youtube_embed')
 def youtube_embed(url):
-    """Convert any YouTube URL to embed format"""
+    """Convert any YouTube URL to embed format with proper parameters"""
     import re
     if not url:
-        return url
-    
-    # Already an embed URL
-    if '/embed/' in url:
         return url
     
     # Extract video ID from various YouTube URL formats
@@ -47,7 +43,8 @@ def youtube_embed(url):
         match = re.search(pattern, url)
         if match:
             video_id = match.group(1)
-            return f'https://www.youtube.com/embed/{video_id}'
+            # Add parameters to enable autoplay, controls, and allow embedding
+            return f'https://www.youtube.com/embed/{video_id}?enablejsapi=1&origin=https://xrp-videos.vercel.app&widget_referrer=https://xrp-videos.vercel.app'
     
     # Not a YouTube URL, return as is
     return url

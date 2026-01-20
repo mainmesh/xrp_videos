@@ -19,16 +19,24 @@
         <div id="modal-title" class="font-semibold text-white">Preview</div>
         <button id="modal-close" class="text-gray-400">Close</button>
       </div>
-      <div class="aspect-video bg-black" id="modal-body">
+      <div class="aspect-video bg-black relative" id="modal-body">
         <!-- iframe injected here -->
+        <div id="embed-error" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-slate-900 text-white p-8">
+          <svg class="w-16 h-16 mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <p class="text-lg mb-4">This video cannot be embedded</p>
+          <a id="youtube-link" href="#" target="_blank" class="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition">
+            Watch on YouTube
+          </a>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // Convert YouTube URLs to embed format
+    // Convert YouTube URLs to embed format with proper parameters
     function youtubeEmbed(url) {
-      if (!url || url.includes('/embed/')) return url;
       const patterns = [
         /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
         /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
@@ -36,7 +44,10 @@
       ];
       for (const pattern of patterns) {
         const match = url.match(pattern);
-        if (match) return 'https://www.youtube.com/embed/' + match[1];
+        if (match) {
+          const videoId = match[1];
+          return 'https://www.youtube.com/embed/' + videoId + '?enablejsapi=1&origin=' + window.location.origin + '&widget_referrer=' + window.location.origin;
+        }
       }
       return url;
     }
@@ -44,14 +55,45 @@
     document.addEventListener('click', function(e){
       const btn = e.target.closest('.open-video-modal');
       if(btn){
-        const url = youtubeEmbed(btn.dataset.videoUrl);
+        const originalUrl = btn.dataset.videoUrl;
+        const embedUrl = youtubeEmbed(originalUrl);
         const title = btn.dataset.videoTitle;
         const modal = document.getElementById('video-modal');
         const body = document.getElementById('modal-body');
         const mt = document.getElementById('modal-title');
+        const errorDiv = document.getElementById('embed-error');
+        const youtubeLink = document.getElementById('youtube-link');
+        
         mt.textContent = title;
-        // inject iframe
-        body.innerHTML = '<iframe src="'+url+'" class="w-full h-full" allowfullscreen></iframe>';
+        errorDiv.classList.add('hidden');
+        
+        // Create iframe with error detection
+        const iframe = document.createElement('iframe');
+        iframe.src = embedUrl;
+        iframe.className = 'w-full h-full';
+        iframe.allowFullscreen = true;
+        
+        // Listen for load errors
+        iframe.onerror = function() {
+          errorDiv.classList.remove('hidden');
+          youtubeLink.href = originalUrl;
+        };
+        
+        // Detect YouTube embed errors after a delay
+        setTimeout(function() {
+          try {
+            // If iframe content is blocked, show fallback
+            if (!iframe.contentWindow || iframe.contentWindow.length === 0) {
+              errorDiv.classList.remove('hidden');
+              youtubeLink.href = originalUrl;
+            }
+          } catch(e) {
+            // Cross-origin errors are expected, ignore them
+          }
+        }, 2000);
+        
+        body.innerHTML = '';
+        body.appendChild(iframe);
         modal.classList.remove('hidden');
         modal.classList.add('flex');
       }
