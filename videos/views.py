@@ -25,6 +25,14 @@ def video_list(request):
     if request.user.is_authenticated:
         try:
             user_tier = request.user.profile.current_tier
+            
+            # If user has no tier, auto-assign Bronze (free tier)
+            if not user_tier:
+                bronze_tier = Tier.objects.filter(price=0).order_by('price').first()
+                if bronze_tier:
+                    request.user.profile.current_tier = bronze_tier
+                    request.user.profile.save()
+                    user_tier = bronze_tier
         except (AttributeError, Profile.DoesNotExist):
             user_tier = None
         
