@@ -48,3 +48,31 @@ def youtube_embed(url):
     
     # Not a YouTube URL, return as is
     return url
+
+@register.filter(name='youtube_id')
+def youtube_id(url):
+    """Extract YouTube video ID from any YouTube URL format"""
+    import re
+    if not url:
+        return ''
+    
+    patterns = [
+        r'(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})',
+        r'youtube\.com\/embed\/([a-zA-Z0-9_-]{11})',
+        r'youtube\.com\/v\/([a-zA-Z0-9_-]{11})'
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    
+    return ''
+
+@register.filter(name='youtube_thumbnail')
+def youtube_thumbnail(url, quality='maxresdefault'):
+    """Get YouTube thumbnail URL. Quality options: maxresdefault, hqdefault, mqdefault, sddefault"""
+    video_id = youtube_id(url)
+    if video_id:
+        return f'https://img.youtube.com/vi/{video_id}/{quality}.jpg'
+    return ''

@@ -111,19 +111,13 @@
       <!-- Video Thumbnail with Play Overlay -->
       <div class="relative rounded-lg overflow-hidden aspect-video bg-slate-900 mb-2 shadow-lg hover:shadow-2xl transition-all duration-300">
         {% if v.thumbnail_url %}
-          <img src="{{ v.thumbnail_url }}" alt="{{ v.title }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.parentNode.querySelector('.thumbnail-fallback').classList.remove('hidden');" />
+          <img src="{{ v.thumbnail_url }}" alt="{{ v.title }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <!-- YouTube Thumbnail Fallback if custom thumbnail fails -->
+          <img src="{{ v.url|youtube_thumbnail:'maxresdefault' }}" alt="{{ v.title }}" class="w-full h-full object-cover hidden" onerror="this.src='{{ v.url|youtube_thumbnail:'hqdefault' }}';" />
+        {% else %}
+          <!-- Direct YouTube Thumbnail -->
+          <img src="{{ v.url|youtube_thumbnail:'maxresdefault' }}" alt="{{ v.title }}" class="w-full h-full object-cover" onerror="this.src='{{ v.url|youtube_thumbnail:'hqdefault' }}';" />
         {% endif %}
-        
-        <!-- YouTube Thumbnail Fallback -->
-        <div class="thumbnail-fallback {% if v.thumbnail_url %}hidden{% endif %} absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900">
-          <img src="https://img.youtube.com/vi/{{ v.url|split:'/'|last }}/mqdefault.jpg" alt="{{ v.title }}" class="w-full h-full object-cover" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');" />
-          <!-- Final Fallback -->
-          <div class="hidden absolute inset-0 bg-gradient-to-br from-purple-600/40 to-pink-600/40 flex items-center justify-center">
-            <svg class="w-12 h-12 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
-          </div>
-        </div>
         
         <!-- Dark Overlay on Hover -->
         <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300"></div>
