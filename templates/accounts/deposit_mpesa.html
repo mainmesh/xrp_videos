@@ -1,54 +1,101 @@
 {% extends "base.html" %}
-{% load payments_extras %}
-{% block title %}Submit M-Pesa Payment{% endblock %}
+{% block title %}Send M-Pesa Payment{% endblock %}
 {% block content %}
   <div class="max-w-3xl mx-auto">
     <!-- Payment Instructions -->
-    <div class="dark-glass rounded-2xl p-8 border border-purple-500/30 mb-6">
-      <h2 class="text-3xl font-bold gradient-text mb-2">Send Payment via M-Pesa</h2>
-      <p class="text-gray-400 mb-6">Send money to the number below, then submit your confirmation message for verification</p>
+    <div class="dark-glass rounded-2xl p-8 border border-green-500/30 mb-6">
+      <h2 class="text-3xl font-bold gradient-text mb-4">💰 Send Payment</h2>
+      
+      <!-- Country Selection -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-300 mb-2">Select Your Country</label>
+        <select id="country-select" class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500 transition text-lg font-semibold">
+          <option value="KE">🇰🇪 Kenya (M-Pesa)</option>
+          <option value="TZ">🇹🇿 Tanzania (M-Pesa)</option>
+        </select>
+      </div>
 
-      <!-- Payment Options -->
-      <div class="mb-8">
-        <h3 class="text-lg font-bold text-white mb-4">💳 Available Payment Methods</h3>
-        {% get_payment_options_for_request as payment_html %}
-        {{ payment_html|safe }}
+      <!-- Amount Display -->
+      <div class="mb-6 p-6 bg-gradient-to-r from-green-600/20 to-emerald-600/20 border border-green-500/30 rounded-xl">
+        <p class="text-sm text-gray-300 mb-2">Amount to Send:</p>
+        <div class="text-4xl font-bold text-white mb-2">
+          <span id="local-currency">KES</span> <span id="local-amount">5,000</span>
+        </div>
+        <p class="text-sm text-gray-400">≈ $<span id="usd-amount">50.00</span> USD</p>
+      </div>
+
+      <!-- Kenya Instructions -->
+      <div id="instructions-ke" class="payment-instructions">
+        <h3 class="text-xl font-bold text-white mb-4">📱 Send Money via M-Pesa</h3>
+        <div class="space-y-4">
+          <div class="p-4 bg-blue-600/10 border border-blue-500/30 rounded-lg">
+            <p class="text-sm text-gray-300 mb-1">Send to Phone Number:</p>
+            <p class="text-3xl font-bold text-blue-300">0792167414</p>
+          </div>
+
+          <div class="bg-slate-800/50 rounded-lg p-4">
+            <p class="font-semibold text-white mb-3">Follow these steps:</p>
+            <ol class="space-y-2 text-gray-300 text-sm">
+              <li class="flex gap-2"><span class="font-bold text-green-400">1.</span> Go to M-Pesa menu on your phone</li>
+              <li class="flex gap-2"><span class="font-bold text-green-400">2.</span> Select "Send Money" or "Lipa na M-Pesa"</li>
+              <li class="flex gap-2"><span class="font-bold text-green-400">3.</span> Enter phone number: <strong class="text-white">0792167414</strong></li>
+              <li class="flex gap-2"><span class="font-bold text-green-400">4.</span> Enter amount: <strong class="text-white" id="ke-amount">KES 5,000</strong></li>
+              <li class="flex gap-2"><span class="font-bold text-green-400">5.</span> Enter your M-Pesa PIN and confirm</li>
+              <li class="flex gap-2"><span class="font-bold text-green-400">6.</span> You'll receive a confirmation SMS</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tanzania Instructions -->
+      <div id="instructions-tz" class="payment-instructions hidden">
+        <h3 class="text-xl font-bold text-white mb-4">📱 Send Money via M-Pesa</h3>
+        <div class="space-y-4">
+          <div class="p-4 bg-blue-600/10 border border-blue-500/30 rounded-lg">
+            <p class="text-sm text-gray-300 mb-1">Send to Phone Number:</p>
+            <p class="text-3xl font-bold text-blue-300">0741029973</p>
+          </div>
+
+          <div class="bg-slate-800/50 rounded-lg p-4">
+            <p class="font-semibold text-white mb-3">Follow these steps:</p>
+            <ol class="space-y-2 text-gray-300 text-sm">
+              <li class="flex gap-2"><span class="font-bold text-green-400">1.</span> Go to M-Pesa menu on your phone</li>
+              <li class="flex gap-2"><span class="font-bold text-green-400">2.</span> Select "Send Money" or "Lipa na M-Pesa"</li>
+              <li class="flex gap-2"><span class="font-bold text-green-400">3.</span> Enter phone number: <strong class="text-white">0741029973</strong></li>
+              <li class="flex gap-2"><span class="font-bold text-green-400">4.</span> Enter amount: <strong class="text-white" id="tz-amount">TZS 115,000</strong></li>
+              <li class="flex gap-2"><span class="font-bold text-green-400">5.</span> Enter your M-Pesa PIN and confirm</li>
+              <li class="flex gap-2"><span class="font-bold text-green-400">6.</span> You'll receive a confirmation SMS</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+        <p class="text-sm text-yellow-300">
+          <strong>⚠️ Important:</strong> Send the EXACT amount shown above to avoid delays in verification.
+        </p>
       </div>
     </div>
 
     <!-- Verification Form -->
     <div class="dark-glass rounded-2xl p-8 border border-purple-500/30">
-      <h3 class="text-2xl font-bold gradient-text mb-2">Submit Confirmation Message</h3>
+      <h3 class="text-2xl font-bold gradient-text mb-2">✅ Submit Confirmation Message</h3>
       <p class="text-gray-400 mb-6">After sending money, paste your M-Pesa confirmation SMS below</p>
       
       <form method="post" class="space-y-4">
         {% csrf_token %}
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Amount (USD)</label>
-          <div class="relative">
-            <span class="absolute left-4 top-3 text-gray-400 text-lg">$</span>
-            <input name="amount" type="number" step="0.01" required class="w-full pl-8 pr-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" id="amount-input" />
-          </div>
-        </div>
+        <input type="hidden" name="amount" id="amount-input" />
+        <input type="hidden" name="country" id="country-input" value="KE" />
 
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Country</label>
-          <select name="country" class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500 transition">
-            <option value="KE">🇰🇪 Kenya</option>
-            <option value="TZ">🇹🇿 Tanzania</option>
-            <option value="UG">🇺🇬 Uganda</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Phone Number Used</label>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Phone Number You Used</label>
           <input name="phone" type="text" placeholder="e.g. 0712345678" class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" />
-          <p class="text-xs text-gray-400 mt-1">The phone number you used to send money</p>
+          <p class="text-xs text-gray-400 mt-1">The phone number you used to send the money</p>
         </div>
 
         <div>
           <label class="block text-sm font-medium text-gray-300 mb-2">M-Pesa Confirmation Message</label>
-          <textarea name="message" rows="6" required class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" placeholder="Paste your full M-Pesa SMS here. Example:&#10;&#10;RKQ7XYZ123 Confirmed. Ksh5,000.00 sent to 0792167414..."></textarea>
+          <textarea name="message" rows="6" required class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" placeholder="Paste your full M-Pesa SMS here. Example:&#10;&#10;RKQ7XYZ123 Confirmed. Ksh5,000.00 sent to 0792167414 on 20/1/26 at 3:45 PM..."></textarea>
           <p class="text-xs text-gray-400 mt-1">Copy and paste the entire SMS you received after sending money</p>
         </div>
 
@@ -66,11 +113,49 @@
   </div>
 
   <script>
-    // Pre-fill amount from URL parameter
+    // Exchange rates (approximate)
+    const EXCHANGE_RATES = {
+      'KE': 100,   // 1 USD = 100 KES (approx)
+      'TZ': 2300   // 1 USD = 2300 TZS (approx)
+    };
+
+    const CURRENCY_SYMBOLS = {
+      'KE': 'KES',
+      'TZ': 'TZS'
+    };
+
+    // Get amount from URL parameter
     const urlParams = new URLSearchParams(window.location.search);
-    const amount = urlParams.get('amount');
-    if (amount) {
-      document.getElementById('amount-input').value = amount;
+    const usdAmount = parseFloat(urlParams.get('amount')) || 50;
+    
+    document.getElementById('usd-amount').textContent = usdAmount.toFixed(2);
+    document.getElementById('amount-input').value = usdAmount.toFixed(2);
+
+    // Update display when country changes
+    const countrySelect = document.getElementById('country-select');
+    
+    function updatePaymentInfo() {
+      const country = countrySelect.value;
+      const rate = EXCHANGE_RATES[country];
+      const localAmount = Math.ceil(usdAmount * rate);
+      
+      // Update currency display
+      document.getElementById('local-currency').textContent = CURRENCY_SYMBOLS[country];
+      document.getElementById('local-amount').textContent = localAmount.toLocaleString();
+      document.getElementById('country-input').value = country;
+      
+      // Update instructions for each country
+      document.getElementById('ke-amount').textContent = 'KES ' + Math.ceil(usdAmount * EXCHANGE_RATES.KE).toLocaleString();
+      document.getElementById('tz-amount').textContent = 'TZS ' + Math.ceil(usdAmount * EXCHANGE_RATES.TZ).toLocaleString();
+      
+      // Show/hide country-specific instructions
+      document.getElementById('instructions-ke').classList.toggle('hidden', country !== 'KE');
+      document.getElementById('instructions-tz').classList.toggle('hidden', country !== 'TZ');
     }
+    
+    countrySelect.addEventListener('change', updatePaymentInfo);
+    
+    // Initialize on page load
+    updatePaymentInfo();
   </script>
 {% endblock %}
