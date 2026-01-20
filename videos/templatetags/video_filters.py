@@ -24,3 +24,30 @@ def divide(value, arg):
         return float(value) / float(arg) if float(arg) != 0 else 0
     except (ValueError, TypeError):
         return 0
+
+@register.filter(name='youtube_embed')
+def youtube_embed(url):
+    """Convert any YouTube URL to embed format"""
+    import re
+    if not url:
+        return url
+    
+    # Already an embed URL
+    if '/embed/' in url:
+        return url
+    
+    # Extract video ID from various YouTube URL formats
+    patterns = [
+        r'(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})',
+        r'youtube\.com\/embed\/([a-zA-Z0-9_-]{11})',
+        r'youtube\.com\/v\/([a-zA-Z0-9_-]{11})'
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            video_id = match.group(1)
+            return f'https://www.youtube.com/embed/{video_id}'
+    
+    # Not a YouTube URL, return as is
+    return url
