@@ -22,6 +22,7 @@
           <span id="local-currency">KES</span> <span id="local-amount">5,000</span>
         </div>
         <p class="text-sm text-gray-400">≈ $<span id="usd-amount">50.00</span> USD</p>
+        <p class="text-xs text-gray-500 mt-2">💱 Exchange rate: 1 USD = <span id="rate-display">{{ exchange_rates.KES|default:100 }} KES</span> (Live rate)</p>
       </div>
 
       <!-- Kenya Instructions -->
@@ -113,10 +114,10 @@
   </div>
 
   <script>
-    // Exchange rates (approximate)
+    // Exchange rates (live from API, updated hourly)
     const EXCHANGE_RATES = {
-      'KE': 100,   // 1 USD = 100 KES (approx)
-      'TZ': 2300   // 1 USD = 2300 TZS (approx)
+      'KE': {{ exchange_rates.KES|default:100 }},
+      'TZ': {{ exchange_rates.TZS|default:2300 }}
     };
 
     const CURRENCY_SYMBOLS = {
@@ -143,6 +144,9 @@
       document.getElementById('local-currency').textContent = CURRENCY_SYMBOLS[country];
       document.getElementById('local-amount').textContent = localAmount.toLocaleString();
       document.getElementById('country-input').value = country;
+      
+      // Update exchange rate display
+      document.getElementById('rate-display').textContent = rate + ' ' + CURRENCY_SYMBOLS[country];
       
       // Update instructions for each country
       document.getElementById('ke-amount').textContent = 'KES ' + Math.ceil(usdAmount * EXCHANGE_RATES.KE).toLocaleString();

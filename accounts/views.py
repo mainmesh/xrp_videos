@@ -52,6 +52,40 @@ def placeholder_deposit(request):
     return render(request, "accounts/deposit_placeholder.html", {"tiers": tiers})
 
 
+def get_exchange_rates():
+    """Fetch current exchange rates from API. Falls back to hardcoded rates if API fails."""
+    import requests
+    from django.core.cache import cache
+    
+    # Check cache first (cache for 1 hour)
+    cached_rates = cache.get('exchange_rates')
+    if cached_rates:
+        return cached_rates
+    
+    # Hardcoded fallback rates
+    fallback_rates = {
+        'KES': 100,    # 1 USD = 100 KES
+        'TZS': 2300,   # 1 USD = 2300 TZS
+    }
+    
+    try:
+        # Using exchangerate-api.com (free tier)
+        response = requests.get('https://api.exchangerate-api.com/v4/latest/USD', timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            rates = {
+                'KES': data['rates'].get('KES', fallback_rates['KES']),
+                'TZS': data['rates'].get('TZS', fallback_rates['TZS']),
+            }
+            # Cache for 1 hour
+            cache.set('exchange_rates', rates, 3600)
+            return rates
+    except Exception:
+        pass
+    
+    return fallback_rates
+
+
 @login_required
 def deposit_mpesa(request):
     """Allow users to submit MPesa/SMS payment messages for verification.
@@ -132,8 +166,11 @@ def deposit_mpesa(request):
 
         return redirect('accounts:dashboard')
 
-    # GET -> show a small MPesa submission form (reuse deposit page template)
-    return render(request, 'accounts/deposit_mpesa.html', {})
+    # GET -> show a small MPesa submission form with current exchange rates
+    exchange_rates = get_exchange_rates()
+    return render(request, 'accounts/deposit_mpesa.html', {
+        'exchange_rates': exchange_rates
+    })
 
 
 @require_http_methods(["POST"])
