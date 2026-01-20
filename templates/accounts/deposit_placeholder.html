@@ -7,16 +7,14 @@
       <h2 class="text-3xl font-bold gradient-text mb-2">Upgrade Your Tier</h2>
       <p class="text-gray-400 mb-8">Deposit funds to unlock premium videos and earn more per watch</p>
 
-      <form method="post" class="space-y-4">
-        {% csrf_token %}
-        
+      <div class="space-y-4">
         <div>
           <label for="amount" class="block text-sm font-medium text-gray-300 mb-2">
             Deposit Amount (USD)
           </label>
           <div class="relative">
             <span class="absolute left-4 top-3 text-gray-400 text-lg">$</span>
-            <input type="number" step="0.01" name="amount" id="amount" placeholder="50.00" class="w-full pl-8 pr-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" required />
+            <input type="number" step="0.01" id="amount" placeholder="50.00" class="w-full pl-8 pr-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" required />
           </div>
         </div>
 
@@ -28,10 +26,23 @@
           </div>
         </div>
 
-        <button type="submit" class="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold rounded-lg transition mt-6">
+        <a href="{% url 'accounts:deposit_mpesa' %}" id="proceed-btn" class="w-full block px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold rounded-lg transition mt-6 text-center">
           Proceed to Payment 💳
-        </button>
-      </form>
+        </a>
+      </div>
+
+      <script>
+        // Pass amount to M-Pesa page via URL parameter
+        document.getElementById('proceed-btn').addEventListener('click', function(e) {
+          const amount = document.getElementById('amount').value;
+          if (!amount || amount <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid amount');
+            return;
+          }
+          this.href = "{% url 'accounts:deposit_mpesa' %}?amount=" + amount;
+        });
+      </script>
 
       <div class="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
         <p class="text-xs text-blue-300">

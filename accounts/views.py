@@ -108,13 +108,29 @@ def deposit_mpesa(request):
         # If heuristics pass, mark verified and credit
         if verified:
             pa.mark_verified(verifier_note='; '.join(note))
-            messages.success(request, f"Payment verified and ${amount_val:.2f} credited to your wallet.")
+            
+            # Auto-upgrade tier based on total balance
+            try:
+                from videos.models import Tier
+                profile = request.user.profile
+                profile.refresh_from_db()  # Get updated balance
+                
+                # Find highest tier user qualifies for based on balance
+                tier = Tier.objects.filter(price__lte=profile.balance).order_by('-price').first()
+                if tier and (not profile.current_tier or tier.price > profile.current_tier.price):
+                    profile.current_tier = tier
+                    profile.save()
+                    messages.success(request, f"✅ Payment verified! ${amount_val:.2f} credited. Upgraded to {tier.name} tier!")
+                else:
+                    messages.success(request, f"✅ Payment verified! ${amount_val:.2f} credited to your wallet.")
+            except Exception:
+                messages.success(request, f"✅ Payment verified! ${amount_val:.2f} credited to your wallet.")
         else:
             pa.verifier_note = '; '.join(note)
             pa.save()
-            messages.info(request, "Payment submitted and is pending verification. You'll be notified after review.")
+            messages.info(request, "📋 Payment submitted for verification. You'll be notified after manual review (usually within 24 hours).")
 
-        return redirect('accounts:deposit')
+        return redirect('accounts:dashboard')
 
     # GET -> show a small MPesa submission form (reuse deposit page template)
     return render(request, 'accounts/deposit_mpesa.html', {})
