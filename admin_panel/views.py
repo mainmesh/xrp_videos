@@ -214,12 +214,20 @@ def videos_list(request):
                     video_url = f"{settings.MEDIA_URL}{saved_name}"
 
             # Create video with default values (tier rewards will be set below)
+            # Convert duration from minutes to seconds
+            duration_input = request.POST.get('duration', 0)
+            try:
+                duration_minutes = float(duration_input) if duration_input else 0
+                duration_seconds = int(duration_minutes * 60)
+            except (ValueError, TypeError):
+                duration_seconds = 0
+                
             video = Video.objects.create(
                 title=request.POST.get('title'),
                 url=video_url,
                 thumbnail_url=request.POST.get('thumbnail', ''),
                 reward=0.0,  # Default to 0, tier-specific rewards take precedence
-                duration_seconds=int(request.POST.get('duration', 0) or 0),
+                duration_seconds=duration_seconds,
                 is_active=request.POST.get('is_active') == 'on',
                 created_by=request.user
             )
@@ -281,7 +289,13 @@ def edit_video(request, video_id):
     if request.method == 'POST':
         try:
             video.title = request.POST.get('edit_title')
-            video.duration_seconds = int(request.POST.get('edit_duration', 0))
+            # Convert duration from minutes to seconds
+            duration_input = request.POST.get('edit_duration', 0)
+            try:
+                duration_minutes = float(duration_input) if duration_input else 0
+                video.duration_seconds = int(duration_minutes * 60)
+            except (ValueError, TypeError):
+                video.duration_seconds = 0
             video.save()
             
             messages.success(request, f'Video "{video.title}" updated successfully!')
