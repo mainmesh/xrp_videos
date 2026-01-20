@@ -17,6 +17,7 @@ urlpatterns = [
     path('deposits/', views.deposits_list, name='deposits'),
     path('referrals/', views.referrals_list, name='referrals'),
     path('tiers/', views.tiers_list, name='tiers'),
+    path('tiers/fix-names/', views.fix_tier_names, name='fix_tier_names'),
     path('api/tiers/', views.api_tiers, name='api_tiers'),
     path('settings/', views.settings_view, name='settings'),
     # Messaging

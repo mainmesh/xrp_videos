@@ -3,6 +3,15 @@
 {% block page_title %}Membership Tiers{% endblock %}
 
 {% block content %}
+<div class="mb-6 flex justify-end">
+    <form method="POST" action="{% url 'admin_panel:fix_tier_names' %}" onsubmit="return confirm('This will rename your tiers to Bronze, Silver, Gold based on price. Continue?');">
+        {% csrf_token %}
+        <button type="submit" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-semibold transition">
+            🔧 Fix Tier Names (Bronze/Silver/Gold)
+        </button>
+    </form>
+</div>
+
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
     {% for tier in tiers %}
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition">

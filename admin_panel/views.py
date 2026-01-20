@@ -407,6 +407,28 @@ def tiers_list(request):
 
 
 @staff_required
+def fix_tier_names(request):
+    """Fix tier names to Bronze, Silver, Gold."""
+    if request.method == 'POST':
+        tiers = Tier.objects.all().order_by('price')
+        
+        if tiers.count() >= 3:
+            tier_names = ['Bronze', 'Silver', 'Gold']
+            for i, tier in enumerate(tiers[:3]):
+                tier.name = tier_names[i]
+                tier.save()
+            messages.success(request, '✅ Tier names updated to Bronze, Silver, Gold!')
+        else:
+            # Create proper tiers if not enough exist
+            Tier.objects.get_or_create(name='Bronze', defaults={'price': 0.0})
+            Tier.objects.get_or_create(name='Silver', defaults={'price': 50.0})
+            Tier.objects.get_or_create(name='Gold', defaults={'price': 100.0})
+            messages.success(request, '✅ Created Bronze, Silver, Gold tiers!')
+    
+    return redirect('admin_panel:tiers')
+
+
+@staff_required
 def settings_view(request):
     """Admin settings page."""
     site_settings = SiteSettings.get_settings()
