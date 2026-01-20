@@ -119,18 +119,39 @@ def deposit_mpesa(request):
         verified = False
         note = []
 
+        # Get exchange rate to convert USD to local currency
+        exchange_rates = get_exchange_rates()
+        country_code = (country or '').upper()
+        expected_local_amount = None
+        
+        if country_code == 'KE':
+            expected_local_amount = amount_val * exchange_rates['KES']
+        elif country_code == 'TZ':
+            expected_local_amount = amount_val * exchange_rates['TZS']
+
         # Extract an amount from the message
         amt_match = re.search(r"(?:KES|TZS|UGX|USD|Ksh|TSh|TZS|KES)?\s*([0-9,.]+)", message, re.IGNORECASE)
         if amt_match:
             amt_str = amt_match.group(1).replace(',', '')
             try:
                 parsed_amt = float(amt_str)
-                # allow small discrepancy (e.g., rounding)
-                if abs(parsed_amt - amount_val) <= max(1.0, 0.02 * amount_val):
-                    verified = True
-                    note.append(f"Message amount {parsed_amt} matches submitted {amount_val}")
+                
+                # Compare with expected local currency amount if available
+                if expected_local_amount:
+                    # Allow 5% discrepancy for exchange rate fluctuations and fees
+                    tolerance = max(100, expected_local_amount * 0.05)
+                    if abs(parsed_amt - expected_local_amount) <= tolerance:
+                        verified = True
+                        note.append(f"Message amount {parsed_amt} matches expected {expected_local_amount:.2f} ({country_code})")
+                    else:
+                        note.append(f"Message amount {parsed_amt} differs from expected {expected_local_amount:.2f} ({country_code})")
                 else:
-                    note.append(f"Message amount {parsed_amt} differs from submitted {amount_val}")
+                    # Fallback: compare with USD amount directly (for backwards compatibility)
+                    if abs(parsed_amt - amount_val) <= max(1.0, 0.02 * amount_val):
+                        verified = True
+                        note.append(f"Message amount {parsed_amt} matches submitted {amount_val}")
+                    else:
+                        note.append(f"Message amount {parsed_amt} differs from submitted {amount_val}")
             except Exception:
                 pass
 
