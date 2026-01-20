@@ -3,21 +3,95 @@
 {% block title %}Welcome — Watch & Earn{% endblock %}
 
 {% block content %}
+<style>
+/* Floating Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+  50% { box-shadow: 0 0 40px rgba(168, 85, 247, 0.8), 0 0 60px rgba(236, 72, 153, 0.6); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.float-video {
+  animation: float 3s ease-in-out infinite;
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background-size: 1000px 100%;
+  animation: shimmer 3s infinite;
+}
+
+.video-icon-bounce {
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+</style>
+
 <div class="w-full max-w-full overflow-hidden">
 	<!-- Hero -->
-	<section class="text-center py-12 lg:py-20 mb-8 lg:mb-12">
-		<h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold gradient-text mb-6 px-4 slide-in-up">Watch. Earn. Withdraw.</h1>
-		<p class="text-base sm:text-lg lg:text-xl text-gray-300 mb-8 max-w-3xl mx-auto px-4 fade-in" style="animation-delay: 0.2s;">Join thousands earning by watching quality videos. Get rewarded instantly, share with friends, and unlock bigger earnings. No investment needed—just your time.</p>
-		<div class="flex justify-center gap-3 sm:gap-4 flex-wrap px-4 fade-in" style="animation-delay: 0.4s;">
+	<section class="text-center py-12 lg:py-20 mb-8 lg:mb-12 relative overflow-hidden">
+		<!-- Animated Background Elements -->
+		<div class="absolute inset-0 overflow-hidden pointer-events-none">
+			<div class="absolute top-20 left-10 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl float-video"></div>
+			<div class="absolute bottom-20 right-10 w-40 h-40 bg-pink-500/10 rounded-full blur-3xl float-video" style="animation-delay: 1s;"></div>
+			<div class="absolute top-40 right-1/4 w-24 h-24 bg-blue-500/10 rounded-full blur-3xl float-video" style="animation-delay: 2s;"></div>
+		</div>
+
+		<h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold gradient-text mb-6 px-4 slide-in-up relative">
+			Watch. Earn. Withdraw.
+		</h1>
+		<p class="text-base sm:text-lg lg:text-xl text-gray-300 mb-8 max-w-3xl mx-auto px-4 fade-in relative" style="animation-delay: 0.2s;">
+			Join thousands earning by watching quality videos. Get rewarded instantly, share with friends, and unlock bigger earnings. No investment needed—just your time.
+		</p>
+		
+		<div class="flex justify-center gap-3 sm:gap-4 flex-wrap px-4 fade-in relative" style="animation-delay: 0.4s;">
 			{% if not user.is_authenticated %}
-			<a href="{% url 'accounts:register' %}" class="w-full sm:w-auto block sm:inline-block px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl transition transform hover:scale-105 shadow-modern-lg text-center">Get Started Now</a>
+			<a href="{% url 'accounts:register' %}" class="group relative w-full sm:w-auto block sm:inline-block px-8 py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl transition transform hover:scale-105 shadow-modern-lg text-center overflow-hidden pulse-glow">
+				<span class="absolute inset-0 shimmer"></span>
+				<span class="relative flex items-center justify-center gap-2">
+					<svg class="w-5 h-5 video-icon-bounce" fill="currentColor" viewBox="0 0 20 20">
+						<path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+						<path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+					</svg>
+					Start Watching & Earning
+				</span>
+			</a>
+			{% else %}
+			<a href="{% url 'videos:list' %}" class="group relative w-full sm:w-auto block sm:inline-block px-8 py-4 text-sm sm:text-base bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl transition transform hover:scale-105 shadow-modern-lg text-center overflow-hidden pulse-glow">
+				<span class="absolute inset-0 shimmer"></span>
+				<span class="relative flex items-center justify-center gap-2">
+					<svg class="w-6 h-6 video-icon-bounce" fill="currentColor" viewBox="0 0 20 20">
+						<path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+					</svg>
+					Browse Videos
+				</span>
+			</a>
 			{% endif %}
-			<a href="{% url 'videos:list' %}" class="w-full sm:w-auto block sm:inline-block px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base dark-glass border border-purple-500/50 text-white font-semibold rounded-xl hover:border-purple-400 transition flex items-center justify-center gap-2">
-				<svg class="w-5 h-5 video-play-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-				</svg>
-				<span>Browse Videos</span>
+			
+			<a href="{% url 'accounts:tiers' %}" class="group w-full sm:w-auto block sm:inline-block px-8 py-4 text-sm sm:text-base dark-glass border-2 border-yellow-500/50 text-yellow-300 font-bold rounded-xl hover:border-yellow-400 hover:bg-yellow-500/10 transition transform hover:scale-105 shadow-lg text-center">
+				<span class="flex items-center justify-center gap-2">
+					<svg class="w-5 h-5 group-hover:rotate-12 transition-transform" fill="currentColor" viewBox="0 0 20 20">
+						<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+					</svg>
+					Upgrade Tier
+				</span>
 			</a>
 		</div>
 	</section>
