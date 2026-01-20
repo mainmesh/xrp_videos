@@ -183,7 +183,7 @@ def deposit_mpesa(request):
         else:
             pa.verifier_note = '; '.join(note)
             pa.save()
-            messages.info(request, "📋 Payment submitted for verification. You'll be notified after manual review (usually within 24 hours).")
+            messages.info(request, "📋 Payment submitted for verification. Our team will review it within 24 hours and you'll receive a notification once it's processed.")
 
         return redirect('accounts:dashboard')
 

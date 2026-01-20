@@ -416,14 +416,84 @@ def reject_withdrawal(request, withdrawal_id):
 
 @staff_required
 def deposits_list(request):
-    """List all deposits."""
+    """List all deposits and payment attempts."""
+    from accounts.models import PaymentAttempt
+    
     deposits = Deposit.objects.select_related('user').order_by('-created_at')
+    payment_attempts = PaymentAttempt.objects.select_related('user').order_by('-created_at')
     
     context = {
         'deposits': deposits,
+        'payment_attempts': payment_attempts,
     }
     
     return render(request, 'admin_panel/deposits.html', context)
+
+
+@staff_required
+def approve_payment(request, payment_id):
+    """Approve a pending payment attempt."""
+    from accounts.models import PaymentAttempt
+    from videos.models import Tier
+    
+    payment = get_object_or_404(PaymentAttempt, pk=payment_id)
+    
+    if payment.status == 'pending':
+        # Mark as verified and credit user
+        payment.mark_verified(verifier_note=f"Manually approved by {request.user.username}")
+        
+        # Auto-upgrade tier based on total balance
+        try:
+            profile = payment.user.profile
+            profile.refresh_from_db()
+            
+            tier = Tier.objects.filter(price__lte=profile.balance).order_by('-price').first()
+            if tier and (not profile.current_tier or tier.price > profile.current_tier.price):
+                profile.current_tier = tier
+                profile.save()
+                
+            # Send notification to user
+            from core.models import Message
+            Message.objects.create(
+                sender=request.user,
+                recipient=payment.user,
+                subject="💰 Payment Approved!",
+                body=f"Your payment of ${payment.amount} has been verified and credited to your wallet. Your current balance is ${profile.balance:.2f}."
+            )
+        except Exception:
+            pass
+        
+        messages.success(request, f"Payment approved and ${payment.amount} credited to {payment.user.username}")
+    
+    return redirect('admin_panel:deposits')
+
+
+@staff_required
+def reject_payment(request, payment_id):
+    """Reject a pending payment attempt."""
+    from accounts.models import PaymentAttempt
+    
+    payment = get_object_or_404(PaymentAttempt, pk=payment_id)
+    
+    if payment.status == 'pending':
+        reason = request.POST.get('reason', 'Payment verification failed')
+        payment.mark_rejected(note=f"Rejected by {request.user.username}: {reason}")
+        
+        # Send notification to user
+        try:
+            from core.models import Message
+            Message.objects.create(
+                sender=request.user,
+                recipient=payment.user,
+                subject="❌ Payment Rejected",
+                body=f"Unfortunately, your payment submission of ${payment.amount} could not be verified. Reason: {reason}. Please contact support if you believe this is an error."
+            )
+        except Exception:
+            pass
+        
+        messages.warning(request, f"Payment rejected for {payment.user.username}")
+    
+    return redirect('admin_panel:deposits')
 
 
 @staff_required

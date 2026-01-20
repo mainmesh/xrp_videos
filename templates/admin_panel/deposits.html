@@ -1,45 +1,176 @@
 {% extends "admin_panel/base.html" %}
-{% block title %}Deposits{% endblock %}
-{% block page_title %}Deposits History{% endblock %}
+{% block title %}Deposits & Payments{% endblock %}
+{% block page_title %}Deposits & Payment Verification{% endblock %}
 
 {% block content %}
-<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="w-full">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                {% for deposit in deposits %}
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs">
-                                {{ deposit.user.username|slice:":1"|upper }}
+<!-- M-Pesa Payment Attempts -->
+<div class="mb-8">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">📱 M-Pesa Payment Submissions</h2>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Country</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for payment in payment_attempts %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">
+                                    {{ payment.user.username|slice:":1"|upper }}
+                                </div>
+                                <p class="text-sm font-medium text-gray-900">{{ payment.user.username }}</p>
                             </div>
-                            <p class="text-sm font-medium text-gray-900">{{ deposit.user.username }}</p>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4"><span class="text-sm font-bold">${{ deposit.amount|floatformat:2 }}</span></td>
-                    <td class="px-6 py-4">
-                        {% if deposit.success %}
-                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Success</span>
-                        {% else %}
-                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Failed</span>
-                        {% endif %}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-500">{{ deposit.created_at|date:"M d, Y H:i" }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="4" class="px-6 py-12 text-center text-gray-500">No deposits found</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                        <td class="px-6 py-4"><span class="text-sm font-bold">${{ payment.amount|floatformat:2 }}</span></td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm text-gray-700">
+                                {% if payment.country == 'KE' %}🇰🇪 Kenya
+                                {% elif payment.country == 'TZ' %}🇹🇿 Tanzania
+                                {% else %}{{ payment.country }}{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4"><span class="text-sm text-gray-700">{{ payment.phone|default:"—" }}</span></td>
+                        <td class="px-6 py-4">
+                            {% if payment.status == 'verified' %}
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">✓ Verified</span>
+                            {% elif payment.status == 'rejected' %}
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">✗ Rejected</span>
+                            {% else %}
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">⏳ Pending</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ payment.created_at|date:"M d, Y H:i" }}</td>
+                        <td class="px-6 py-4">
+                            {% if payment.status == 'pending' %}
+                            <div class="flex gap-2">
+                                <a href="{% url 'admin_panel:approve_payment' payment.id %}" 
+                                   onclick="return confirm('Approve this payment of ${{ payment.amount }} for {{ payment.user.username }}?')"
+                                   class="px-3 py-1 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white rounded transition">
+                                    ✓ Approve
+                                </a>
+                                <button onclick="showRejectModal({{ payment.id }}, '{{ payment.user.username }}', '{{ payment.amount }}')"
+                                        class="px-3 py-1 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded transition">
+                                    ✗ Reject
+                                </button>
+                                <button onclick="showMessageModal('{{ payment.raw_message|escapejs }}')"
+                                        class="px-3 py-1 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded transition">
+                                    📱 View SMS
+                                </button>
+                            </div>
+                            {% else %}
+                            <span class="text-xs text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="px-6 py-12 text-center text-gray-500">No payment submissions yet</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+<!-- Legacy Deposits -->
+<div>
+    <h2 class="text-xl font-bold text-gray-800 mb-4">💵 Direct Deposits (Legacy)</h2>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for deposit in deposits %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs">
+                                    {{ deposit.user.username|slice:":1"|upper }}
+                                </div>
+                                <p class="text-sm font-medium text-gray-900">{{ deposit.user.username }}</p>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4"><span class="text-sm font-bold">${{ deposit.amount|floatformat:2 }}</span></td>
+                        <td class="px-6 py-4">
+                            {% if deposit.success %}
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Success</span>
+                            {% else %}
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Failed</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ deposit.created_at|date:"M d, Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="px-6 py-12 text-center text-gray-500">No deposits found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div id="reject-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-bold mb-4">Reject Payment</h3>
+        <form id="reject-form" method="post" action="">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Reason for rejection:</label>
+                <textarea name="reason" rows="3" class="w-full border border-gray-300 rounded px-3 py-2" placeholder="e.g., Amount mismatch, invalid SMS, duplicate" required></textarea>
+            </div>
+            <div class="flex gap-3">
+                <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded">Reject Payment</button>
+                <button type="button" onclick="closeRejectModal()" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- SMS Modal -->
+<div id="sms-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+        <h3 class="text-lg font-bold mb-4">📱 M-Pesa SMS Message</h3>
+        <div class="bg-gray-100 p-4 rounded border border-gray-300 mb-4">
+            <pre id="sms-content" class="whitespace-pre-wrap text-sm"></pre>
+        </div>
+        <button onclick="closeSmsModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">Close</button>
+    </div>
+</div>
+
+<script>
+function showRejectModal(paymentId, username, amount) {
+    document.getElementById('reject-modal').classList.remove('hidden');
+    document.getElementById('reject-form').action = `/admin/deposits/${paymentId}/reject/`;
+}
+
+function closeRejectModal() {
+    document.getElementById('reject-modal').classList.add('hidden');
+}
+
+function showMessageModal(message) {
+    document.getElementById('sms-content').textContent = message;
+    document.getElementById('sms-modal').classList.remove('hidden');
+}
+
+function closeSmsModal() {
+    document.getElementById('sms-modal').classList.add('hidden');
+}
+</script>
 {% endblock %}
