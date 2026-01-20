@@ -286,9 +286,28 @@ def edit_video(request, video_id):
     """Edit an existing video's details."""
     video = get_object_or_404(Video, id=video_id)
     
+    # If AJAX GET request, return video data as JSON
+    if request.method == 'GET' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        from django.http import JsonResponse
+        from videos.models import VideoTierPrice
+        
+        tier_rewards = VideoTierPrice.objects.filter(video=video).values('tier_id', 'reward')
+        
+        return JsonResponse({
+            'title': video.title,
+            'url': video.url,
+            'duration_minutes': video.duration_minutes,
+            'min_tier_id': video.min_tier.id if video.min_tier else None,
+            'tier_rewards': list(tier_rewards)
+        })
+    
     if request.method == 'POST':
         try:
+            from videos.models import VideoTierPrice, Tier
+            
             video.title = request.POST.get('edit_title')
+            video.url = request.POST.get('edit_url', video.url)
+            
             # Convert duration from minutes to seconds
             duration_input = request.POST.get('edit_duration', 0)
             try:
@@ -296,7 +315,35 @@ def edit_video(request, video_id):
                 video.duration_seconds = int(duration_minutes * 60)
             except (ValueError, TypeError):
                 video.duration_seconds = 0
+            
+            # Update minimum tier
+            min_tier_id = request.POST.get('edit_min_tier')
+            if min_tier_id:
+                video.min_tier = Tier.objects.get(id=min_tier_id)
+            else:
+                video.min_tier = None
+            
             video.save()
+            
+            # Update tier rewards
+            selected_tiers = request.POST.getlist('edit_selected_tiers')
+            
+            # Delete old tier rewards
+            VideoTierPrice.objects.filter(video=video).delete()
+            
+            # Add new tier rewards
+            for tier_id in selected_tiers:
+                reward_value = request.POST.get(f'edit_reward_{tier_id}')
+                if reward_value:
+                    try:
+                        tier = Tier.objects.get(id=tier_id)
+                        VideoTierPrice.objects.create(
+                            video=video,
+                            tier=tier,
+                            reward=float(reward_value)
+                        )
+                    except (ValueError, Tier.DoesNotExist):
+                        pass
             
             messages.success(request, f'Video "{video.title}" updated successfully!')
         except Exception as e:

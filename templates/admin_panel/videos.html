@@ -384,28 +384,63 @@
 </div>
 
 <!-- Edit Video Modal -->
-<div id="editVideoModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center">
-    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+<div id="editVideoModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center overflow-y-auto">
+    <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 my-8 shadow-2xl">
         <h3 class="text-2xl font-bold text-gray-900 mb-6">Edit Video</h3>
         <form id="editVideoForm" method="post" action="">
             {% csrf_token %}
             <input type="hidden" name="action" value="edit">
             <input type="hidden" id="edit_video_id" name="video_id">
             
-            <div class="space-y-4 mb-6">
+            <div class="space-y-4 mb-6 max-h-[60vh] overflow-y-auto pr-2">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Video Title</label>
                     <input type="text" id="edit_title" name="edit_title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Duration (seconds)</label>
-                    <input type="number" id="edit_duration" name="edit_duration" min="1" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-                    <p class="text-xs text-gray-500 mt-1">Users must watch 80% of this duration to earn rewards</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Video URL</label>
+                    <input type="url" id="edit_url" name="edit_url" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="https://youtube.com/embed/...">
+                    <p class="text-xs text-gray-500 mt-1">YouTube embed format: https://www.youtube.com/embed/VIDEO_ID</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
+                    <input type="number" id="edit_duration" name="edit_duration" min="0.5" step="0.5" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="e.g., 5">
+                    <p class="text-xs text-gray-500 mt-1">Enter duration in minutes (e.g., 5 for a 5-minute video)</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Tier Required</label>
+                    <select id="edit_min_tier" name="edit_min_tier" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <option value="">Free (No tier required)</option>
+                        {% for tier in tiers %}
+                        <option value="{{ tier.id }}">{{ tier.name }} (${tier.price})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="border-t border-gray-200 pt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Tier Rewards</label>
+                    <p class="text-xs text-gray-500 mb-3">Set how much users earn for watching this video at each tier level</p>
+                    <div id="edit_tier_rewards" class="space-y-2">
+                        {% for tier in tiers %}
+                        <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
+                            <label class="flex items-center flex-1">
+                                <input type="checkbox" name="edit_selected_tiers" value="{{ tier.id }}" class="w-4 h-4 text-purple-600 focus:ring-purple-500 rounded">
+                                <span class="ml-2 text-sm font-medium text-gray-700">{{ tier.name }}</span>
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-600">$</span>
+                                <input type="number" name="edit_reward_{{ tier.id }}" step="0.01" min="0" placeholder="0.00" class="w-24 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 text-sm">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
             
-            <div class="flex gap-3">
+            <div class="flex gap-3 border-t border-gray-200 pt-4">
                 <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
                     Save Changes
                 </button>
@@ -437,11 +472,47 @@ function deleteVideo(videoId, title) {
 }
 
 function editVideo(videoId, title, duration) {
-    document.getElementById('edit_video_id').value = videoId;
-    document.getElementById('edit_title').value = title;
-    document.getElementById('edit_duration').value = duration;
-    document.getElementById('editVideoForm').action = '/admin/videos/edit/' + videoId + '/';
-    document.getElementById('editVideoModal').classList.remove('hidden');
+    // Fetch video details via AJAX
+    fetch(`/admin/videos/edit/${videoId}/`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('edit_video_id').value = videoId;
+        document.getElementById('edit_title').value = data.title;
+        document.getElementById('edit_url').value = data.url;
+        document.getElementById('edit_duration').value = data.duration_minutes;
+        document.getElementById('edit_min_tier').value = data.min_tier_id || '';
+        
+        // Reset all tier checkboxes and rewards
+        document.querySelectorAll('input[name="edit_selected_tiers"]').forEach(cb => cb.checked = false);
+        document.querySelectorAll('input[name^="edit_reward_"]').forEach(input => input.value = '');
+        
+        // Populate tier rewards
+        if (data.tier_rewards) {
+            data.tier_rewards.forEach(tr => {
+                const checkbox = document.querySelector(`input[name="edit_selected_tiers"][value="${tr.tier_id}"]`);
+                const rewardInput = document.querySelector(`input[name="edit_reward_${tr.tier_id}"]`);
+                if (checkbox) checkbox.checked = true;
+                if (rewardInput) rewardInput.value = tr.reward;
+            });
+        }
+        
+        document.getElementById('editVideoForm').action = '/admin/videos/edit/' + videoId + '/';
+        document.getElementById('editVideoModal').classList.remove('hidden');
+    })
+    .catch(error => {
+        console.error('Error loading video details:', error);
+        // Fallback to basic edit with what we have
+        document.getElementById('edit_video_id').value = videoId;
+        document.getElementById('edit_title').value = title;
+        document.getElementById('edit_duration').value = Math.floor(duration / 60);
+        document.getElementById('editVideoForm').action = '/admin/videos/edit/' + videoId + '/';
+        document.getElementById('editVideoModal').classList.remove('hidden');
+    });
 }
 
 function closeEditModal() {
