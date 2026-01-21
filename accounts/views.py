@@ -480,3 +480,45 @@ def delete_account(request):
         return redirect("home")
     return redirect("accounts:settings")
 
+
+@login_required
+def upgrade_tier(request, tier_id):
+    """Upgrade user's tier using account balance."""
+    from videos.models import Tier
+    
+    tier = get_object_or_404(Tier, id=tier_id)
+    profile = request.user.profile
+    
+    if request.method == "POST":
+        # Check if user already has this tier or higher
+        if profile.current_tier and profile.current_tier.price >= tier.price:
+            messages.warning(request, f"You already have {profile.current_tier.name} tier or higher!")
+            return redirect("accounts:dashboard")
+        
+        # Check if user has sufficient balance
+        if profile.balance < tier.price:
+            messages.error(request, f"Insufficient balance. You need ${tier.price:.2f} but have ${profile.balance:.2f}")
+            return redirect("accounts:deposit")
+        
+        # Deduct balance and upgrade tier
+        if profile.debit(tier.price, reason=f"Upgrade to {tier.name} tier"):
+            profile.current_tier = tier
+            profile.save()
+            messages.success(request, f"🎉 Successfully upgraded to {tier.name} tier!")
+            return redirect("accounts:dashboard")
+        else:
+            messages.error(request, "Failed to process upgrade. Please try again.")
+            return redirect("accounts:dashboard")
+    
+    # GET request - show confirmation page
+    from videos.models import Tier
+    all_tiers = Tier.objects.all().order_by('price')
+    
+    context = {
+        'tier': tier,
+        'profile': profile,
+        'all_tiers': all_tiers,
+        'has_sufficient_balance': profile.balance >= tier.price,
+    }
+    return render(request, "accounts/upgrade_tier.html", context)
+

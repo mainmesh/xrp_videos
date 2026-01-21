@@ -43,8 +43,8 @@ def youtube_embed(url):
         match = re.search(pattern, url)
         if match:
             video_id = match.group(1)
-            # Add parameters to enable autoplay, controls, and allow embedding
-            return f'https://www.youtube.com/embed/{video_id}?enablejsapi=1&origin=https://xrp-videos.vercel.app&widget_referrer=https://xrp-videos.vercel.app'
+            # Return clean embed URL without restrictive origin parameters
+            return f'https://www.youtube.com/embed/{video_id}?rel=0&modestbranding=1'
     
     # Not a YouTube URL, return as is
     return url

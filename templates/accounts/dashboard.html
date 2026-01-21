@@ -45,16 +45,16 @@
         <p class="text-sm text-gray-400 mb-6">${{ profile.current_tier.price }} tier unlocked</p>
         {% if profile.current_tier.price < 100 %}
           <a href="{% url 'tiers' %}" class="text-xs px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition inline-block">
-            Upgrade Tier
+            💎 Upgrade Tier
           </a>
         {% else %}
-          <p class="text-xs text-gray-400">You have the highest tier!</p>
+          <p class="text-xs text-gray-400">You have the highest tier! 🎉</p>
         {% endif %}
       {% else %}
         <div class="text-2xl font-bold text-orange-400 mb-2">Bronze (Free)</div>
         <p class="text-sm text-gray-400 mb-4">No deposit needed</p>
         <a href="{% url 'tiers' %}" class="text-xs px-3 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition inline-block">
-          Upgrade Tier
+          💎 Upgrade Tier
         </a>
       {% endif %}
     </div>

@@ -19,7 +19,18 @@ def about(request):
 
 
 def tiers(request):
-    return render(request, 'tiers.html')
+    from videos.models import Tier
+    tiers_list = Tier.objects.all().order_by('price')
+    
+    context = {
+        'tiers_list': tiers_list,
+    }
+    
+    if request.user.is_authenticated:
+        context['user_tier'] = request.user.profile.current_tier
+        context['user_balance'] = request.user.profile.balance
+    
+    return render(request, 'tiers.html', context)
 
 
 @login_required

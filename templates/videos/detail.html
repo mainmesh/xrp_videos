@@ -62,7 +62,13 @@
       <!-- Video Player -->
       <div class="dark-glass rounded-2xl overflow-hidden border border-purple-500/30 mb-8">
         <div class="relative bg-slate-900 aspect-video flex items-center justify-center">
-          <iframe src="{{ video.url|youtube_embed }}" class="w-full h-full" allowfullscreen></iframe>
+          <iframe 
+            src="{{ video.url|youtube_embed }}" 
+            class="w-full h-full" 
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen>
+          </iframe>
         </div>
       </div>
       <!-- Watch Timer & Controls -->
