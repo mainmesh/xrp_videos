@@ -76,3 +76,41 @@ def youtube_thumbnail(url, quality='maxresdefault'):
     if video_id:
         return f'https://img.youtube.com/vi/{video_id}/{quality}.jpg'
     return ''
+
+
+@register.filter(name='get_reward_for_tier')
+def get_reward_for_tier(video, tier):
+    """Get the reward amount for a specific tier for this video"""
+    if not tier:
+        return 0
+    
+    try:
+        from videos.models import VideoTierPrice
+        tier_price = VideoTierPrice.objects.filter(video=video, tier=tier).first()
+        if tier_price:
+            return tier_price.reward
+    except Exception:
+        pass
+    
+    # Fallback to video's default reward
+    return video.reward if hasattr(video, 'reward') else 0
+
+
+@register.simple_tag
+def get_video_reward(video, user_tier=None):
+    """Get the appropriate reward for a video based on user's tier"""
+    if not user_tier:
+        # Return the default reward or 0
+        return video.reward if hasattr(video, 'reward') else 0
+    
+    try:
+        from videos.models import VideoTierPrice
+        # Get tier-specific reward
+        tier_price = VideoTierPrice.objects.filter(video=video, tier=user_tier).first()
+        if tier_price:
+            return f"{tier_price.reward:.2f}"
+        
+        # If no specific tier price, return default
+        return f"{video.reward:.2f}" if hasattr(video, 'reward') else "0.00"
+    except Exception:
+        return "0.00"

@@ -18,7 +18,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 
 def video_list(request):
     """List videos the user has access to based on their tier."""
-    videos = Video.objects.filter(is_active=True)
+    videos = Video.objects.filter(is_active=True).prefetch_related('tier_prices__tier')
     
     # If logged in, filter by tier access
     user_tier = None

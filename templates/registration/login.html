@@ -49,6 +49,9 @@
           {% if form.password.errors %}
             <p class="text-red-300 text-xs mt-1">{{ form.password.errors.0 }}</p>
           {% endif %}
+          <div class="text-right mt-2">
+            <a href="{% url 'accounts:password_reset' %}" class="text-purple-400 hover:text-purple-300 text-sm font-medium">Forgot password?</a>
+          </div>
         </div>
 
         <button type="submit" class="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition mt-6">
