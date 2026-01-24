@@ -36,15 +36,16 @@ def youtube_embed(url):
     patterns = [
         r'(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})',
         r'youtube\.com\/embed\/([a-zA-Z0-9_-]{11})',
-        r'youtube\.com\/v\/([a-zA-Z0-9_-]{11})'
+        r'youtube\.com\/v\/([a-zA-Z0-9_-]{11})',
+        r'youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]{11})'
     ]
     
     for pattern in patterns:
         match = re.search(pattern, url)
         if match:
             video_id = match.group(1)
-            # Return embed URL with autoplay and minimal parameters to avoid Error 153
-            return f'https://www.youtube.com/embed/{video_id}?autoplay=0&rel=0&modestbranding=1&playsinline=1'
+            # Use privacy-enhanced domain to avoid tracking issues and work better with ad blockers
+            return f'https://www.youtube-nocookie.com/embed/{video_id}?autoplay=0&rel=0&modestbranding=1&playsinline=1'
     
     # Not a YouTube URL, return as is
     return url
