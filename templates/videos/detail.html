@@ -73,6 +73,22 @@
           </iframe>
         </div>
       </div>
+      
+      {% if already_watched %}
+        <!-- Already Watched Message -->
+        <div class="dark-glass rounded-2xl p-8 border border-green-500/30 mb-8 text-center">
+          <div class="flex items-center justify-center mb-4">
+            <svg class="w-16 h-16 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-green-300 mb-3">✓ Already Watched</h3>
+          <p class="text-gray-300 mb-6">You have already completed this video and received your reward.</p>
+          <a href="{% url 'videos:list' %}?available=1" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
+            Browse More Videos →
+          </a>
+        </div>
+      {% else %}
       <!-- Watch Timer & Controls -->
       {% if user.is_authenticated %}
         <div class="mb-6">
@@ -173,6 +189,7 @@
           }
         }, 1000);
       </script>
+      {% endif %}
     {% endif %}
   </div>
 {% endblock %}

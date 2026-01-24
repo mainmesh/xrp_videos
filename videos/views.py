@@ -80,14 +80,24 @@ def video_list(request):
 
     # Available filter: show only unwatched videos for logged in users
     show_available = request.GET.get('available') == '1'
-    if show_available and request.user.is_authenticated:
-        watched_vid_ids = WatchHistory.objects.filter(user=request.user, verified=True).values_list('video_id', flat=True)
-        videos = [v for v in videos if v.id not in set(watched_vid_ids)]
+    watched_video_ids = set()
+    
+    if request.user.is_authenticated:
+        # Get all verified watched videos for this user
+        watched_video_ids = set(WatchHistory.objects.filter(
+            user=request.user, 
+            verified=True
+        ).values_list('video_id', flat=True))
+        
+        if show_available:
+            # Filter to only show unwatched videos
+            videos = [v for v in videos if v.id not in watched_video_ids]
     
     context = {
         "videos": videos,
         "user_tier": user_tier,
-        "all_tiers": Tier.objects.all().order_by('price')
+        "all_tiers": Tier.objects.all().order_by('price'),
+        "watched_video_ids": watched_video_ids
     }
     return render(request, "videos/list.html", context)
 
@@ -99,6 +109,7 @@ def video_detail(request, pk):
     # Check tier access
     has_access = False
     user_tier = None
+    already_watched = False
     
     if video.min_tier is None:
         # Free video, everyone can access
@@ -112,11 +123,20 @@ def video_detail(request, pk):
         if user_tier and user_tier.price >= video.min_tier.price:
             has_access = True
     
+    # Check if user has already watched and earned from this video
+    if request.user.is_authenticated:
+        already_watched = WatchHistory.objects.filter(
+            user=request.user, 
+            video=video, 
+            verified=True
+        ).exists()
+    
     context = {
         "video": video,
         "has_access": has_access,
         "required_tier": video.min_tier,
-        "user_tier": user_tier
+        "user_tier": user_tier,
+        "already_watched": already_watched
     }
     return render(request, "videos/detail.html", context)
 
@@ -221,20 +241,20 @@ def watch_complete(request, pk):
     """Called by frontend when a user finishes watching a video.
     Credits reward and referral bonus if applicable.
     Prevents double-crediting by checking WatchHistory.verified flag.
-    Validates that user watched minimum duration (80% of video).
+    Validates that user watched the FULL duration set by admin.
     """
     video = get_object_or_404(Video, pk=pk)
     
     # Get watched seconds from POST data
     watched_seconds = int(request.POST.get('watched_seconds', 0))
     
-    # Validate minimum watch duration (80% of video duration)
-    min_watch_seconds = int(video.duration_seconds * 0.8)
-    if watched_seconds < min_watch_seconds:
+    # ENFORCE: User must watch the FULL duration set by admin (100%)
+    required_seconds = video.duration_seconds
+    if watched_seconds < required_seconds:
         return JsonResponse({
             "error": "insufficient_watch_time",
-            "message": f"Please watch at least {min_watch_seconds} seconds (80% of video)",
-            "required": min_watch_seconds,
+            "message": f"You must watch the full video ({required_seconds} seconds) to earn the reward",
+            "required": required_seconds,
             "watched": watched_seconds
         }, status=400)
 
@@ -249,10 +269,13 @@ def watch_complete(request, pk):
         if not user_tier or user_tier.price < video.min_tier.price:
             return JsonResponse({"error": "insufficient_tier"}, status=403)
     
-    # Check if already verified (prevent double-crediting)
+    # PREVENT DUPLICATE REWARDS: Check if user already earned reward for this video
     existing_wh = WatchHistory.objects.filter(user=request.user, video=video, verified=True).first()
     if existing_wh:
-        return JsonResponse({"error": "already_credited"}, status=400)
+        return JsonResponse({
+            "error": "already_credited",
+            "message": "You have already earned the reward for this video"
+        }, status=400)
 
     # Determine reward amount: prefer tier-specific reward if configured
     reward_to_credit = float(video.reward or 0)
