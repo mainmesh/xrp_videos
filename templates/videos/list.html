@@ -117,10 +117,10 @@
         {% if v.thumbnail_url %}
           <img src="{{ v.thumbnail_url }}" alt="{{ v.title }}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
           <!-- YouTube Thumbnail Fallback if custom thumbnail fails -->
-          <img src="{{ v.url|youtube_thumbnail:'maxresdefault' }}" alt="{{ v.title }}" class="w-full h-full object-cover hidden" onerror="this.src='{{ v.url|youtube_thumbnail:'hqdefault' }}';" />
+          <img src="{{ v.url|youtube_thumbnail:'hqdefault' }}" alt="{{ v.title }}" class="w-full h-full object-cover hidden" onerror="this.src='{{ v.url|youtube_thumbnail:'mqdefault' }}';" />
         {% else %}
-          <!-- Direct YouTube Thumbnail -->
-          <img src="{{ v.url|youtube_thumbnail:'maxresdefault' }}" alt="{{ v.title }}" class="w-full h-full object-cover" onerror="this.src='{{ v.url|youtube_thumbnail:'hqdefault' }}';" />
+          <!-- Direct YouTube Thumbnail (hqdefault is always available) -->
+          <img src="{{ v.url|youtube_thumbnail:'hqdefault' }}" alt="{{ v.title }}" class="w-full h-full object-cover" onerror="this.src='{{ v.url|youtube_thumbnail:'mqdefault' }}';" />
         {% endif %}
         
         <!-- Dark Overlay on Hover -->
