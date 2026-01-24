@@ -4,12 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
     <title>{% block title %}Admin Dashboard{% endblock %} - xrpvideos Admin</title>
     <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Suppress Tailwind CDN warning
+      tailwind.config = { corePlugins: { preflight: true } };
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { 
             font-family: 'Inter', sans-serif;
@@ -77,27 +82,38 @@
         @media (max-width: 1024px) {
             .admin-sidebar.closed { transform: translateX(-100%); }
             
-            /* Reduce padding on mobile */
+            /* Optimize padding for mobile */
             .p-8 { padding: 1rem !important; }
-            .p-6 { padding: 0.75rem !important; }
+            .p-6 { padding: 1rem !important; }
             .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
             
-            /* Ensure tables are scrollable */
-            table { font-size: 0.875rem; }
+            /* Responsive tables */
+            .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { font-size: 0.875rem; min-width: 600px; }
             
-            /* Touch-friendly buttons and inputs */
-            button, input, select, textarea {
+            /* Larger touch targets */
+            button, input, select, textarea, a {
                 min-height: 44px;
+                min-width: 44px;
             }
+            
+            /* Stack form elements */
+            .form-grid { grid-template-columns: 1fr !important; }
         }
         
         @media (max-width: 640px) {
-            /* Smaller text on mobile */
+            /* Compact text on mobile */
             h1 { font-size: 1.5rem !important; }
             h2 { font-size: 1.25rem !important; }
             h3 { font-size: 1.125rem !important; }
             
-            table { font-size: 0.75rem; }
+            table { font-size: 0.8125rem; }
+            
+            /* Hide less important columns on mobile */
+            .hide-mobile { display: none !important; }
+            
+            /* Compact stat cards */
+            .stat-card { padding: 0.75rem !important; }
         }
     </style>
 </head>

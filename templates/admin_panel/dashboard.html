@@ -171,14 +171,14 @@
             <a href="{% url 'admin_panel:withdrawals' %}" class="text-sm text-purple-600 hover:text-purple-700 font-medium">View All →</a>
         </div>
     </div>
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto table-container">
         <table class="w-full">
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hide-mobile">Date</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
@@ -208,7 +208,7 @@
                         <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Rejected</span>
                         {% endif %}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 hide-mobile">
                         {{ withdrawal.created_at|date:"M d, Y" }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -230,8 +230,15 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js" async defer></script>
 <script>
+// Wait for Chart.js to load
+window.addEventListener('load', function() {
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js not loaded');
+        return;
+    }
+    
 // User Growth Chart
 const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
 const userGrowthData = {{ user_growth_data|safe }};
@@ -300,6 +307,7 @@ new Chart(revenueCtx, {
             }
         }
     }
+});
 });
 </script>
 {% endblock %}
