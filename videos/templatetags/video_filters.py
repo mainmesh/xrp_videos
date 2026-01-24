@@ -43,8 +43,8 @@ def youtube_embed(url):
         match = re.search(pattern, url)
         if match:
             video_id = match.group(1)
-            # Return clean embed URL without restrictive origin parameters
-            return f'https://www.youtube.com/embed/{video_id}?rel=0&modestbranding=1'
+            # Return embed URL with autoplay and minimal parameters to avoid Error 153
+            return f'https://www.youtube.com/embed/{video_id}?autoplay=0&rel=0&modestbranding=1&playsinline=1'
     
     # Not a YouTube URL, return as is
     return url
