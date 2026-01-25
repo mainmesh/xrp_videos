@@ -115,6 +115,29 @@
         </form>
 
         <p class="text-xs text-gray-500 text-center mt-4">Complete the full video to unlock your reward</p>
+        
+        <!-- Success Modal -->
+        <div id="success-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div class="bg-gradient-to-br from-slate-900 to-purple-900 rounded-2xl p-8 max-w-md w-full text-center border border-green-500/30 shadow-2xl">
+            <div class="mb-4">
+              <svg class="w-20 h-20 mx-auto text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <h3 class="text-3xl font-bold text-white mb-2">🎉 Congratulations!</h3>
+            <p class="text-gray-300 mb-4">You've earned</p>
+            <p id="reward-amount" class="text-5xl font-bold text-green-400 mb-6">$0.00</p>
+            <p class="text-gray-400 text-sm mb-6">The reward has been added to your account balance.</p>
+            <div class="flex gap-3">
+              <a href="{% url 'videos:list' %}?available=1" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
+                Watch More Videos →
+              </a>
+              <a href="{% url 'accounts:dashboard' %}" class="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg transition">
+                View Balance
+              </a>
+            </div>
+          </div>
+        </div>
       {% else %}
         <div class="dark-glass rounded-2xl p-8 border border-purple-500/30 text-center">
           <p class="text-gray-300 mb-4">Sign in to earn rewards for watching</p>
@@ -182,12 +205,50 @@
             submitBtn.classList.add('bg-gradient-to-r', 'from-green-600', 'to-emerald-600', 'hover:from-green-500', 'hover:to-emerald-500', 'cursor-pointer');
             submitBtn.textContent = '✓ Claim Your Reward! 🎉';
             
-            // Auto-submit after a brief delay
+            // Auto-submit after a brief delay via AJAX
             setTimeout(() => {
-              if (watchForm) watchForm.submit();
+              submitReward();
             }, 500);
           }
         }, 1000);
+        
+        // Submit reward via AJAX
+        function submitReward() {
+          const formData = new FormData(watchForm);
+          
+          fetch(watchForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.status === 'credited') {
+              // Show success modal with reward amount
+              document.getElementById('reward-amount').textContent = '$' + parseFloat(data.reward).toFixed(2);
+              document.getElementById('success-modal').classList.remove('hidden');
+              
+              // Redirect to videos list after 5 seconds
+              setTimeout(() => {
+                window.location.href = '{% url "videos:list" %}?available=1';
+              }, 5000);
+            } else if (data.error) {
+              alert('Error: ' + (data.message || data.error));
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while claiming your reward. Please try again.');
+          });
+        }
+        
+        // Prevent default form submission, use AJAX instead
+        watchForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          submitReward();
+        });
       </script>
       {% endif %}
     {% endif %}
