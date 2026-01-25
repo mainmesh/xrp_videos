@@ -1,48 +1,91 @@
 {% extends 'base.html' %}
 
-{% block title %}Inbox{% endblock %}
+{% block title %}Inbox & Notifications{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Inbox</h1>
-        <a href="{% url 'compose_message' %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+<div class="container mx-auto px-4 py-8 max-w-5xl">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold gradient-text">Inbox & Notifications</h1>
+            <p class="text-gray-400 text-sm mt-1">Messages from admin and system notifications</p>
+        </div>
+        <a href="{% url 'compose_message' %}" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-lg transition shadow-lg text-sm">
             <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
-            Compose
+            Message Admin
         </a>
     </div>
 
     {% if unread_count > 0 %}
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <p class="text-blue-800">You have <strong>{{ unread_count }}</strong> unread message{{ unread_count|pluralize }}.</p>
+    <div class="dark-glass border border-blue-500/30 rounded-lg p-4 mb-6">
+        <p class="text-blue-300">📬 You have <strong>{{ unread_count }}</strong> unread message{{ unread_count|pluralize }}.</p>
     </div>
     {% endif %}
 
     {% if messages %}
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="divide-y divide-gray-200">
-            {% for message in messages %}
-            <a href="{% url 'view_message' message.id %}" class="block hover:bg-gray-50 transition">
-                <div class="p-4 {% if not message.is_read %}bg-blue-50{% endif %}">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-3">
-                                {% if not message.is_read %}
-                                <span class="w-2 h-2 bg-blue-600 rounded-full"></span>
-                                {% endif %}
+    <div class="dark-glass rounded-xl border border-purple-500/30 overflow-hidden">
+        <div class="divide-y divide-gray-700/50">
+            {% for msg in messages %}
+            <a href="{% url 'view_message' msg.id %}" class="block hover:bg-purple-500/10 transition">
+                <div class="p-4 {% if not msg.is_read %}bg-blue-500/5{% endif %}">
+                    <div class="flex items-start gap-3">
+                        <!-- Icon based on message type -->
+                        <div class="flex-shrink-0">
+                            {% if msg.message_type == 'reward' %}
+                                <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                                    <span class="text-lg">💰</span>
+                                </div>
+                            {% elif msg.message_type == 'withdrawal' %}
+                                <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                    <span class="text-lg">💸</span>
+                                </div>
+                            {% elif msg.message_type == 'admin' %}
+                                <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                                    <span class="text-lg">👤</span>
+                                </div>
+                            {% else %}
+                                <div class="w-10 h-10 rounded-full bg-gray-500/20 flex items-center justify-center">
+                                    <span class="text-lg">📧</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Message content -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between gap-2">
                                 <div class="flex-1">
-                                    <div class="flex items-center justify-between">
-                                        <p class="font-semibold text-gray-800">{{ message.sender.username }}</p>
-                                        <span class="text-sm text-gray-500">{{ message.created_at|timesince }} ago</span>
-                                    </div>
-                                    <p class="text-gray-700 font-medium mt-1">{{ message.subject }}</p>
-                                    <p class="text-gray-600 text-sm mt-1 truncate">{{ message.message|truncatewords:15 }}</p>
+                                    {% if msg.sender %}
+                                        <p class="font-semibold text-white">{{ msg.sender.username }}
+                                            {% if msg.sender.is_staff %}
+                                                <span class="ml-2 px-2 py-0.5 bg-purple-500/30 text-purple-300 text-xs rounded-full">Admin</span>
+                                            {% endif %}
+                                        </p>
+                                    {% else %}
+                                        <p class="font-semibold text-white">System Notification</p>
+                                    {% endif %}
+                                    
+                                    {% if msg.subject %}
+                                        <p class="text-gray-300 font-medium mt-1">{{ msg.subject }}</p>
+                                    {% endif %}
+                                    
+                                    {% if msg.content %}
+                                        <p class="text-gray-400 text-sm mt-1 line-clamp-2">{{ msg.content }}</p>
+                                    {% elif msg.message %}
+                                        <p class="text-gray-400 text-sm mt-1 line-clamp-2">{{ msg.message }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="flex items-start gap-2 flex-shrink-0">
+                                    <span class="text-xs text-gray-500 whitespace-nowrap">{{ msg.created_at|timesince }} ago</span>
+                                    {% if not msg.is_read %}
+                                        <span class="w-2 h-2 bg-blue-500 rounded-full mt-1"></span>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
-                        <svg class="w-5 h-5 text-gray-400 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                        <svg class="w-5 h-5 text-gray-600 flex-shrink-0 mt-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
                     </div>
@@ -52,13 +95,22 @@
         </div>
     </div>
     {% else %}
-    <div class="bg-white rounded-lg shadow-md p-12 text-center">
-        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="dark-glass rounded-xl border border-purple-500/30 p-12 text-center">
+        <svg class="w-16 h-16 text-gray-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
         </svg>
-        <p class="text-gray-600 text-lg">No messages yet</p>
-        <p class="text-gray-500 mt-2">When admins send you messages, they'll appear here.</p>
+        <p class="text-gray-300 text-lg font-semibold">No messages yet</p>
+        <p class="text-gray-500 mt-2">When admins send you messages or you receive notifications, they'll appear here.</p>
     </div>
     {% endif %}
 </div>
+
+<style>
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
 {% endblock %}

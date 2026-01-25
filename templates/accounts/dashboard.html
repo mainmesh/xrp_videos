@@ -99,19 +99,16 @@
         </div>
       </div>
 
-      {% if profile.referrals_count >= 7 %}
-        <div class="p-4 bg-green-500/10 border border-green-500/30 rounded-lg mb-4">
-          <p class="text-green-300 text-sm font-semibold">✓ You're eligible to withdraw!</p>
-        </div>
-        <a href="{% url 'accounts:withdraw' %}" class="w-full block text-center px-4 py-3 dark-glass border border-green-500/50 hover:border-green-400 text-green-300 hover:text-green-200 font-semibold rounded-lg transition">
-          Request Withdrawal
-        </a>
-      {% else %}
-        <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-          <p class="text-red-300 text-sm font-semibold">⚠️ Not Eligible Yet</p>
-          <p class="text-sm text-red-300/80 mt-1">You need {{ 7|add:"-1"|add:profile.referrals_count }} more referral{{ 7|add:"-1"|add:profile.referrals_count|pluralize }} to withdraw.</p>
+      {% if profile.referrals_count < 7 %}
+        <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg mb-4">
+          <p class="text-yellow-300 text-sm font-semibold">⚠️ {{ 7|add:profile.referrals_count|add:"-7" }} more referral{{ 7|add:profile.referrals_count|add:"-7"|pluralize }} needed for priority processing</p>
+          <p class="text-xs text-yellow-300/60 mt-1">You can still withdraw, but it may take longer</p>
         </div>
       {% endif %}
+      
+      <a href="{% url 'accounts:withdraw' %}" class="w-full block text-center px-4 py-3 dark-glass border border-green-500/50 hover:border-green-400 text-green-300 hover:text-green-200 font-semibold rounded-lg transition">
+        Request Withdrawal
+      </a>
     </div>
 
     <!-- Recent Withdrawals -->

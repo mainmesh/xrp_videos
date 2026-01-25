@@ -35,11 +35,19 @@ def tiers(request):
 
 @login_required
 def inbox(request):
-    """User inbox for messages."""
-    messages = Message.objects.filter(receiver=request.user)
+    """User inbox for messages and notifications."""
+    # Get all messages (includes both notifications and admin messages)
+    messages = Message.objects.filter(receiver=request.user).order_by('-created_at')
     unread_count = messages.filter(is_read=False).count()
+    
+    # Separate by type for better organization
+    notifications = messages.filter(message_type__in=['reward', 'withdrawal', 'message'])
+    admin_messages = messages.filter(message_type='admin')
+    
     return render(request, 'core/inbox.html', {
         'messages': messages,
+        'notifications': notifications,
+        'admin_messages': admin_messages,
         'unread_count': unread_count
     })
 
