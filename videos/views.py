@@ -301,7 +301,7 @@ def watch_complete(request, pk):
     # Credit user profile
     try:
         profile = request.user.profile
-        profile.credit(reward_to_credit, reason=f"watch:{video.id}")
+        profile.credit(reward_to_credit, reason=f"Watched: {video.title}", transaction_type="video_reward", video=video)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -314,7 +314,7 @@ def watch_complete(request, pk):
             # credit referrer's profile
             try:
                 ref_profile = referred_by.profile
-                ref_profile.credit(bonus_amount, reason=f"referral:{request.user.id}")
+                ref_profile.credit(bonus_amount, reason=f"Referral bonus from {request.user.username}", transaction_type="referral_bonus")
             except Exception:
                 pass
     except Exception:

@@ -14,6 +14,7 @@ urlpatterns = [
     path('upgrade-tier/<int:tier_id>/', views.upgrade_tier, name='upgrade_tier'),
     path('register/', views.register, name='register'),
     path('notifications/', views.notifications, name='notifications'),
+    path('transactions/', views.transaction_history, name='transactions'),
     path('profile/', views.profile, name='profile'),
     path('settings/', views.settings, name='settings'),
     path('settings/update-profile/', views.update_profile, name='update_profile'),

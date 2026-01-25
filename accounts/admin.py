@@ -1,5 +1,5 @@
 from django.contrib import admin, messages
-from .models import PaymentAttempt
+from .models import PaymentAttempt, Transaction
 
 
 @admin.action(description="Mark selected attempts as verified and credit users")
@@ -130,3 +130,24 @@ class WithdrawalAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related("user", "approved_by")
+
+
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ("user", "transaction_type", "amount", "balance_before", "balance_after", "created_at")
+    list_filter = ("transaction_type", "created_at")
+    search_fields = ("user__username", "description")
+    readonly_fields = ("user", "transaction_type", "amount", "balance_before", "balance_after", "description", "created_at", "tier", "video")
+    date_hierarchy = "created_at"
+    
+    def has_add_permission(self, request):
+        # Prevent manual creation of transactions
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deletion of transaction records (audit trail)
+        return False
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related("user", "tier", "video")

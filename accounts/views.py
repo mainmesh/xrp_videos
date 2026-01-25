@@ -398,6 +398,44 @@ def notifications(request):
 
 
 @login_required
+def transaction_history(request):
+    """Display user's transaction history."""
+    from .models import Transaction
+    from django.core.paginator import Paginator
+    
+    # Get all transactions for this user
+    transactions = Transaction.objects.filter(user=request.user).select_related('tier', 'video')
+    
+    # Filter by type if requested
+    transaction_type = request.GET.get('type')
+    if transaction_type and transaction_type != 'all':
+        transactions = transactions.filter(transaction_type=transaction_type)
+    
+    # Pagination
+    paginator = Paginator(transactions, 20)  # 20 per page
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    # Get transaction type counts for filter buttons
+    type_counts = {
+        'all': Transaction.objects.filter(user=request.user).count(),
+        'tier_upgrade': Transaction.objects.filter(user=request.user, transaction_type='tier_upgrade').count(),
+        'video_reward': Transaction.objects.filter(user=request.user, transaction_type='video_reward').count(),
+        'deposit': Transaction.objects.filter(user=request.user, transaction_type='deposit').count(),
+        'withdrawal': Transaction.objects.filter(user=request.user, transaction_type='withdrawal').count(),
+        'referral_bonus': Transaction.objects.filter(user=request.user, transaction_type='referral_bonus').count(),
+    }
+    
+    context = {
+        'page_obj': page_obj,
+        'current_type': transaction_type or 'all',
+        'type_counts': type_counts,
+        'profile': request.user.profile,
+    }
+    return render(request, "accounts/transactions.html", context)
+
+
+@login_required
 def profile(request):
     """User profile page (redirect target after login)."""
     profile = request.user.profile
@@ -493,6 +531,7 @@ def delete_account(request):
 def upgrade_tier(request, tier_id):
     """Upgrade user's tier using account balance."""
     from videos.models import Tier
+    from core.models import Message
     
     tier = get_object_or_404(Tier, id=tier_id)
     profile = request.user.profile
@@ -500,22 +539,46 @@ def upgrade_tier(request, tier_id):
     if request.method == "POST":
         # Check if user already has this tier or higher
         if profile.current_tier and profile.current_tier.price >= tier.price:
-            messages.warning(request, f"You already have {profile.current_tier.name} tier or higher!")
+            messages.warning(request, f"⚠️ You already have {profile.current_tier.name} tier or higher! You can't downgrade or re-purchase the same tier.")
+            Message.objects.create(
+                receiver=request.user,
+                message_type="message",
+                content=f"Tier upgrade failed: You already have {profile.current_tier.name} tier (${profile.current_tier.price:.2f}) which is equal or higher than {tier.name} (${tier.price:.2f})."
+            )
             return redirect("accounts:dashboard")
         
         # Check if user has sufficient balance
         if profile.balance < tier.price:
-            messages.error(request, f"Insufficient balance. You need ${tier.price:.2f} but have ${profile.balance:.2f}")
+            shortfall = tier.price - profile.balance
+            messages.error(request, f"💳 Insufficient balance. You need ${tier.price:.2f} but have ${profile.balance:.2f}. Please deposit ${shortfall:.2f} more.")
+            Message.objects.create(
+                receiver=request.user,
+                message_type="message",
+                content=f"Tier upgrade failed: Insufficient balance. You need ${tier.price:.2f} for {tier.name} tier but your current balance is ${profile.balance:.2f}. Please deposit ${shortfall:.2f} to proceed."
+            )
             return redirect("accounts:deposit")
         
         # Deduct balance and upgrade tier
-        if profile.debit(tier.price, reason=f"Upgrade to {tier.name} tier"):
+        if profile.debit(tier.price, reason=f"Upgrade to {tier.name} tier", transaction_type="tier_upgrade", tier=tier):
+            old_tier = profile.current_tier.name if profile.current_tier else "No Tier"
             profile.current_tier = tier
             profile.save()
-            messages.success(request, f"🎉 Successfully upgraded to {tier.name} tier!")
+            
+            # Success messages and notification
+            messages.success(request, f"🎉 Successfully upgraded from {old_tier} to {tier.name} tier! ${tier.price:.2f} has been deducted from your account.")
+            Message.objects.create(
+                receiver=request.user,
+                message_type="reward",
+                content=f"🎉 Tier Upgrade Successful! You've been upgraded from {old_tier} to {tier.name} tier. ${tier.price:.2f} was deducted from your account. New balance: ${profile.balance:.2f}"
+            )
             return redirect("accounts:dashboard")
         else:
-            messages.error(request, "Failed to process upgrade. Please try again.")
+            messages.error(request, "❌ Failed to process upgrade. Transaction error occurred. Please contact support if this persists.")
+            Message.objects.create(
+                receiver=request.user,
+                message_type="message",
+                content=f"Tier upgrade transaction failed for {tier.name} tier. Please contact support if you continue experiencing issues."
+            )
             return redirect("accounts:dashboard")
     
     # GET request - show confirmation page

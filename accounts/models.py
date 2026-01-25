@@ -12,14 +12,40 @@ class Profile(models.Model):
     referrals_count = models.IntegerField(default=0)
     current_tier = models.ForeignKey('videos.Tier', null=True, blank=True, on_delete=models.SET_NULL, help_text="Current tier the user has access to")
 
-    def credit(self, amount: float, reason: str = ""):
+    def credit(self, amount: float, reason: str = "", transaction_type: str = "deposit", video=None):
+        from decimal import Decimal
+        balance_before = Decimal(str(self.balance))
         self.balance = float(self.balance) + float(amount)
         self.save()
+        
+        # Log transaction
+        Transaction.objects.create(
+            user=self.user,
+            transaction_type=transaction_type,
+            amount=Decimal(str(amount)),
+            balance_before=balance_before,
+            balance_after=Decimal(str(self.balance)),
+            description=reason or f"{transaction_type.replace('_', ' ').title()}",
+            video=video
+        )
 
-    def debit(self, amount: float, reason: str = "") -> bool:
+    def debit(self, amount: float, reason: str = "", transaction_type: str = "withdrawal", tier=None) -> bool:
+        from decimal import Decimal
         if float(self.balance) >= float(amount):
+            balance_before = Decimal(str(self.balance))
             self.balance = float(self.balance) - float(amount)
             self.save()
+            
+            # Log transaction
+            Transaction.objects.create(
+                user=self.user,
+                transaction_type=transaction_type,
+                amount=Decimal(str(amount)),
+                balance_before=balance_before,
+                balance_after=Decimal(str(self.balance)),
+                description=reason or f"{transaction_type.replace('_', ' ').title()}",
+                tier=tier
+            )
             return True
         return False
 
@@ -121,4 +147,33 @@ class PaymentAttempt(models.Model):
 
     def __str__(self):
         return f"PaymentAttempt {self.amount} {self.user.username} - {self.status}"
+
+
+class Transaction(models.Model):
+    """Track all financial transactions for audit trail"""
+    TRANSACTION_TYPES = (
+        ("tier_upgrade", "Tier Upgrade"),
+        ("video_reward", "Video Reward"),
+        ("deposit", "Deposit"),
+        ("withdrawal", "Withdrawal"),
+        ("referral_bonus", "Referral Bonus"),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    balance_before = models.DecimalField(max_digits=12, decimal_places=2)
+    balance_after = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Optional references
+    tier = models.ForeignKey('videos.Tier', null=True, blank=True, on_delete=models.SET_NULL)
+    video = models.ForeignKey('videos.Video', null=True, blank=True, on_delete=models.SET_NULL)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.transaction_type} - ${self.amount} ({self.created_at.strftime('%Y-%m-%d %H:%M')})"
 

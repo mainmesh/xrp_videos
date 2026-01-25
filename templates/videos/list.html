@@ -4,20 +4,20 @@
 {% block content %}
   <h2 class="text-4xl font-bold gradient-text mb-12 slide-in-up">Browse Videos</h2>
   
-  <div class="flex items-center justify-between mb-6 gap-4">
-    <div class="flex items-center gap-3">
-      <a href="?available=1" class="px-3 py-1 rounded bg-purple-600 text-white text-sm">Available for you</a>
-      <a href="?" class="px-3 py-1 rounded bg-slate-800 text-gray-300 text-sm">Show all</a>
+  <div class="flex items-center justify-between mb-6 gap-2 sm:gap-4 flex-wrap">
+    <div class="flex items-center gap-2 sm:gap-3">
+      <a href="?available=1" class="px-3 py-1.5 sm:py-1 rounded bg-purple-600 text-white text-xs sm:text-sm whitespace-nowrap">Available for you</a>
+      <a href="?" class="px-3 py-1.5 sm:py-1 rounded bg-slate-800 text-gray-300 text-xs sm:text-sm whitespace-nowrap">Show all</a>
     </div>
-    <div class="text-sm text-gray-400">Compact grid — tap a card to preview</div>
+    <div class="text-xs sm:text-sm text-gray-400 hidden sm:block">Compact grid — tap a card to preview</div>
   </div>
   
   <!-- Compact modal for preview -->
   <div id="video-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60">
     <div class="bg-slate-900 rounded-lg w-full max-w-3xl mx-4 overflow-hidden">
-      <div class="p-4 flex items-center justify-between border-b border-slate-800">
-        <div id="modal-title" class="font-semibold text-white">Preview</div>
-        <button id="modal-close" class="text-gray-400">Close</button>
+      <div class="p-3 sm:p-4 flex items-center justify-between border-b border-slate-800">
+        <div id="modal-title" class="font-semibold text-white text-sm sm:text-base">Preview</div>
+        <button id="modal-close" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm rounded transition whitespace-nowrap">✕ Close</button>
       </div>
       <div class="aspect-video bg-black relative" id="modal-body">
         <!-- iframe injected here -->
