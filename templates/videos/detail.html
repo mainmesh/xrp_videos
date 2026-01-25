@@ -147,6 +147,7 @@
         </div>
       {% endif %}
 
+      {% if not already_watched %}
       <script>
         // Client-side watch verification: timer + auto-submit
         const videoDuration = {{ video.duration_seconds }}; // seconds
@@ -226,22 +227,35 @@
           .then(response => response.json())
           .then(data => {
             if (data.status === 'credited') {
+              // Mark as watched in sessionStorage to prevent re-watching on refresh
+              sessionStorage.setItem('video_{{ video.id }}_watched', 'true');
+              
               // Show success modal with reward amount
               document.getElementById('reward-amount').textContent = '$' + parseFloat(data.reward).toFixed(2);
               document.getElementById('success-modal').classList.remove('hidden');
               
-              // Redirect to videos list after 5 seconds
+              // Redirect to videos list after 4 seconds
               setTimeout(() => {
                 window.location.href = '{% url "videos:list" %}?available=1';
-              }, 5000);
+              }, 4000);
             } else if (data.error) {
               alert('Error: ' + (data.message || data.error));
+              // Reload page to show "already watched" message if applicable
+              if (data.error === 'already_credited') {
+                window.location.reload();
+              }
             }
           })
           .catch(error => {
             console.error('Error:', error);
             alert('An error occurred while claiming your reward. Please try again.');
           });
+        }
+        
+        // Check if video was already watched in this session
+        if (sessionStorage.getItem('video_{{ video.id }}_watched') === 'true') {
+          // Reload to show "already watched" message from server
+          window.location.reload();
         }
         
         // Prevent default form submission, use AJAX instead
