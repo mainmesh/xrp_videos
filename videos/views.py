@@ -323,5 +323,28 @@ def watch_complete(request, pk):
     # mark watch as verified after successful crediting
     wh.verified = True
     wh.save()
+    
+    # Create notification for user
+    try:
+        from core.models import Message
+        from django.contrib.auth.models import User
+        
+        # Get system user or create one for automated messages
+        system_user, _ = User.objects.get_or_create(
+            username='system',
+            defaults={'email': 'system@xrpvideos.com', 'is_staff': True}
+        )
+        
+        # Create notification message
+        Message.objects.create(
+            sender=system_user,
+            receiver=request.user,
+            subject=f'✅ Reward Earned: ${reward_to_credit:.2f}',
+            message=f'Congratulations! You have successfully earned ${reward_to_credit:.2f} by watching "{video.title}". The amount has been added to your account balance.',
+            is_read=False
+        )
+    except Exception as e:
+        # Don't fail the reward if notification fails
+        print(f"Failed to create notification: {str(e)}")
 
     return JsonResponse({"status": "credited", "reward": reward_to_credit})

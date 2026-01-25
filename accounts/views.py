@@ -386,7 +386,15 @@ def stripe_webhook(request):
 @login_required
 def notifications(request):
     """Display user notifications."""
-    return render(request, "accounts/notifications.html")
+    from core.models import Message
+    
+    # Get messages where user is the receiver
+    messages_list = Message.objects.filter(receiver=request.user).order_by('-created_at')[:50]
+    
+    context = {
+        'notifications': messages_list
+    }
+    return render(request, "accounts/notifications.html", context)
 
 
 @login_required
