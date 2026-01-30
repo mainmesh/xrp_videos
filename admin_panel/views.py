@@ -157,20 +157,20 @@ def dashboard(request):
     # Recent withdrawals
     recent_withdrawals = WithdrawalRequest.objects.select_related('user').order_by('-created_at')[:5]
 
-        # Country/region analytics (based on PaymentAttempt country field)
-        from accounts.models import PaymentAttempt
-        from django.db.models import Count
-        country_counts = (
-            PaymentAttempt.objects
-            .exclude(country__isnull=True)
-            .exclude(country__exact='')
-            .values('country')
-            .annotate(count=Count('id'))
-            .order_by('-count')
-        )
-        country_chart_data = [
-            {'country': c['country'], 'count': c['count']} for c in country_counts
-        ]
+    # Country/region analytics (based on PaymentAttempt country field)
+    from accounts.models import PaymentAttempt
+    from django.db.models import Count
+    country_counts = (
+        PaymentAttempt.objects
+        .exclude(country__isnull=True)
+        .exclude(country__exact='')
+        .values('country')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+    country_chart_data = [
+        {'country': c['country'], 'count': c['count']} for c in country_counts
+    ]
     
     context = {
         'stats': stats,
