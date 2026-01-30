@@ -205,7 +205,12 @@
             submitBtn.classList.remove('bg-slate-700', 'text-gray-300', 'cursor-not-allowed');
             submitBtn.classList.add('bg-gradient-to-r', 'from-green-600', 'to-emerald-600', 'hover:from-green-500', 'hover:to-emerald-500', 'cursor-pointer');
             submitBtn.textContent = '✓ Claim Your Reward! 🎉';
-            
+            // Auto-close/hide video player after required time
+            const player = document.getElementById('video-player');
+            if (player) {
+              player.pause && player.pause();
+              player.style.display = 'none';
+            }
             // Auto-submit after a brief delay via AJAX
             setTimeout(() => {
               submitReward();

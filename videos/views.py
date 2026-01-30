@@ -81,23 +81,35 @@ def video_list(request):
     # Available filter: show only unwatched videos for logged in users
     show_available = request.GET.get('available') == '1'
     watched_video_ids = set()
-    
+    watched_today = False
+    today = None
     if request.user.is_authenticated:
+        from django.utils import timezone
+        today = timezone.now().date()
         # Get all verified watched videos for this user
         watched_video_ids = set(WatchHistory.objects.filter(
             user=request.user, 
             verified=True
         ).values_list('video_id', flat=True))
-        
+        # Check if user has watched any video today
+        watched_today = WatchHistory.objects.filter(
+            user=request.user,
+            verified=True,
+            watched_at__date=today
+        ).exists()
         if show_available:
             # Filter to only show unwatched videos
             videos = [v for v in videos if v.id not in watched_video_ids]
-    
+        # Restrict: If user has watched a video today, show no videos
+        if watched_today:
+            videos = []
     context = {
         "videos": videos,
         "user_tier": user_tier,
         "all_tiers": Tier.objects.all().order_by('price'),
-        "watched_video_ids": watched_video_ids
+        "watched_video_ids": watched_video_ids,
+        "watched_today": watched_today,
+        "today": today
     }
     return render(request, "videos/list.html", context)
 
@@ -256,6 +268,19 @@ def watch_complete(request, pk):
             "message": f"You must watch the full video ({required_seconds} seconds) to earn the reward",
             "required": required_seconds,
             "watched": watched_seconds
+        }, status=400)
+    # ENFORCE: Only one video per user per day
+    from django.utils import timezone
+    today = timezone.now().date()
+    watched_today = WatchHistory.objects.filter(
+        user=request.user,
+        verified=True,
+        watched_at__date=today
+    ).exists()
+    if watched_today:
+        return JsonResponse({
+            "error": "one_video_per_day",
+            "message": "You can only watch one video per day."
         }, status=400)
 
     # Require at least 3 heartbeats recorded for this user/video in recent session

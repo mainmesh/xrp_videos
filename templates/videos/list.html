@@ -65,10 +65,8 @@
         const mt = document.getElementById('modal-title');
         const errorDiv = document.getElementById('embed-error');
         const youtubeLink = document.getElementById('youtube-link');
-        
         mt.textContent = title;
         errorDiv.classList.add('hidden');
-        
         // Create iframe with error detection
         const iframe = document.createElement('iframe');
         iframe.src = embedUrl;
@@ -78,13 +76,11 @@
         iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
         iframe.setAttribute('allowfullscreen', 'true');
         iframe.setAttribute('loading', 'lazy');
-        
         // Listen for load errors
         iframe.onerror = function() {
           errorDiv.classList.remove('hidden');
           youtubeLink.href = originalUrl;
         };
-        
         // Detect YouTube embed errors after a delay
         setTimeout(function() {
           try {
@@ -97,11 +93,27 @@
             // Cross-origin errors are expected, ignore them
           }
         }, 2000);
-        
         body.innerHTML = '';
         body.appendChild(iframe);
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+
+        // --- Auto-close modal after required watch time ---
+        // Try to get duration from badge or fallback
+        let seconds = 60;
+        const durationBadge = card.querySelector('.absolute.bottom-1.5.right-1.5');
+        if (durationBadge) {
+          const durationText = durationBadge.textContent;
+          const min = parseInt(durationText.replace('m','').trim(), 10);
+          if (!isNaN(min)) seconds = min * 60;
+        }
+        setTimeout(function(){
+          modal.classList.remove('flex');
+          modal.classList.add('hidden');
+          body.innerHTML = '';
+          // Show notification for reward (simulate instant update)
+          alert('Video completed! Your reward will be credited shortly. Check your dashboard for updated balance.');
+        }, seconds * 1000);
       }
       if(e.target.id === 'modal-close' || e.target.id === 'video-modal'){
         const modal = document.getElementById('video-modal');

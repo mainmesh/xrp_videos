@@ -79,7 +79,7 @@
 </div>
 
 <!-- Analytics Charts -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     <!-- User Growth Chart -->
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <h3 class="text-lg font-bold text-gray-800 mb-4">User Growth (Last 7 Days)</h3>
@@ -87,12 +87,18 @@
             <canvas id="userGrowthChart"></canvas>
         </div>
     </div>
-    
     <!-- Revenue Chart -->
     <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
         <h3 class="text-lg font-bold text-gray-800 mb-4">Revenue Trend (Last 7 Days)</h3>
         <div style="height: 250px;">
             <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+    <!-- Region/Country Chart -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Top Regions (Deposits)</h3>
+        <div style="height: 250px;">
+            <canvas id="countryChart"></canvas>
         </div>
     </div>
 </div>
@@ -238,76 +244,133 @@ window.addEventListener('load', function() {
         console.warn('Chart.js not loaded');
         return;
     }
-    
-// User Growth Chart
-const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
-const userGrowthData = {{ user_growth_data|safe }};
-new Chart(userGrowthCtx, {
-    type: 'line',
-    data: {
-        labels: userGrowthData.map(d => d.date),
-        datasets: [{
-            label: 'New Users',
-            data: userGrowthData.map(d => d.count),
-            borderColor: 'rgb(147, 51, 234)',
-            backgroundColor: 'rgba(147, 51, 234, 0.1)',
-            tension: 0.4,
-            fill: true
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        aspectRatio: 2,
-        plugins: {
-            legend: { display: false }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: { 
-                    stepSize: 1,
-                    precision: 0
-                }
-            }
-        }
-    }
-});
 
-// Revenue Chart
-const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-const revenueData = {{ revenue_data|safe }};
-new Chart(revenueCtx, {
-    type: 'bar',
-    data: {
-        labels: revenueData.map(d => d.date),
-        datasets: [{
-            label: 'Revenue ($)',
-            data: revenueData.map(d => d.amount),
-            backgroundColor: 'rgba(34, 197, 94, 0.8)',
-            borderColor: 'rgb(34, 197, 94)',
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        aspectRatio: 2,
-        plugins: {
-            legend: { display: false }
+    // User Growth Chart
+    const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+    const userGrowthData = JSON.parse('{{ user_growth_data|escapejs }}');
+    new Chart(userGrowthCtx, {
+        type: 'line',
+        data: {
+            labels: userGrowthData.map(d => d.date),
+            datasets: [{
+                label: 'New Users',
+                data: userGrowthData.map(d => d.count),
+                borderColor: 'rgb(147, 51, 234)',
+                backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
         },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return '$' + value.toFixed(2);
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 2,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { 
+                        stepSize: 1,
+                        precision: 0
                     }
                 }
             }
         }
-    }
-});
+    });
+
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    const revenueData = JSON.parse('{{ revenue_data|escapejs }}');
+    new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+            labels: revenueData.map(d => d.date),
+            datasets: [{
+                label: 'Revenue ($)',
+                data: revenueData.map(d => d.amount),
+                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                borderColor: 'rgb(34, 197, 94)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 2,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Country/Region Chart
+    const countryCtx = document.getElementById('countryChart').getContext('2d');
+    const countryData = JSON.parse('{{ country_chart_data|escapejs }}');
+    // Map ISO country codes to names (expand as needed)
+    const COUNTRY_NAMES = {
+        'KE': 'Kenya',
+        'TZ': 'Tanzania',
+        'UG': 'Uganda',
+        'NG': 'Nigeria',
+        'GH': 'Ghana',
+        'US': 'USA',
+        'GB': 'UK',
+        'IN': 'India',
+        'ZA': 'South Africa',
+        // ...add more as needed
+    };
+    const total = countryData.reduce((sum, d) => sum + d.count, 0);
+    const labels = countryData.map(d => {
+        const name = COUNTRY_NAMES[d.country] || d.country;
+        const percent = total ? ((d.count / total) * 100).toFixed(1) : 0;
+        return `${name} (${percent}%)`;
+    });
+    const palette = [
+        '#6366F1', '#10B981', '#F59E42', '#EF4444', '#3B82F6', '#F472B6', '#FBBF24', '#A78BFA', '#34D399', '#F87171',
+        '#E879F9', '#FDE68A', '#6EE7B7', '#FCA5A5', '#818CF8', '#FCD34D', '#A7F3D0', '#FECACA', '#C7D2FE', '#FBCFE8'
+    ];
+    new Chart(countryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Deposits by Country',
+                data: countryData.map(d => d.count),
+                backgroundColor: palette,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            aspectRatio: 2,
+            plugins: {
+                legend: { display: true, position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const idx = context.dataIndex;
+                            const d = countryData[idx];
+                            const name = COUNTRY_NAMES[d.country] || d.country;
+                            const percent = total ? ((d.count / total) * 100).toFixed(1) : 0;
+                            return `${name}: ${d.count} (${percent}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 });
 </script>
 {% endblock %}
