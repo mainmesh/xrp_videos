@@ -10,8 +10,22 @@ import uuid
 
 
 def home(request):
+    from videos.models import Tier
     announcements = Announcement.objects.filter(is_active=True)[:3]
-    return render(request, 'home.html', {'announcements': announcements})
+    
+    context = {'announcements': announcements}
+    
+    # Check if user is on the highest tier
+    if request.user.is_authenticated:
+        try:
+            user_tier = request.user.profile.current_tier
+            highest_tier = Tier.objects.all().order_by('-price').first()
+            context['user_tier'] = user_tier
+            context['is_max_tier'] = user_tier and highest_tier and user_tier.id == highest_tier.id
+        except:
+            context['is_max_tier'] = False
+    
+    return render(request, 'home.html', context)
 
 
 def about(request):
