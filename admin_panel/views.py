@@ -159,7 +159,6 @@ def dashboard(request):
 
     # Country/region analytics (based on PaymentAttempt country field)
     from accounts.models import PaymentAttempt
-    from django.db.models import Count
     country_counts = (
         PaymentAttempt.objects
         .exclude(country__isnull=True)

@@ -66,8 +66,8 @@ def get_withdrawal_model():
 @receiver(post_save, sender='accounts.Deposit')
 def send_deposit_confirmation(sender, instance, **kwargs):
     """Send email when deposit is confirmed."""
-    # Only send if deposit was just verified
-    if instance.status == 'verified' and kwargs.get('update_fields') and 'status' in kwargs.get('update_fields', []):
+    # Only send if deposit was just marked successful
+    if instance.success and kwargs.get('update_fields') and 'success' in kwargs.get('update_fields', []):
         try:
             subject = 'Deposit Confirmed - XRPPrime'
             message = f"""
