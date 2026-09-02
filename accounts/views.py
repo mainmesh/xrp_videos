@@ -395,15 +395,21 @@ def login_view(request):
                 }, status=403)
 
             if not user.profile.email_verified:
-                # Allow login but prompt user to verify; show a clear page.
-                request.session['pending_verification_user'] = user.username
-                auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                messages.warning(
-                    request,
-                    'Please verify your email to unlock all features. We just re-sent the verification link.',
-                )
-                send_verification_email(user, request)
-                return redirect('accounts:verification_sent')
+                # Legacy users (created before email verification shipped) may
+                # have an empty email; auto-verify them so they aren't locked
+                # out, and prompt them to add an email from settings.
+                if not user.email:
+                    user.profile.email_verified = True
+                    user.profile.save(update_fields=['email_verified'])
+                else:
+                    request.session['pending_verification_user'] = user.username
+                    auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                    messages.warning(
+                        request,
+                        'Please verify your email to unlock all features. We just re-sent the verification link.',
+                    )
+                    send_verification_email(user, request)
+                    return redirect('accounts:verification_sent')
 
             auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
