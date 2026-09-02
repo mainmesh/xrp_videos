@@ -3,6 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout, login as auth_login, authenticate
 from django.contrib.auth.models import User
 from django.contrib import messages
+from .audit import audit
+from .permissions import permission_required, has_perm, seed_permissions, ensure_admin_profile
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from django.http import HttpResponseForbidden, JsonResponse
@@ -339,13 +341,13 @@ def edit_video(request, video_id):
                 video.min_tier = None
             
             video.save()
-            
+
             # Update tier rewards
             selected_tiers = request.POST.getlist('edit_selected_tiers')
-            
+
             # Delete old tier rewards
             VideoTierPrice.objects.filter(video=video).delete()
-            
+
             # Add new tier rewards
             for tier_id in selected_tiers:
                 reward_value = request.POST.get(f'edit_reward_{tier_id}')
@@ -359,7 +361,13 @@ def edit_video(request, video_id):
                         )
                     except (ValueError, Tier.DoesNotExist):
                         pass
-            
+
+            audit('video.update', request=request, actor=request.user,
+                  target_type='Video', target_id=str(video.pk),
+                  description=f'Updated video "{video.title}"',
+                  after={'title': video.title, 'duration_seconds': video.duration_seconds,
+                         'is_active': video.is_active, 'min_tier_id': video.min_tier_id})
+
             messages.success(request, f'Video "{video.title}" updated successfully!')
         except Exception as e:
             messages.error(request, f'Error updating video: {str(e)}')
@@ -401,31 +409,43 @@ def withdrawals_list(request):
 
 
 @staff_required
+@permission_required('approve_payouts')
 def approve_withdrawal(request, withdrawal_id):
     """Approve a withdrawal request."""
     withdrawal = get_object_or_404(WithdrawalRequest, id=withdrawal_id)
-    
+
     if withdrawal.status == 'pending':
+        before = {'status': 'pending', 'amount': withdrawal.amount}
         withdrawal.approve(request.user)
+        audit('withdrawal.approve', request=request, actor=request.user,
+              target_type='WithdrawalRequest', target_id=str(withdrawal.pk),
+              description=f'Approved ${withdrawal.amount}',
+              before=before, after={'status': withdrawal.status})
         messages.success(request, f'Withdrawal request for ${withdrawal.amount} approved successfully.')
     else:
         messages.error(request, 'This withdrawal has already been processed.')
-    
+
     return redirect('admin_panel:withdrawals')
 
 
 @staff_required
+@permission_required('approve_payouts')
 def reject_withdrawal(request, withdrawal_id):
     """Reject a withdrawal request."""
     withdrawal = get_object_or_404(WithdrawalRequest, id=withdrawal_id)
-    
+
     if withdrawal.status == 'pending':
+        before = {'status': 'pending', 'amount': withdrawal.amount}
         withdrawal.status = 'rejected'
         withdrawal.save()
+        audit('withdrawal.reject', request=request, actor=request.user,
+              target_type='WithdrawalRequest', target_id=str(withdrawal.pk),
+              description=f'Rejected ${withdrawal.amount}',
+              before=before, after={'status': 'rejected'})
         messages.warning(request, f'Withdrawal request for ${withdrawal.amount} rejected.')
     else:
         messages.error(request, 'This withdrawal has already been processed.')
-    
+
     return redirect('admin_panel:withdrawals')
 
 
@@ -699,3 +719,195 @@ def delete_announcement(request, announcement_id):
     
     messages.success(request, 'Announcement deleted successfully.')
     return redirect('admin_panel:announcements')
+
+
+# ---------------------------------------------------------------------------
+# New RBAC-gated views. These sit alongside the existing staff-only views to
+# avoid breaking the live admin panel. New features use the per-permission
+# decorator, so Super Admin / Standard Admin / Staff see what they're allowed.
+# ---------------------------------------------------------------------------
+
+@staff_required
+@permission_required('manage_videos')
+def video_create(request):
+    """Create a new video. Fields include the new reward_amount and
+    duration_seconds which feed the atomic complete_watch flow."""
+    if request.method == 'POST':
+        from .audit import audit as _audit
+        from videos.models import Category
+        title = (request.POST.get('title') or '').strip()
+        url = (request.POST.get('url') or '').strip()
+        description = request.POST.get('description') or ''
+        try:
+            duration = int(request.POST.get('duration_seconds') or 30)
+        except Exception:
+            duration = 30
+        try:
+            reward_amount = float(request.POST.get('reward_amount') or 0)
+        except Exception:
+            reward_amount = 0
+        thumbnail = (request.POST.get('thumbnail_url') or '').strip()
+        countries = (request.POST.get('countries') or '').strip()
+        min_tier_id = request.POST.get('min_tier') or None
+
+        if not title or not url:
+            messages.error(request, 'Title and URL are required.')
+            return render(request, 'admin_panel/video_form.html', {
+                'tiers': Tier.objects.all().order_by('price'),
+                'categories': Category.objects.all().order_by('name'),
+                'form_data': request.POST,
+            })
+
+        v = Video(
+            title=title, url=url, description=description,
+            duration_seconds=duration,
+            reward_amount=reward_amount if reward_amount > 0 else 0,
+            reward=reward_amount or 0.10,
+            thumbnail_url=thumbnail, countries=countries,
+            created_by=request.user, is_active=True,
+        )
+        if min_tier_id:
+            try:
+                v.min_tier_id = int(min_tier_id)
+            except Exception:
+                pass
+        v.save()
+        _audit('video.create', request=request, actor=request.user,
+               target_type='Video', target_id=str(v.pk),
+               description=f'Created video "{v.title}"',
+               after={'title': v.title, 'duration_seconds': v.duration_seconds,
+                      'reward_amount': float(v.reward_amount), 'is_active': v.is_active})
+        messages.success(request, f'Video "{v.title}" created.')
+        return redirect('admin_panel:edit_video', video_id=v.pk)
+
+    return render(request, 'admin_panel/video_form.html', {
+        'tiers': Tier.objects.all().order_by('price'),
+        'categories': Category.objects.all().order_by('name'),
+        'form_data': {},
+    })
+
+
+@staff_required
+@permission_required('manage_videos')
+def video_bulk_action(request):
+    """Apply activate/deactivate/delete to many videos at once."""
+    from .audit import audit as _audit
+    if request.method != 'POST':
+        return redirect('admin_panel:videos')
+    action = request.POST.get('action')
+    ids = request.POST.getlist('video_ids')
+    if not ids or action not in ('activate', 'deactivate', 'delete'):
+        messages.error(request, 'No videos selected or invalid action.')
+        return redirect('admin_panel:videos')
+    qs = Video.objects.filter(id__in=ids)
+    count = qs.count()
+    if action == 'delete':
+        # Capture before-state so the diff is preserved.
+        before = list(qs.values('id', 'title', 'is_active'))
+        qs.delete()
+        _audit('video.bulk_delete', request=request, actor=request.user,
+               target_type='Video', description=f'Bulk-deleted {count} videos',
+               before=before)
+        messages.success(request, f'Deleted {count} videos.')
+    elif action == 'activate':
+        qs.update(is_active=True)
+        _audit('video.bulk_activate', request=request, actor=request.user,
+               target_type='Video', description=f'Activated {count} videos',
+               after={'ids': ids})
+        messages.success(request, f'Activated {count} videos.')
+    elif action == 'deactivate':
+        qs.update(is_active=False)
+        _audit('video.bulk_deactivate', request=request, actor=request.user,
+               target_type='Video', description=f'Deactivated {count} videos',
+               after={'ids': ids})
+        messages.success(request, f'Deactivated {count} videos.')
+    return redirect('admin_panel:videos')
+
+
+@staff_required
+@permission_required('view_audit_log')
+def audit_log(request):
+    """List audit log entries with simple filters."""
+    from .models import AuditLog
+    qs = AuditLog.objects.select_related('actor').order_by('-created_at')
+    actor_q = request.GET.get('actor', '').strip()
+    action_q = request.GET.get('action', '').strip()
+    target_q = request.GET.get('target', '').strip()
+    if actor_q:
+        qs = qs.filter(actor__username__icontains=actor_q)
+    if action_q:
+        qs = qs.filter(action__icontains=action_q)
+    if target_q:
+        qs = qs.filter(target_type__icontains=target_q) | qs.filter(target_id__icontains=target_q)
+    qs = qs[:200]
+    return render(request, 'admin_panel/audit_log.html', {
+        'entries': qs,
+        'actor_q': actor_q, 'action_q': action_q, 'target_q': target_q,
+    })
+
+
+@staff_required
+@permission_required('manage_users')
+def edit_user_role(request, user_id):
+    """Promote / demote an admin role. Super Admin only can promote to
+    super_admin; Standard Admin can promote to admin/staff only."""
+    target = get_object_or_404(User, pk=user_id)
+    from .permissions import AdminRole, PERMISSIONS, ROLE_PERMS
+    from .models import AdminProfile, AdminPermission
+    seed_permissions()
+    profile = ensure_admin_profile(target)
+
+    if request.method == 'POST':
+        new_role = request.POST.get('role')
+        if new_role not in dict(AdminRole.choices):
+            messages.error(request, 'Invalid role.')
+            return redirect('admin_panel:edit_user_role', user_id=user_id)
+
+        # Standard Admins cannot grant super_admin
+        if new_role == AdminRole.SUPER_ADMIN and not request.user.is_superuser:
+            messages.error(request, 'Only superusers may grant Super Admin.')
+            return redirect('admin_panel:edit_user_role', user_id=user_id)
+
+        before = {'role': profile.role}
+        profile.role = new_role
+        profile.save(update_fields=['role'])
+        audit('admin.role_change', request=request, actor=request.user,
+              target_type='User', target_id=str(target.pk),
+              description=f'{target.username}: {before["role"]} -> {new_role}',
+              before=before, after={'role': new_role})
+        messages.success(request, f'{target.username} is now {new_role}.')
+        return redirect('admin_panel:edit_user_role', user_id=user_id)
+
+    return render(request, 'admin_panel/user_role.html', {
+        'target': target, 'profile': profile,
+        'roles': AdminRole.choices, 'permissions': PERMISSIONS,
+        'role_perms': {r: sorted(v) for r, v in ROLE_PERMS.items()},
+        'user_perms': set(profile.permissions.values_list('key', flat=True)),
+    })
+
+
+@staff_required
+@permission_required('manage_users')
+def toggle_user_permission(request, user_id, key):
+    """Grant/revoke a single ad-hoc permission for a user."""
+    target = get_object_or_404(User, pk=user_id)
+    profile = ensure_admin_profile(target)
+    perm = AdminPermission.objects.filter(key=key).first()
+    if not perm:
+        messages.error(request, 'Unknown permission.')
+        return redirect('admin_panel:edit_user_role', user_id=user_id)
+    if request.method == 'POST':
+        granted = bool(request.POST.get('granted'))
+        had = profile.permissions.filter(pk=perm.pk).exists()
+        if granted and not had:
+            profile.permissions.add(perm)
+            audit('admin.permission_grant', request=request, actor=request.user,
+                  target_type='User', target_id=str(target.pk),
+                  description=f'+{key}', before={'has_perm': False}, after={'has_perm': True})
+        elif not granted and had:
+            profile.permissions.remove(perm)
+            audit('admin.permission_revoke', request=request, actor=request.user,
+                  target_type='User', target_id=str(target.pk),
+                  description=f'-{key}', before={'has_perm': True}, after={'has_perm': False})
+        messages.success(request, f'Permission {key} {"granted" if granted else "revoked"} for {target.username}.')
+    return redirect('admin_panel:edit_user_role', user_id=user_id)

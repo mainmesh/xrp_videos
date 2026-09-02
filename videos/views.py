@@ -3,17 +3,20 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
-from .models import Video, WatchHistory, Tier
+from .models import Video, WatchHistory, Tier, VideoWatch, WatchCompletionAttempt
 from .models import WatchHeartbeat
 from accounts.models import Profile
 from referrals.models import ReferralBonus
 from django.db import transaction
 import json
+import secrets
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 from django.conf import settings
 from django.shortcuts import redirect
 from django.contrib.admin.views.decorators import staff_member_required
+from django.utils import timezone
+from decimal import Decimal
 
 
 def video_list(request):
@@ -373,3 +376,233 @@ def watch_complete(request, pk):
         print(f"Failed to create notification: {str(e)}")
 
     return JsonResponse({"status": "credited", "reward": reward_to_credit})
+
+
+# ---------------------------------------------------------------------------
+# New atomic credit flow (start / heartbeat / complete). Idempotent on
+# (user, video) thanks to the VideoWatch uniqueness constraint and the
+# `credited` flag. Designed to coexist with the legacy `watch_complete` flow.
+# ---------------------------------------------------------------------------
+
+def _client_ip(request):
+    xff = request.META.get('HTTP_X_FORWARDED_FOR')
+    if xff:
+        return xff.split(',')[0].strip() or None
+    return request.META.get('REMOTE_ADDR') or None
+
+
+def _resolve_reward(video: Video) -> Decimal:
+    """Determine the reward in a tier-aware way, falling back to video.reward."""
+    base = Decimal(str(video.effective_reward() or 0))
+    try:
+        ut = video.min_tier  # placeholder to keep imports tidy
+        _ = ut
+    except Exception:
+        pass
+    user = getattr(video, '_hint_user', None)
+    if user is not None:
+        try:
+            tier = user.profile.current_tier
+            if tier is not None:
+                vtp = video.tier_prices.filter(tier=tier).first()
+                if not vtp:
+                    vtp = (video.tier_prices
+                           .filter(tier__price__lte=tier.price)
+                           .select_related('tier')
+                           .order_by('-tier__price')
+                           .first())
+                if vtp:
+                    base = Decimal(str(vtp.reward))
+        except Exception:
+            pass
+    return base
+
+
+@login_required
+@require_http_methods(["POST"])
+def start_watch(request, pk):
+    """Create a VideoWatch session for this user/video. Returns the
+    `client_id` (per-tab UUID) that the browser must include on every
+    subsequent heartbeat/complete call."""
+    video = get_object_or_404(Video, pk=pk, is_active=True)
+    if video.min_tier:
+        tier = getattr(request.user.profile, 'current_tier', None)
+        if not tier or tier.price < video.min_tier.price:
+            return JsonResponse({"error": "insufficient_tier"}, status=403)
+
+    now = timezone.now()
+    watch, created = VideoWatch.objects.get_or_create(
+        user=request.user, video=video,
+        defaults={'client_id': secrets.token_urlsafe(16), 'started_at': now},
+    )
+    if created:
+        return JsonResponse({
+            "ok": True, "client_id": watch.client_id,
+            "started_at": watch.started_at.isoformat(),
+            "duration_seconds": video.duration_seconds,
+        })
+    # Existing session: return the existing client_id so the tab can resume
+    # the same record. If already credited, signal no-op.
+    return JsonResponse({
+        "ok": True, "client_id": watch.client_id,
+        "started_at": watch.started_at.isoformat(),
+        "duration_seconds": video.duration_seconds,
+        "credited": watch.credited,
+    })
+
+
+@login_required
+@require_http_methods(["POST"])
+@transaction.atomic
+def heartbeat_watch(request, pk):
+    """Lightweight heartbeat for the new flow. Updates
+    `last_heartbeat_at` so elapsed time can be measured server-side."""
+    video = get_object_or_404(Video, pk=pk)
+    client_id = (request.POST.get('client_id') or '').strip()
+    seconds = int(request.POST.get('seconds', 0) or 0)
+    if not client_id:
+        return JsonResponse({"error": "missing_client_id"}, status=400)
+    updated = VideoWatch.objects.filter(
+        user=request.user, video=video, client_id=client_id
+    ).update(last_heartbeat_at=timezone.now())
+    if not updated:
+        return JsonResponse({"error": "no_session"}, status=404)
+    WatchCompletionAttempt.objects.create(
+        user=request.user, video=video, client_id=client_id,
+        elapsed_seconds=seconds, accepted=False, reason='heartbeat',
+        ip_address=_client_ip(request),
+        user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
+    )
+    return JsonResponse({"ok": True})
+
+
+@login_required
+@require_http_methods(["POST"])
+@transaction.atomic
+def complete_watch(request, pk):
+    """Atomic credit endpoint. Credits the user exactly once per
+    (user, video, client_id). Safe to call multiple times — duplicate
+    requests are no-ops. Returns 400 if the server-measured elapsed time
+    is below the video's required duration."""
+    video = get_object_or_404(Video, pk=pk)
+    client_id = (request.POST.get('client_id') or '').strip()
+    if not client_id:
+        return JsonResponse({"error": "missing_client_id"}, status=400)
+
+    watch = (VideoWatch.objects
+             .select_for_update()
+             .filter(user=request.user, video=video, client_id=client_id)
+             .first())
+    if not watch:
+        WatchCompletionAttempt.objects.create(
+            user=request.user, video=video, client_id=client_id,
+            elapsed_seconds=0, accepted=False, reason='no_session',
+            ip_address=_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
+        )
+        return JsonResponse({"error": "no_session"}, status=404)
+
+    if watch.credited:
+        # Idempotent: already credited, just return the balance.
+        return JsonResponse({
+            "ok": True, "already_credited": True,
+            "amount": float(watch.amount_credited),
+            "balance": float(request.user.profile.balance),
+        })
+
+    now = timezone.now()
+    elapsed = (now - watch.started_at).total_seconds()
+    required = int(video.duration_seconds or 0)
+    if required and elapsed + 1 < required:  # +1s tolerance for clock skew
+        WatchCompletionAttempt.objects.create(
+            user=request.user, video=video, client_id=client_id,
+            elapsed_seconds=int(elapsed), accepted=False, reason='too_soon',
+            ip_address=_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
+        )
+        return JsonResponse({
+            "error": "too_soon",
+            "elapsed": int(elapsed),
+            "required": required,
+        }, status=400)
+
+    # Tier access (re-check inside the transaction)
+    tier = getattr(request.user.profile, 'current_tier', None)
+    if video.min_tier and (not tier or tier.price < video.min_tier.price):
+        WatchCompletionAttempt.objects.create(
+            user=request.user, video=video, client_id=client_id,
+            elapsed_seconds=int(elapsed), accepted=False, reason='insufficient_tier',
+            ip_address=_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
+        )
+        return JsonResponse({"error": "insufficient_tier"}, status=403)
+
+    # Resolve reward, prefer tier-specific override
+    reward = Decimal(str(video.effective_reward() or 0))
+    if tier is not None:
+        try:
+            vtp = video.tier_prices.filter(tier=tier).first()
+            if not vtp:
+                vtp = (video.tier_prices
+                       .filter(tier__price__lte=tier.price)
+                       .select_related('tier')
+                       .order_by('-tier__price')
+                       .first())
+            if vtp:
+                reward = Decimal(str(vtp.reward))
+        except Exception:
+            pass
+    if reward <= 0:
+        WatchCompletionAttempt.objects.create(
+            user=request.user, video=video, client_id=client_id,
+            elapsed_seconds=int(elapsed), accepted=False, reason='zero_reward',
+            ip_address=_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
+        )
+        return JsonResponse({"error": "zero_reward"}, status=400)
+
+    # Atomic credit
+    profile = Profile.objects.select_for_update().get(user=request.user)
+    profile.credit(float(reward), reason=f"Watched: {video.title}",
+                   transaction_type="video_reward", video=video)
+    watch.credited = True
+    watch.amount_credited = reward
+    watch.credited_at = now
+    watch.save(update_fields=['credited', 'amount_credited', 'credited_at'])
+
+    WatchCompletionAttempt.objects.create(
+        user=request.user, video=video, client_id=client_id,
+        elapsed_seconds=int(elapsed), accepted=True, reason='credited',
+        ip_address=_client_ip(request),
+        user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
+    )
+
+    # Referral bonus (10%) — best effort, never blocks the main credit
+    try:
+        referred_by = request.user.profile.referred_by
+        if referred_by and reward > 0:
+            bonus = (reward * Decimal('0.10')).quantize(Decimal('0.0001'))
+            try:
+                ReferralBonus.objects.create(
+                    to_user=referred_by, from_user=request.user,
+                    amount=bonus,
+                )
+            except Exception:
+                pass
+            try:
+                referred_by.profile.credit(
+                    float(bonus),
+                    reason=f"Referral bonus from {request.user.username}",
+                    transaction_type='referral_bonus',
+                )
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    return JsonResponse({
+        "ok": True,
+        "amount": float(reward),
+        "balance": float(profile.balance),
+        "transaction_type": "video_reward",
+    })

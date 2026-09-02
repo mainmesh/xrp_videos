@@ -66,11 +66,15 @@
                         {% endif %}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <a href="{% url 'admin_panel:send_message' user.id %}" class="text-blue-600 hover:text-blue-900 inline-flex items-center">
+                        <a href="{% url 'admin_panel:send_message' user.id %}" class="text-blue-600 hover:text-blue-900 inline-flex items-center mr-3">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                             </svg>
                             Message
+                        </a>
+                        <a href="{% url 'admin_panel:edit_user_role' user.id %}" class="text-purple-600 hover:text-purple-900 inline-flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4z"/></svg>
+                            Role
                         </a>
                     </td>
                 </tr>

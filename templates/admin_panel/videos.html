@@ -3,6 +3,50 @@
 {% block page_title %}Videos Management{% endblock %}
 
 {% block content %}
+<!-- Bulk actions + new create link -->
+<form method="post" action="{% url 'admin_panel:video_bulk_action' %}" id="bulkForm"
+      class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4 flex flex-wrap items-center gap-3">
+    {% csrf_token %}
+    <div class="flex items-center gap-2 text-sm text-gray-600">
+        <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.5 4h9l3 3v11a2 2 0 01-2 2h-10a2 2 0 01-2-2V7l3-3z"/></svg>
+        Bulk actions
+    </div>
+    <select name="action" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <option value="">Choose…</option>
+        <option value="activate">Activate</option>
+        <option value="deactivate">Deactivate</option>
+        <option value="delete">Delete</option>
+    </select>
+    <button class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition">Apply to selected</button>
+    <span class="ml-auto"></span>
+    <a href="{% url 'admin_panel:video_create' %}" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-semibold rounded-lg transition inline-flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Create new video
+    </a>
+</form>
+<script>
+    // Augment each row with a checkbox; selected IDs go into hidden inputs in #bulkForm.
+    document.addEventListener('DOMContentLoaded', function() {
+        var form = document.getElementById('bulkForm');
+        document.querySelectorAll('a[href*="/admin/videos/edit/"]').forEach(function(link) {
+            var m = (link.getAttribute('href') || '').match(/edit\/(\d+)/);
+            if (!m) return;
+            var id = m[1];
+            var cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.name = 'video_ids'; cb.value = id;
+            cb.className = 'video-bulk-cb w-4 h-4 ml-2 accent-purple-600';
+            var cell = link.closest('tr');
+            if (cell) cell.querySelector('td').prepend(cb);
+        });
+        form.addEventListener('submit', function(e) {
+            var sel = form.querySelector('select[name=action]').value;
+            var n = document.querySelectorAll('.video-bulk-cb:checked').length;
+            if (!sel) { e.preventDefault(); alert('Choose an action'); }
+            else if (!n) { e.preventDefault(); alert('Select at least one video'); }
+            else if (sel === 'delete' && !confirm('Delete ' + n + ' videos? This cannot be undone.')) { e.preventDefault(); }
+        });
+    });
+</script>
 <!-- Add Video Form -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
     <button onclick="toggleAddForm()" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-lg transition flex items-center gap-2">

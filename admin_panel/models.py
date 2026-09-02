@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class SiteSettings(models.Model):
@@ -75,4 +76,63 @@ class PaymentOption(models.Model):
 
     def __str__(self):
         return f"{self.name} ({'Global' if not self.countries else self.countries})"
+
+
+class AdminRole(models.TextChoices):
+    SUPER_ADMIN = 'super_admin', 'Super Admin'
+    STANDARD_ADMIN = 'admin', 'Standard Admin'
+    STAFF = 'staff', 'Staff (read-only)'
+
+
+class AdminPermission(models.Model):
+    """Granular permission flag. A user gains permissions either from their
+    role's default set or from explicit rows in AdminProfile.permissions."""
+    key = models.CharField(max_length=64, unique=True)
+    label = models.CharField(max_length=200)
+
+    class Meta:
+        ordering = ['key']
+
+    def __str__(self):
+        return self.key
+
+
+class AdminProfile(models.Model):
+    """Per-admin user metadata. Created automatically the first time a user is
+    promoted into any non-default admin role (data migration in 0002)."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='admin_profile')
+    role = models.CharField(max_length=20, choices=AdminRole.choices, default=AdminRole.STAFF)
+    permissions = models.ManyToManyField(AdminPermission, blank=True, related_name='admins')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.username} ({self.role})"
+
+
+class AuditLog(models.Model):
+    """Append-only audit log for sensitive actions performed in the admin
+    panel. `before`/`after` are stored as JSON to allow diff rendering later."""
+    actor = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='audit_logs')
+    action = models.CharField(max_length=64, db_index=True)
+    target_type = models.CharField(max_length=64, blank=True)
+    target_id = models.CharField(max_length=64, blank=True)
+    description = models.CharField(max_length=255, blank=True)
+    before = models.JSONField(null=True, blank=True)
+    after = models.JSONField(null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['actor', '-created_at']),
+            models.Index(fields=['action', '-created_at']),
+            models.Index(fields=['target_type', 'target_id']),
+        ]
+
+    def __str__(self):
+        who = self.actor.username if self.actor else 'system'
+        return f"AuditLog({who} {self.action} {self.target_type}#{self.target_id})"
 

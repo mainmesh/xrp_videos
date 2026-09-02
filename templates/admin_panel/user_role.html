@@ -1,0 +1,53 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Role · {{ target.username }}{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-2xl font-bold gradient-text mb-2">Admin role</h1>
+    <p class="text-gray-400 mb-6">Manage role & permissions for <span class="text-purple-300 font-medium">{{ target.username }}</span>.</p>
+
+    {% if messages %}
+    <div class="mb-4 space-y-2">
+        {% for m in messages %}
+        <div class="px-4 py-2.5 rounded-lg text-sm {% if m.tags == 'error' %}bg-red-500/10 border border-red-500/30 text-red-300{% elif m.tags == 'success' %}bg-green-500/10 border border-green-500/30 text-green-300{% else %}bg-blue-500/10 border border-blue-500/30 text-blue-300{% endif %}">{{ m }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="dark-glass rounded-2xl p-6 space-y-4">
+        <label class="block text-sm font-medium text-gray-300 mb-1">Role</label>
+        <div class="flex flex-wrap gap-2">
+            {% for value, label in roles %}
+            <label class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800/40 border border-purple-500/20 cursor-pointer has-[:checked]:border-purple-500 has-[:checked]:bg-purple-500/10 transition">
+                <input type="radio" name="role" value="{{ value }}" {% if profile.role == value %}checked{% endif %}>
+                <span class="text-white text-sm">{{ label }}</span>
+            </label>
+            {% endfor %}
+        </div>
+        <button type="submit" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold hover:from-purple-500 hover:to-pink-500 transition">Save role</button>
+    </form>
+
+    <div class="dark-glass rounded-2xl p-6 mt-6">
+        <h2 class="text-lg font-semibold text-white mb-2">Ad-hoc permissions</h2>
+        <p class="text-gray-400 text-sm mb-4">Grant or revoke individual permissions on top of the role's defaults.</p>
+        <ul class="space-y-2">
+            {% for key, label in permissions.items %}
+            <li class="flex items-center justify-between gap-4 p-3 rounded-lg bg-slate-800/30">
+                <div>
+                    <div class="text-white text-sm font-medium">{{ label }}</div>
+                    <div class="text-gray-500 text-xs font-mono">{{ key }}</div>
+                </div>
+                <form method="post" action="{% url 'admin_panel:toggle_user_permission' target.id key %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="granted" value="{% if key in user_perms %}0{% else %}1{% endif %}">
+                    <button class="px-3 py-1.5 rounded-lg text-sm {% if key in user_perms %}bg-red-500/15 text-red-300 border border-red-500/30 hover:bg-red-500/25{% else %}bg-green-500/15 text-green-300 border border-green-500/30 hover:bg-green-500/25{% endif %} transition">
+                        {% if key in user_perms %}Revoke{% else %}Grant{% endif %}
+                    </button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <a href="{% url 'admin_panel:users' %}" class="inline-block mt-6 text-purple-400 hover:text-purple-300 text-sm">← Back to users</a>
+</div>
+{% endblock %}
