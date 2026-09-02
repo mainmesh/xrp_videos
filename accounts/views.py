@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
-from .models import Profile, Deposit, WithdrawalRequest
+from .models import Profile, Deposit, WithdrawalRequest, EmailVerification, LoginAttempt
 from django.contrib.auth.models import User
-from django.contrib.auth import login, update_session_auth_hash
-from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
+from django.contrib.auth import login as auth_login, logout as auth_logout, update_session_auth_hash, authenticate
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm, AuthenticationForm  # noqa: F401
 from django.contrib import messages
 from referrals.models import ReferralLink
 import stripe
@@ -16,8 +16,23 @@ from .models import PaymentAttempt
 from admin_panel.models import PaymentOption
 from django.utils import timezone
 
+from .forms import RegisterForm, LoginForm, ResendVerificationForm
+from .ratelimit import (
+    is_rate_limited, record_attempt, client_ip, captcha_required, make_math_captcha,
+)
+from .emails import send_verification_email, send_login_alert
+
 
 stripe.api_key = settings.STRIPE_API_KEY
+
+# Configurable knobs
+LOGIN_FAIL_WINDOW_SECONDS = 900   # 15 min rolling
+LOGIN_FAIL_LIMIT = 5              # 5 failures -> captcha
+LOGIN_IP_LIMIT = 30               # 30 failures per IP per 15 min -> block
+RESET_WINDOW_SECONDS = 600
+RESET_LIMIT = 5
+REGISTER_WINDOW_SECONDS = 3600
+REGISTER_LIMIT = 8
 
 
 def placeholder_deposit(request):
@@ -288,34 +303,237 @@ def request_withdrawal(request):
 
 
 def register(request):
-    """Simple registration view that links referral if present in session."""
+    """Email-verified registration: collects email, runs a math captcha, sends
+    a verification link, and only logs the user in after they confirm. Until
+    then the user is created with `is_active=False` so they can't use the
+    site (and the welcome email is sent to the verified address only)."""
+    ip = client_ip(request)
+    if is_rate_limited('register:ip', f'ip:{ip}', REGISTER_LIMIT, REGISTER_WINDOW_SECONDS):
+        messages.error(request, 'Too many registration attempts from this device. Please try again later.')
+        return render(request, 'accounts/register.html', {
+            'form': RegisterForm(),
+            'captcha': make_math_captcha(),
+            'rate_limited': True,
+        }, status=429)
+
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        captcha = make_math_captcha()
+        form = RegisterForm(request.POST, request=request, captcha=captcha)
         if form.is_valid():
+            record_attempt('register:ip', f'ip:{ip}', REGISTER_WINDOW_SECONDS)
             user = form.save()
-            # Note: Profile and ReferralLink are auto-created by signals
-            
-            # attach referral if exists
+            user.is_active = False
+            user.save()
+
             ref_code = request.session.pop('referral_code', None)
             if ref_code:
                 try:
                     rl = ReferralLink.objects.get(code=ref_code)
                     user.profile.referred_by = rl.user
                     user.profile.save()
-                    # increment referrer's count
                     try:
-                        ref_profile = rl.user.profile
-                        ref_profile.referrals_count = (ref_profile.referrals_count or 0) + 1
-                        ref_profile.save()
+                        rl.user.profile.referrals_count = (rl.user.profile.referrals_count or 0) + 1
+                        rl.user.profile.save()
                     except Exception:
                         pass
                 except ReferralLink.DoesNotExist:
                     pass
-            login(request, user)
+
+            send_verification_email(user, request)
+            messages.success(
+                request,
+                f"Account created! We sent a verification link to {user.email}. "
+                "Please check your inbox (and spam folder) to activate your account.",
+            )
+            request.session['pending_verification_user'] = user.username
+            return redirect('accounts:verification_sent')
+        record_attempt('register:ip', f'ip:{ip}', REGISTER_WINDOW_SECONDS)
+        return render(request, 'accounts/register.html', {
+            'form': form,
+            'captcha': make_math_captcha(),
+        })
+
+    return render(request, 'accounts/register.html', {
+        'form': RegisterForm(),
+        'captcha': make_math_captcha(),
+    })
+
+
+def login_view(request):
+    """Custom login that accepts username-or-email, supports 'Remember me',
+    applies a math captcha after repeated failures, throttles by IP, tracks
+    login history, and updates the user's last-login IP on success."""
+    ip = client_ip(request)
+    # If already logged in, bounce to dashboard.
+    if request.user.is_authenticated:
+        return redirect('accounts:dashboard')
+
+    blocked = is_rate_limited('login:ip', f'ip:{ip}', LOGIN_IP_LIMIT, LOGIN_FAIL_WINDOW_SECONDS)
+    if blocked:
+        messages.error(request, 'Too many failed sign-in attempts from this device. Please try again in 15 minutes.')
+        return render(request, 'accounts/login.html', {
+            'form': LoginForm(request=request),
+            'captcha_required': True,
+            'captcha': make_math_captcha(),
+            'blocked': True,
+        }, status=429)
+
+    require_captcha = captcha_required('login', request)
+
+    if request.method == 'POST':
+        captcha = make_math_captcha()
+        form = LoginForm(request=request, data=request.POST, require_captcha=require_captcha, captcha=captcha)
+        if form.is_valid() and form.user is not None:
+            user = form.user
+            # Check account lock (brute-force lockout).
+            if user.profile.locked_until and user.profile.locked_until > timezone.now():
+                messages.error(request, 'Account temporarily locked. Please try again later.')
+                return render(request, 'accounts/login.html', {
+                    'form': LoginForm(request=request),
+                    'captcha_required': True,
+                    'captcha': make_math_captcha(),
+                }, status=403)
+
+            if not user.profile.email_verified:
+                # Allow login but prompt user to verify; show a clear page.
+                request.session['pending_verification_user'] = user.username
+                auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                messages.warning(
+                    request,
+                    'Please verify your email to unlock all features. We just re-sent the verification link.',
+                )
+                send_verification_email(user, request)
+                return redirect('accounts:verification_sent')
+
+            auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+
+            # Remember me -> extend session lifetime
+            if form.cleaned_data.get('remember_me'):
+                request.session.set_expiry(1209600)  # 2 weeks
+            else:
+                request.session.set_expiry(0)  # browser session
+
+            # Update profile last-login info.
+            ua = request.META.get('HTTP_USER_AGENT', '')
+            user.profile.last_login_ip = ip
+            user.profile.last_login_at = timezone.now()
+            user.profile.failed_login_count = 0
+            user.profile.locked_until = None
+            user.profile.save(update_fields=['last_login_ip', 'last_login_at', 'failed_login_count', 'locked_until'])
+
+            LoginAttempt.objects.create(username=user.username, ip_address=ip, user_agent=ua[:255], success=True)
+            send_login_alert(user, request, ip, ua)
+
             return redirect('accounts:dashboard')
-    else:
-        form = UserCreationForm()
-    return render(request, 'accounts/register.html', {'form': form})
+
+        # Failed login
+        identifier = request.POST.get('username', '').strip()
+        LoginAttempt.objects.create(username=identifier, ip_address=ip, user_agent=request.META.get('HTTP_USER_AGENT', '')[:255], success=False)
+        record_attempt('login:ip', f'ip:{ip}', LOGIN_FAIL_WINDOW_SECONDS)
+        if identifier:
+            record_attempt('login:user', f'user:{identifier}', LOGIN_FAIL_WINDOW_SECONDS)
+            # Increment per-user failure; if > lockout threshold, lock the account briefly.
+            try:
+                u = User.objects.get(username=identifier)
+            except User.DoesNotExist:
+                u = User.objects.filter(email__iexact=identifier).first()
+            if u:
+                u.profile.failed_login_count = (u.profile.failed_login_count or 0) + 1
+                if u.profile.failed_login_count >= 10:
+                    u.profile.locked_until = timezone.now() + timezone.timedelta(minutes=15)
+                    u.profile.failed_login_count = 0
+                u.profile.save(update_fields=['failed_login_count', 'locked_until'])
+
+        require_captcha = captcha_required('login', request, username=identifier)
+        messages.error(request, 'Invalid email or password.')
+        return render(request, 'accounts/login.html', {
+            'form': LoginForm(request=request, data=request.POST, require_captcha=require_captcha, captcha=make_math_captcha()),
+            'captcha_required': require_captcha,
+            'captcha': make_math_captcha(),
+        })
+
+    return render(request, 'accounts/login.html', {
+        'form': LoginForm(request=request, require_captcha=require_captcha, captcha=make_math_captcha() if require_captcha else None),
+        'captcha_required': require_captcha,
+        'captcha': make_math_captcha() if require_captcha else None,
+    })
+
+
+def logout_view(request):
+    """POST-only logout (CSRF-safe)."""
+    if request.method == 'POST':
+        auth_logout(request)
+        messages.success(request, 'You have been signed out.')
+        return redirect('home')
+    return redirect('home')
+
+
+def verification_sent(request):
+    """Page shown after signup / resend with a clear 'check your inbox' UX."""
+    username = request.session.get('pending_verification_user', '')
+    return render(request, 'accounts/verification_sent.html', {'username': username})
+
+
+def verify_email(request, token):
+    """Confirm the email-verification token. On success, activates the account
+    (if not already active) and sets `email_verified=True`. Renders a clear
+    success page with a CTA into the site.
+    """
+    ev = get_object_or_404(EmailVerification, token=token)
+    if not ev.is_valid():
+        return render(request, 'accounts/verification_result.html', {
+            'ok': False,
+            'message': 'This verification link has expired or already been used. '
+                        'You can request a new one below.',
+        })
+    user = ev.user
+    if ev.new_email:
+        user.email = ev.new_email
+    user.is_active = True
+    user.save()
+    user.profile.email_verified = True
+    user.profile.save(update_fields=['email_verified'])
+    ev.used_at = timezone.now()
+    ev.save(update_fields=['used_at'])
+    request.session.pop('pending_verification_user', None)
+    auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    messages.success(request, f"Welcome, {user.username}! Your email is verified.")
+    return render(request, 'accounts/verification_result.html', {'ok': True, 'user': user})
+
+
+@require_http_methods(["GET", "POST"])
+def resend_verification(request):
+    """Allow a user to re-request the verification email. Always renders the
+    same 'check your inbox' copy to avoid leaking which addresses are signed up.
+    """
+    form = ResendVerificationForm(request.POST or None)
+    sent = False
+    if request.method == 'POST' and form.is_valid():
+        email = form.cleaned_data['email'].strip().lower()
+        u = User.objects.filter(email__iexact=email).first()
+        if u and not u.profile.email_verified:
+            send_verification_email(u, request)
+        sent = True  # Always render success copy (no enumeration leak).
+    return render(request, 'accounts/resend_verification.html', {'form': form, 'sent': sent})
+
+
+def custom_password_reset(request, *args, **kwargs):
+    """Wrapper around Django's PasswordResetView with our own rate-limiting +
+    captcha gating."""
+    ip = client_ip(request)
+    if is_rate_limited('reset:ip', f'ip:{ip}', RESET_LIMIT, RESET_WINDOW_SECONDS):
+        messages.error(request, 'Too many password-reset requests from this device. Please try again later.')
+        return redirect('accounts:password_reset')
+    if request.method == 'POST':
+        record_attempt('reset:ip', f'ip:{ip}', RESET_WINDOW_SECONDS)
+    from django.contrib.auth.views import PasswordResetView
+    return PasswordResetView.as_view(
+        template_name='registration/password_reset_form.html',
+        email_template_name='registration/password_reset_email.html',
+        subject_template_name='registration/password_reset_subject.txt',
+        success_url='/accounts/password-reset/done/',
+        from_email=settings.DEFAULT_FROM_EMAIL,
+    )(request, *args, **kwargs)
 
 
 @login_required
@@ -383,7 +601,6 @@ def stripe_webhook(request):
         return JsonResponse({"error": str(e)}, status=400)
 
 
-@login_required
 @login_required
 def transaction_history(request):
     """Display user's transaction history."""

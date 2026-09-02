@@ -13,10 +13,10 @@ urlpatterns = [
     path('api/chatbot/', chatbot, name='chatbot'),
     # Stripe webhook
     path('stripe/webhook/', stripe_webhook, name='stripe_webhook'),
-    # Django auth (login/logout/password management)
-    path('accounts/', include('django.contrib.auth.urls')),
-    # app-specific account urls (dashboard, register, etc.)
+    # App-specific account URLs first so our custom login/logout win.
     path('accounts/', include('accounts.urls')),
+    # Django contrib auth URLs for the remaining defaults (password_change etc.)
+    path('accounts/', include('django.contrib.auth.urls')),
     path('videos/', include('videos.urls')),
     path('referrals/', include('referrals.urls')),
     path('favicon.ico', RedirectView.as_view(url=staticfiles_storage.url('images/favicon.ico'))),

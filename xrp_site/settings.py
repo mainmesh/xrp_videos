@@ -84,8 +84,23 @@ STRIPE_API_KEY = config('STRIPE_API_KEY', default='')
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
 
 # Login URLs
-LOGIN_URL = 'login'
+LOGIN_URL = 'accounts:login'
 LOGOUT_REDIRECT_URL = 'home'
+
+# Password validation
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
+
+# Password reset link lifetime (24 hours, as advertised in the email)
+PASSWORD_RESET_TIMEOUT = 86400
+
+# Sessions: default 2 weeks, but "Remember me" extends, "session" closes on browser close
+SESSION_COOKIE_AGE = 1209600
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 # Email Configuration
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')

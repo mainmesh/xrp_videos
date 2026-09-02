@@ -1,0 +1,32 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resend verification - xrpvideos</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>* { font-family: 'Inter', sans-serif; box-sizing: border-box; } .input-field { width: 100%; padding: 0.875rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(139,92,246,0.3); border-radius: 0.75rem; color: #ffffff; font-size: 0.95rem; outline: none; } .input-field:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.15); } .btn-primary { width: 100%; padding: 0.875rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; font-weight: 600; border-radius: 0.75rem; border: none; cursor: pointer; }</style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4" style="background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);">
+    <div class="w-full max-w-md p-8 rounded-2xl shadow-2xl" style="background: rgba(30,27,75,0.5); border: 1px solid rgba(139,92,246,0.2);">
+        <h1 class="text-2xl font-bold text-white mb-2">Resend verification</h1>
+        {% if sent %}
+        <div class="p-4 mb-4 rounded-lg bg-green-500/10 border border-green-500/30 text-green-300 text-sm">
+            If an account exists for that email and isn't already verified, we've just sent a new link. Check your inbox.
+        </div>
+        {% else %}
+        <p class="text-gray-400 text-sm mb-6">Enter the email you signed up with. We'll send a new verification link.</p>
+        <form method="post">{% csrf_token %}
+            <label class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+            {{ form.email }}
+            {% if form.email.errors %}<p class="text-red-300 text-xs mt-1">{{ form.email.errors.0 }}</p>{% endif %}
+            <button type="submit" class="btn-primary mt-4">Send verification link</button>
+        </form>
+        {% endif %}
+        <a href="{% url 'accounts:login' %}" class="block mt-4 text-purple-400 hover:text-purple-300 text-sm text-center">Back to sign in</a>
+    </div>
+</body>
+</html>

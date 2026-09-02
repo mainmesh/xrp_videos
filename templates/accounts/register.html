@@ -1,85 +1,243 @@
-{% extends "base.html" %}
-{% block title %}Register{% endblock %}
-{% block content %}
-  <div class="max-w-md mx-auto">
-    <div class="dark-glass rounded-2xl p-8 border border-purple-500/30">
-      <h2 class="text-3xl font-bold gradient-text mb-2">Create Account</h2>
-      <p class="text-gray-400 mb-8">Join thousands earning by watching videos</p>
-      
-      <form method="post" class="space-y-4">
-        {% csrf_token %}
-        
-        {% if form.non_field_errors %}
-          <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-            <p class="text-red-300 text-sm">{{ form.non_field_errors }}</p>
-          </div>
-        {% endif %}
-        
-        {% for field in form %}
-          <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
-              {{ field.label }}
-            </label>
-            {% if field.field.widget.input_type == 'checkbox' %}
-              {{ field }}
-            {% else %}
-              {% if field.field.widget.input_type == 'password' %}
-                <div class="relative">
-                  <input type="password" name="{{ field.name }}" id="{{ field.id_for_label }}" class="w-full px-4 py-3 pr-12 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" placeholder="{{ field.field.widget.attrs.placeholder }}" {% if field.value %}value="{{ field.value }}"{% endif %} />
-                  <button 
-                    type="button" 
-                    onclick="togglePasswordField('{{ field.id_for_label }}')" 
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition"
-                    aria-label="Toggle password visibility"
-                  >
-                    <svg class="eye-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                    </svg>
-                    <svg class="eye-off-icon w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
-                    </svg>
-                  </button>
-                </div>
-              {% elif field.field.widget.input_type == 'email' or field.field.widget.input_type == 'text' %}
-                <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}" class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" placeholder="{{ field.field.widget.attrs.placeholder }}" {% if field.value %}value="{{ field.value }}"{% endif %} />
-              {% else %}
-                {{ field }}
-              {% endif %}
-            {% endif %}
-            {% if field.errors %}
-              <p class="text-red-300 text-xs mt-1">{{ field.errors.0 }}</p>
-            {% endif %}
-          </div>
-        {% endfor %}
-        
-        <button type="submit" class="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition mt-6">
-          Create Account 🚀
-        </button>
-      </form>
-      
-      <p class="text-center text-gray-400 text-sm mt-6">
-        Already have an account? <a href="{% url 'login' %}" class="text-purple-400 hover:text-purple-300 font-semibold">Log in</a>
-      </p>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - xrpvideos</title>
+    <meta name="theme-color" content="#667eea">
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+        html, body { overflow-x: hidden; width: 100%; max-width: 100vw; }
+        * { max-width: 100%; word-wrap: break-word; overflow-wrap: break-word; }
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .dark-glass { background: rgba(30, 27, 75, 0.5); backdrop-filter: blur(10px); border: 1px solid rgba(139, 92, 246, 0.2); }
+        .input-field { width: 100%; padding: 0.875rem 1rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(139,92,246,0.3); border-radius: 0.75rem; color: #ffffff; font-size: 0.95rem; transition: all 0.3s ease; outline: none; }
+        .input-field::placeholder { color: #6b7280; }
+        .input-field:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.15); background: rgba(255,255,255,0.08); }
+        .input-field.error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.15); }
+        .btn-primary { width: 100%; padding: 0.875rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; font-weight: 600; border-radius: 0.75rem; border: none; cursor: pointer; transition: all 0.3s ease; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .btn-primary:hover { background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%); transform: translateY(-1px); box-shadow: 0 10px 25px -5px rgba(102,126,234,0.4); }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .checkbox-field { width: 1.125rem; height: 1.125rem; accent-color: #667eea; cursor: pointer; }
+        .divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(139,92,246,0.3), transparent); }
+        .req-list { list-style: none; padding: 0; margin: 0.5rem 0 0; font-size: 0.8rem; color: #9ca3af; }
+        .req-list li { display: flex; align-items: center; gap: 0.5rem; padding: 0.15rem 0; }
+        .req-list .ok { color: #10b981; }
+        .req-list .fail { color: #9ca3af; }
+        .strength-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; margin-top: 0.5rem; }
+        .strength-bar > div { height: 100%; width: 0%; transition: width 0.3s ease, background 0.3s ease; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out; }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        @media (max-width: 640px) { .p-8 { padding: 1.25rem !important; } }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style="background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);">
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-float"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl animate-float" style="animation-delay: 3s;"></div>
     </div>
-  </div>
 
-  <script>
-    function togglePasswordField(inputId) {
-      const passwordInput = document.getElementById(inputId);
-      const button = passwordInput.nextElementSibling;
-      const eyeIcon = button.querySelector('.eye-icon');
-      const eyeOffIcon = button.querySelector('.eye-off-icon');
-      
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        eyeIcon.classList.add('hidden');
-        eyeOffIcon.classList.remove('hidden');
-      } else {
-        passwordInput.type = 'password';
-        eyeIcon.classList.remove('hidden');
-        eyeOffIcon.classList.add('hidden');
-      }
-    }
-  </script>
-{% endblock %}
+    <div class="w-full max-w-md relative z-10 animate-fade-in-up">
+        <div class="dark-glass rounded-2xl p-8 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-bg mb-4 shadow-lg shadow-purple-500/30">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold gradient-text mb-2">Create Account</h1>
+                <p class="text-gray-400 text-sm">Join thousands earning by watching videos</p>
+            </div>
+
+            {% if messages %}
+            <div class="mb-6 space-y-3">
+                {% for message in messages %}
+                <div class="p-4 rounded-lg border flex items-center gap-3 {% if message.tags == 'success' %}bg-green-500/10 border-green-500/30 text-green-300{% elif message.tags == 'error' %}bg-red-500/10 border-red-500/30 text-red-300{% else %}bg-blue-500/10 border-blue-500/30 text-blue-300{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {% if message.tags == 'success' %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        {% else %}<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>{% endif %}
+                    </svg>
+                    <span class="text-sm">{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if rate_limited %}
+            <div class="p-4 mb-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                Too many sign-up attempts from this device. Please try again later.
+            </div>
+            {% endif %}
+
+            <form method="post" class="space-y-4" id="registerForm">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                    {{ form.non_field_errors.0 }}
+                </div>
+                {% endif %}
+
+                <!-- Username -->
+                <div>
+                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}<p class="text-red-300 text-xs mt-1.5">{{ form.username.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}<p class="text-red-300 text-xs mt-1.5">{{ form.email.errors.0 }}</p>{% endif %}
+                    <p class="text-gray-500 text-xs mt-1">We'll send a verification link here.</p>
+                </div>
+
+                <!-- First name (optional) -->
+                <div>
+                    <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">First name <span class="text-gray-500">(optional)</span></label>
+                    {{ form.first_name }}
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                    <div class="relative">
+                        {{ form.password1 }}
+                        <button type="button" onclick="togglePasswordVisibility('{{ form.password1.id_for_label }}','pw1-eye','pw1-eyeoff')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition p-1" aria-label="Toggle password visibility">
+                            <svg id="pw1-eye" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            <svg id="pw1-eyeoff" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
+                        </button>
+                    </div>
+                    {% if form.password1.errors %}<p class="text-red-300 text-xs mt-1.5">{{ form.password1.errors.0 }}</p>{% endif %}
+
+                    <div class="strength-bar mt-2"><div id="pw-strength-fill"></div></div>
+                    <ul class="req-list" id="pw-reqs">
+                        <li id="req-len" class="fail">• At least 8 characters</li>
+                        <li id="req-upper" class="fail">• Contains an uppercase letter</li>
+                        <li id="req-num" class="fail">• Contains a number</li>
+                        <li id="req-match" class="fail">• Matches confirmation</li>
+                    </ul>
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Confirm password</label>
+                    <div class="relative">
+                        {{ form.password2 }}
+                        <button type="button" onclick="togglePasswordVisibility('{{ form.password2.id_for_label }}','pw2-eye','pw2-eyeoff')" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition p-1" aria-label="Toggle password visibility">
+                            <svg id="pw2-eye" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            <svg id="pw2-eyeoff" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
+                        </button>
+                    </div>
+                    {% if form.password2.errors %}<p class="text-red-300 text-xs mt-1.5">{{ form.password2.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- Anti-bot math -->
+                <div class="p-4 rounded-xl bg-slate-800/40 border border-purple-500/20">
+                    <label for="{{ form.captcha_answer.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">Anti-bot check: {{ captcha.question }}</label>
+                    <div class="flex gap-2">
+                        {{ form.captcha_a }}
+                        {{ form.captcha_b }}
+                        {{ form.captcha_answer }}
+                    </div>
+                    {% if form.captcha_answer.errors %}<p class="text-red-300 text-xs mt-1.5">{{ form.captcha_answer.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- Terms -->
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" name="accept_terms" class="checkbox-field mt-0.5" required />
+                    <span class="text-xs text-gray-300">I agree to the <a href="#" class="text-purple-400 hover:text-purple-300 underline">Terms of Service</a> and <a href="#" class="text-purple-400 hover:text-purple-300 underline">Privacy Policy</a>, and confirm I am at least 18 years old.</span>
+                </label>
+                {% if form.accept_terms.errors %}<p class="text-red-300 text-xs mt-1.5">{{ form.accept_terms.errors.0 }}</p>{% endif %}
+
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" name="marketing_opt_in" class="checkbox-field mt-0.5" />
+                    <span class="text-xs text-gray-400">Send me product tips and tier-upgrade offers.</span>
+                </label>
+
+                <button type="submit" class="btn-primary" id="submitBtn">
+                    <span id="btnText">Create Account 🚀</span>
+                    <div id="btnSpinner" class="spinner hidden"></div>
+                </button>
+            </form>
+
+            <p class="text-center text-gray-400 text-sm mt-6">
+                Already have an account? <a href="{% url 'accounts:login' %}" class="text-purple-400 hover:text-purple-300 font-semibold">Log in</a>
+            </p>
+            <p class="text-center text-gray-500 text-xs mt-4">
+                <a href="{% url 'home' %}" class="hover:text-gray-400 transition inline-flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to main site
+                </a>
+            </p>
+        </div>
+        <p class="text-center text-gray-500 text-xs mt-6">&copy; {% now "Y" %} xrpvideos. All rights reserved.</p>
+    </div>
+
+    <script>
+        function togglePasswordVisibility(inputId, eyeId, eyeOffId) {
+            const i = document.getElementById(inputId);
+            const e = document.getElementById(eyeId);
+            const eo = document.getElementById(eyeOffId);
+            if (i.type === 'password') { i.type = 'text'; e.classList.add('hidden'); eo.classList.remove('hidden'); }
+            else { i.type = 'password'; e.classList.remove('hidden'); eo.classList.add('hidden'); }
+        }
+
+        const pw1 = document.getElementById('{{ form.password1.id_for_label }}');
+        const pw2 = document.getElementById('{{ form.password2.id_for_label }}');
+        const reqLen = document.getElementById('req-len');
+        const reqUpper = document.getElementById('req-upper');
+        const reqNum = document.getElementById('req-num');
+        const reqMatch = document.getElementById('req-match');
+        const fill = document.getElementById('pw-strength-fill');
+
+        function score(pw) {
+            let s = 0;
+            if (pw.length >= 8) s += 25;
+            if (pw.length >= 12) s += 15;
+            if (/[A-Z]/.test(pw)) s += 20;
+            if (/[a-z]/.test(pw)) s += 10;
+            if (/[0-9]/.test(pw)) s += 20;
+            if (/[^A-Za-z0-9]/.test(pw)) s += 20;
+            return Math.min(100, s);
+        }
+        function updateReq(el, ok) {
+            if (!el) return;
+            el.classList.toggle('ok', ok);
+            el.classList.toggle('fail', !ok);
+        }
+        function refresh() {
+            const v = pw1.value;
+            updateReq(reqLen, v.length >= 8);
+            updateReq(reqUpper, /[A-Z]/.test(v));
+            updateReq(reqNum, /[0-9]/.test(v));
+            updateReq(reqMatch, v && v === pw2.value);
+            const s = score(v);
+            fill.style.width = s + '%';
+            fill.style.background = s < 40 ? '#ef4444' : s < 70 ? '#f59e0b' : '#10b981';
+        }
+        pw1.addEventListener('input', refresh);
+        pw2.addEventListener('input', refresh);
+
+        document.getElementById('registerForm').addEventListener('submit', function() {
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            document.getElementById('btnText').textContent = 'Creating account...';
+            document.getElementById('btnSpinner').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>

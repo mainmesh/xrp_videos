@@ -11,6 +11,13 @@ class Profile(models.Model):
     referred_by = models.ForeignKey(User, null=True, blank=True, related_name='referred_users', on_delete=models.SET_NULL)
     referrals_count = models.IntegerField(default=0)
     current_tier = models.ForeignKey('videos.Tier', null=True, blank=True, on_delete=models.SET_NULL, help_text="Current tier the user has access to")
+    last_login_ip = models.GenericIPAddressField(null=True, blank=True)
+    last_login_at = models.DateTimeField(null=True, blank=True)
+    email_verified = models.BooleanField(default=False)
+    accepted_terms_at = models.DateTimeField(null=True, blank=True)
+    marketing_opt_in = models.BooleanField(default=False)
+    failed_login_count = models.IntegerField(default=0)
+    locked_until = models.DateTimeField(null=True, blank=True)
 
     def credit(self, amount: float, reason: str = "", transaction_type: str = "deposit", video=None):
         from decimal import Decimal
@@ -51,6 +58,46 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - ${self.balance:.2f}"
+
+
+class EmailVerification(models.Model):
+    """One-time token sent by email to confirm a user's email address on signup
+    or when the user changes their email. The token expires in 24 hours."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='email_verifications')
+    token = models.CharField(max_length=64, unique=True)
+    new_email = models.EmailField(blank=True, help_text="Filled when verifying an email change.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def is_valid(self):
+        from django.utils import timezone
+        return self.used_at is None and timezone.now() < self.expires_at
+
+    def __str__(self):
+        return f"EmailVerification(user={self.user.username}, used={'{bool(self.used_at)}'})"
+
+
+class LoginAttempt(models.Model):
+    """Tracks login attempts (success/failure) and timestamps, used for rate-limit
+    inspection and showing the user 'last login' info."""
+
+    username = models.CharField(max_length=150)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, blank=True)
+    success = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [models.Index(fields=['username', 'created_at'])]
+
+    def __str__(self):
+        return f"LoginAttempt({self.username}, success={self.success}, ip={self.ip_address})"
 
 
 class Deposit(models.Model):
