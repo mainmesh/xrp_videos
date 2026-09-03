@@ -310,9 +310,10 @@ def register(request):
     ip = client_ip(request)
     if is_rate_limited('register:ip', f'ip:{ip}', REGISTER_LIMIT, REGISTER_WINDOW_SECONDS):
         messages.error(request, 'Too many registration attempts from this device. Please try again later.')
+        _c = make_math_captcha()
         return render(request, 'accounts/register.html', {
-            'form': RegisterForm(),
-            'captcha': make_math_captcha(),
+            'form': RegisterForm(captcha=_c),
+            'captcha': _c,
             'rate_limited': True,
         }, status=429)
 
@@ -348,14 +349,19 @@ def register(request):
             request.session['pending_verification_user'] = user.username
             return redirect('accounts:verification_sent')
         record_attempt('register:ip', f'ip:{ip}', REGISTER_WINDOW_SECONDS)
+        # Preserve the original captcha on re-render so the displayed question
+        # still matches the hidden `captcha_a`/`captcha_b` values in the form.
+        orig_a = int(request.POST.get('captcha_a', 0))
+        orig_b = int(request.POST.get('captcha_b', 0))
         return render(request, 'accounts/register.html', {
             'form': form,
-            'captcha': make_math_captcha(),
+            'captcha': {'a': orig_a, 'b': orig_b, 'question': f'What is {orig_a} + {orig_b}?'},
         })
 
+    captcha = make_math_captcha()
     return render(request, 'accounts/register.html', {
-        'form': RegisterForm(),
-        'captcha': make_math_captcha(),
+        'form': RegisterForm(captcha=captcha),
+        'captcha': captcha,
     })
 
 
@@ -371,10 +377,11 @@ def login_view(request):
     blocked = is_rate_limited('login:ip', f'ip:{ip}', LOGIN_IP_LIMIT, LOGIN_FAIL_WINDOW_SECONDS)
     if blocked:
         messages.error(request, 'Too many failed sign-in attempts from this device. Please try again in 15 minutes.')
+        _c = make_math_captcha()
         return render(request, 'accounts/login.html', {
-            'form': LoginForm(request=request),
+            'form': LoginForm(request=request, require_captcha=True, captcha=_c),
             'captcha_required': True,
-            'captcha': make_math_captcha(),
+            'captcha': _c,
             'blocked': True,
         }, status=429)
 
@@ -388,10 +395,11 @@ def login_view(request):
             # Check account lock (brute-force lockout).
             if user.profile.locked_until and user.profile.locked_until > timezone.now():
                 messages.error(request, 'Account temporarily locked. Please try again later.')
+                _c = make_math_captcha()
                 return render(request, 'accounts/login.html', {
-                    'form': LoginForm(request=request),
+                    'form': LoginForm(request=request, require_captcha=True, captcha=_c),
                     'captcha_required': True,
-                    'captcha': make_math_captcha(),
+                    'captcha': _c,
                 }, status=403)
 
             if not user.profile.email_verified:
@@ -452,16 +460,21 @@ def login_view(request):
 
         require_captcha = captcha_required('login', request, username=identifier)
         messages.error(request, 'Invalid email or password.')
+        # Preserve original captcha on re-render so the displayed question
+        # still matches the hidden inputs in the bound form.
+        orig_a = int(request.POST.get('captcha_a', 0))
+        orig_b = int(request.POST.get('captcha_b', 0))
         return render(request, 'accounts/login.html', {
             'form': LoginForm(request=request, data=request.POST, require_captcha=require_captcha, captcha=make_math_captcha()),
             'captcha_required': require_captcha,
-            'captcha': make_math_captcha(),
+            'captcha': {'a': orig_a, 'b': orig_b, 'question': f'What is {orig_a} + {orig_b}?'},
         })
 
+    captcha = make_math_captcha() if require_captcha else None
     return render(request, 'accounts/login.html', {
-        'form': LoginForm(request=request, require_captcha=require_captcha, captcha=make_math_captcha() if require_captcha else None),
+        'form': LoginForm(request=request, require_captcha=require_captcha, captcha=captcha),
         'captcha_required': require_captcha,
-        'captcha': make_math_captcha() if require_captcha else None,
+        'captcha': captcha,
     })
 
 
