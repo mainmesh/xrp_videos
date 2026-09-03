@@ -342,8 +342,8 @@
                         <div class="field">
                             <label for="{{ form.captcha_answer.id_for_label }}">Anti-bot · {{ captcha.question }}</label>
                             <div class="input-wrap" style="max-width: 160px;">
-                                <input type="hidden" name="captcha_a" value="{{ form.captcha_a.value }}">
-                                <input type="hidden" name="captcha_b" value="{{ form.captcha_b.value }}">
+                                <input type="hidden" name="captcha_a" value="{{ captcha.a }}">
+                                <input type="hidden" name="captcha_b" value="{{ captcha.b }}">
                                 <input type="number" name="captcha_answer" id="{{ form.captcha_answer.id_for_label }}" class="input" placeholder="?" inputmode="numeric" autocomplete="off" required>
                             </div>
                             {% if form.captcha_answer.errors %}<div class="error-text">{{ form.captcha_answer.errors.0 }}</div>{% endif %}

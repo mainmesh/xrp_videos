@@ -79,7 +79,11 @@ class RegisterForm(UserCreationForm):
             css = field.widget.attrs.get('class', '')
             if 'input-field' not in css and not isinstance(field.widget, (forms.CheckboxInput,)):
                 field.widget.attrs['class'] = (css + ' input-field').strip()
-        # captcha question rendered by view into hidden fields + a label
+        # Always ensure the hidden captcha operands have a valid initial value
+        # so templates never render value="None" (which breaks int() on POST).
+        if captcha is None:
+            from .ratelimit import make_math_captcha
+            captcha = make_math_captcha()
         if captcha:
             self.fields['captcha_a'].initial = captcha['a']
             self.fields['captcha_b'].initial = captcha['b']

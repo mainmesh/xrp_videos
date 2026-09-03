@@ -302,6 +302,17 @@ def request_withdrawal(request):
     return render(request, "accounts/withdrawal_form.html", {"profile": profile})
 
 
+def _captcha_from_post(request):
+    a = request.POST.get('captcha_a')
+    b = request.POST.get('captcha_b')
+    try:
+        a = int(a)
+        b = int(b)
+        return {'a': a, 'b': b, 'question': f'What is {a} + {b}?'}
+    except (TypeError, ValueError):
+        return make_math_captcha()
+
+
 def register(request):
     """Email-verified registration: collects email, runs a math captcha, sends
     a verification link, and only logs the user in after they confirm. Until
@@ -349,13 +360,9 @@ def register(request):
             request.session['pending_verification_user'] = user.username
             return redirect('accounts:verification_sent')
         record_attempt('register:ip', f'ip:{ip}', REGISTER_WINDOW_SECONDS)
-        # Preserve the original captcha on re-render so the displayed question
-        # still matches the hidden `captcha_a`/`captcha_b` values in the form.
-        orig_a = int(request.POST.get('captcha_a', 0))
-        orig_b = int(request.POST.get('captcha_b', 0))
         return render(request, 'accounts/register.html', {
             'form': form,
-            'captcha': {'a': orig_a, 'b': orig_b, 'question': f'What is {orig_a} + {orig_b}?'},
+            'captcha': _captcha_from_post(request),
         })
 
     captcha = make_math_captcha()
@@ -460,14 +467,10 @@ def login_view(request):
 
         require_captcha = captcha_required('login', request, username=identifier)
         messages.error(request, 'Invalid email or password.')
-        # Preserve original captcha on re-render so the displayed question
-        # still matches the hidden inputs in the bound form.
-        orig_a = int(request.POST.get('captcha_a', 0))
-        orig_b = int(request.POST.get('captcha_b', 0))
         return render(request, 'accounts/login.html', {
             'form': LoginForm(request=request, data=request.POST, require_captcha=require_captcha, captcha=make_math_captcha()),
             'captcha_required': require_captcha,
-            'captcha': {'a': orig_a, 'b': orig_b, 'question': f'What is {orig_a} + {orig_b}?'},
+            'captcha': _captcha_from_post(request),
         })
 
     captcha = make_math_captcha() if require_captcha else None
