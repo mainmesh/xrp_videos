@@ -89,21 +89,27 @@ def video_list(request):
     if request.user.is_authenticated:
         from django.utils import timezone
         today = timezone.now().date()
-        # Get all verified watched videos for this user
-        watched_video_ids = set(WatchHistory.objects.filter(
-            user=request.user, 
+        watched_history_ids = set(WatchHistory.objects.filter(
+            user=request.user,
             verified=True
         ).values_list('video_id', flat=True))
-        # Check if user has watched any video today
+        watched_watch_ids = set(VideoWatch.objects.filter(
+            user=request.user,
+            credited=True
+        ).values_list('video_id', flat=True))
+        watched_video_ids = watched_history_ids | watched_watch_ids
+
         watched_today = WatchHistory.objects.filter(
             user=request.user,
             verified=True,
             watched_at__date=today
+        ).exists() or VideoWatch.objects.filter(
+            user=request.user,
+            credited=True,
+            credited_at__date=today
         ).exists()
         if show_available:
-            # Filter to only show unwatched videos
             videos = [v for v in videos if v.id not in watched_video_ids]
-        # Restrict: If user has watched a video today, show no videos
         if watched_today:
             videos = []
     context = {
@@ -141,9 +147,13 @@ def video_detail(request, pk):
     # Check if user has already watched and earned from this video
     if request.user.is_authenticated:
         already_watched = WatchHistory.objects.filter(
-            user=request.user, 
-            video=video, 
+            user=request.user,
+            video=video,
             verified=True
+        ).exists() or VideoWatch.objects.filter(
+            user=request.user,
+            video=video,
+            credited=True
         ).exists()
     
     context = {

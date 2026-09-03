@@ -149,162 +149,121 @@
 
       {% if not already_watched %}
       <script>
-        // Client-side watch verification: timer + auto-submit
-        const videoDuration = {{ video.duration_seconds }}; // seconds
-        let rewardSubmitted = false; // Prevent duplicate submissions
-        
+        const videoId = {{ video.id }};
+        const videoDuration = {{ video.duration_seconds }};
+        let rewardSubmitted = false;
+        let clientId = null;
+
         function formatTime(s) {
           const mins = Math.floor(s / 60);
           const secs = Math.floor(s % 60);
           return String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
         }
-        
-        // set total duration display nicely
+
         const totalDurationElem = document.getElementById('total-duration');
         if (totalDurationElem) {
           const total = parseInt(totalDurationElem.textContent || '0', 10);
           totalDurationElem.textContent = formatTime(total);
         }
-        
+
         const watchTimer = document.getElementById('watch-timer');
         const progressBar = document.getElementById('progress-bar');
         const submitBtn = document.getElementById('submit-btn');
-        const watchForm = document.getElementById('watch-complete');
         const watchedSecondsInput = document.getElementById('watched-seconds-input');
         let watchedSeconds = 0;
-        
-        // Heartbeat: POST to server every 10s and increment timer every second
-        function sendHeartbeat(sec){
-          console.log('Sending heartbeat:', sec);
-          fetch("{% url 'videos:heartbeat' %}", {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({seconds: sec, video_id: {{ video.id }}})
-          })
-          .then(response => response.json())
-          .then(data => console.log('Heartbeat response:', data))
-          .catch(err => console.error('Heartbeat error:', err));
+
+        async function startWatch() {
+          try {
+            const res = await fetch(`/videos/${videoId}/watch/start/`, {
+              method: 'POST',
+              headers: {'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest'}
+            });
+            const data = await res.json();
+            if (data.ok) clientId = data.client_id;
+          } catch (e) {
+            console.error('startWatch error', e);
+          }
         }
+
+        async function sendHeartbeat(sec) {
+          if (!clientId) return;
+          try {
+            await fetch(`/videos/${videoId}/watch/heartbeat/`, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+              body: JSON.stringify({seconds: sec, client_id: clientId})
+            });
+          } catch (e) {
+            console.error('heartbeat error', e);
+          }
+        }
+
+        async function submitReward() {
+          if (!clientId) return;
+          if (sessionStorage.getItem('submitting_' + videoId) === 'true') return;
+          sessionStorage.setItem('submitting_' + videoId, 'true');
+
+          submitBtn.textContent = '⏳ Processing...';
+          submitBtn.disabled = true;
+
+          try {
+            const formData = new FormData();
+            formData.append('client_id', clientId);
+
+            const res = await fetch(`/videos/${videoId}/watch/complete/`, {
+              method: 'POST',
+              body: formData,
+              headers: {'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest'}
+            });
+            const data = await res.json();
+            sessionStorage.removeItem('submitting_' + videoId);
+
+            if (data.ok) {
+              sessionStorage.setItem('video_' + videoId + '_watched', 'true');
+              const rewardAmount = parseFloat(data.amount || 0).toFixed(2);
+              document.getElementById('reward-amount').textContent = '$' + rewardAmount;
+              document.getElementById('success-modal').classList.remove('hidden');
+
+              setTimeout(() => {
+                window.location.href = '{% url "videos:list" %}?available=1';
+              }, 4000);
+            } else {
+              alert('Error: ' + (data.error || 'unknown'));
+              submitBtn.disabled = false;
+              submitBtn.textContent = '❌ Error - Try Again';
+            }
+          } catch (e) {
+            console.error('submitReward error', e);
+            sessionStorage.removeItem('submitting_' + videoId);
+            alert('An error occurred while claiming your reward. Please try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '❌ Error - Try Again';
+          }
+        }
+
+        startWatch();
 
         const watchInterval = setInterval(() => {
           if (watchedSeconds < videoDuration) {
             watchedSeconds += 1;
             watchTimer.textContent = formatTime(watchedSeconds);
-            
-            // Update hidden input
-            if (watchedSecondsInput) {
-              watchedSecondsInput.value = watchedSeconds;
-            }
-            
-            // Update progress bar
+            if (watchedSecondsInput) watchedSecondsInput.value = watchedSeconds;
             const percentage = (watchedSeconds / videoDuration) * 100;
             progressBar.style.width = percentage + '%';
-            
-            // Send heartbeat every 10 seconds
-            if (watchedSeconds % 10 === 0) {
-              sendHeartbeat(watchedSeconds);
-            }
+            if (watchedSeconds % 10 === 0) sendHeartbeat(watchedSeconds);
           }
 
-          // Enable submit button when full duration watched
           if (watchedSeconds >= videoDuration && !rewardSubmitted) {
             console.log('Video complete! Submitting reward...');
-            clearInterval(watchInterval); // Stop the timer
-            
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('bg-slate-700', 'text-gray-300', 'cursor-not-allowed');
-            submitBtn.classList.add('bg-gradient-to-r', 'from-green-600', 'to-emerald-600', 'hover:from-green-500', 'hover:to-emerald-500', 'cursor-pointer');
-            submitBtn.textContent = '✓ Claim Your Reward! 🎉';
-            
-            // Auto-submit after a brief delay via AJAX
+            clearInterval(watchInterval);
             rewardSubmitted = true;
-            setTimeout(() => {
-              submitReward();
-            }, 500);
+            submitReward();
           }
         }, 1000);
-        
-        // Submit reward via AJAX
-        function submitReward() {
-          if (rewardSubmitted && sessionStorage.getItem('submitting_{{ video.id }}') === 'true') {
-            console.log('Already submitting, skipping...');
-            return;
-          }
-          
-          console.log('Submitting reward for video {{ video.id }}...');
-          sessionStorage.setItem('submitting_{{ video.id }}', 'true');
-          
-          const formData = new FormData(watchForm);
-          
-          // Show loading state
-          submitBtn.textContent = '⏳ Processing...';
-          submitBtn.disabled = true;
-          
-          fetch(watchForm.action, {
-            method: 'POST',
-            body: formData,
-            headers: {
-              'X-Requested-With': 'XMLHttpRequest'
-            }
-          })
-          .then(response => {
-            console.log('Response status:', response.status);
-            return response.json();
-          })
-          .then(data => {
-            console.log('Response data:', data);
-            sessionStorage.removeItem('submitting_{{ video.id }}');
-            
-            if (data.status === 'credited') {
-              // Mark as watched in sessionStorage to prevent re-watching on refresh
-              sessionStorage.setItem('video_{{ video.id }}_watched', 'true');
-              
-              // Show success modal with reward amount
-              const rewardAmount = parseFloat(data.reward || 0).toFixed(2);
-              console.log('Reward credited: $' + rewardAmount);
-              document.getElementById('reward-amount').textContent = '$' + rewardAmount;
-              document.getElementById('success-modal').classList.remove('hidden');
-              
-              // Redirect to videos list after 4 seconds
-              setTimeout(() => {
-                window.location.href = '{% url "videos:list" %}?available=1';
-              }, 4000);
-            } else if (data.error) {
-              console.error('Error from server:', data.error, data.message);
-              alert('Error: ' + (data.message || data.error));
-              submitBtn.textContent = '❌ Error';
-              
-              // Reload page to show "already watched" message if applicable
-              if (data.error === 'already_credited' || data.error === 'one_video_per_day') {
-                setTimeout(() => {
-                  window.location.reload();
-                }, 2000);
-              }
-            }
-          })
-          .catch(error => {
-            console.error('Fetch error:', error);
-            sessionStorage.removeItem('submitting_{{ video.id }}');
-            alert('An error occurred while claiming your reward. Please check the console and try again.');
-            submitBtn.textContent = '❌ Error - Try Again';
-            submitBtn.disabled = false;
-          });
-        }
-        
-        // Check if video was already watched in this session
-        if (sessionStorage.getItem('video_{{ video.id }}_watched') === 'true') {
-          // Reload to show "already watched" message from server
+
+        if (sessionStorage.getItem('video_' + videoId + '_watched') === 'true') {
           window.location.reload();
         }
-        
-        // Prevent default form submission, use AJAX instead
-        watchForm.addEventListener('submit', function(e) {
-          e.preventDefault();
-          submitReward();
-        });
       </script>
       {% endif %}
     {% endif %}
