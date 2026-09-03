@@ -2,12 +2,20 @@ import os
 from decouple import config, Csv
 import dj_database_url
 
+
+def _bool(val, default=False):
+    if val == '':
+        return default
+    if isinstance(val, bool):
+        return val
+    return str(val).strip().lower() in ('true', '1', 'yes', 'on')
+
+
 # Secret Key
 SECRET_KEY = config('SECRET_KEY', default='dummy-key-change-this-in-production')
 
 # Debug Mode
-# Default to True for local development when env var is not set.
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = _bool(config('DEBUG', default=True))
 
 # Allowed Hosts
 
@@ -106,7 +114,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_USE_TLS = _bool(config('EMAIL_USE_TLS', default=True))
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='xrpvideos Team <noreply@xrpvideos.com>')
