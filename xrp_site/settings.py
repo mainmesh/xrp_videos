@@ -111,11 +111,13 @@ SESSION_COOKIE_AGE = 1209600
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 # Email Configuration
-EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend').strip()
+if not EMAIL_BACKEND.endswith('EmailBackend'):
+    EMAIL_BACKEND = EMAIL_BACKEND.rstrip('.') + '.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com').strip()
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = _bool(config('EMAIL_USE_TLS', default=True))
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='xrpvideos Team <noreply@xrpvideos.com>')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='').strip()
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='').strip()
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='xrpvideos Team <noreply@xrpvideos.com>').strip()
 SERVER_EMAIL = DEFAULT_FROM_EMAIL

@@ -333,32 +333,39 @@ def register(request):
         form = RegisterForm(request.POST, request=request, captcha=captcha)
         if form.is_valid():
             record_attempt('register:ip', f'ip:{ip}', REGISTER_WINDOW_SECONDS)
-            user = form.save()
-            user.is_active = False
-            user.save()
+            try:
+                user = form.save()
+                user.is_active = False
+                user.save()
 
-            ref_code = request.session.pop('referral_code', None)
-            if ref_code:
-                try:
-                    rl = ReferralLink.objects.get(code=ref_code)
-                    user.profile.referred_by = rl.user
-                    user.profile.save()
+                ref_code = request.session.pop('referral_code', None)
+                if ref_code:
                     try:
-                        rl.user.profile.referrals_count = (rl.user.profile.referrals_count or 0) + 1
-                        rl.user.profile.save()
-                    except Exception:
+                        rl = ReferralLink.objects.get(code=ref_code)
+                        user.profile.referred_by = rl.user
+                        user.profile.save()
+                        try:
+                            rl.user.profile.referrals_count = (rl.user.profile.referrals_count or 0) + 1
+                            rl.user.profile.save()
+                        except Exception:
+                            pass
+                    except ReferralLink.DoesNotExist:
                         pass
-                except ReferralLink.DoesNotExist:
-                    pass
 
-            send_verification_email(user, request)
-            messages.success(
-                request,
-                f"Account created! We sent a verification link to {user.email}. "
-                "Please check your inbox (and spam folder) to activate your account.",
-            )
-            request.session['pending_verification_user'] = user.username
-            return redirect('accounts:verification_sent')
+                send_verification_email(user, request)
+                messages.success(
+                    request,
+                    f"Account created! We sent a verification link to {user.email}. "
+                    "Please check your inbox (and spam folder) to activate your account.",
+                )
+                request.session['pending_verification_user'] = user.username
+                return redirect('accounts:verification_sent')
+            except Exception as e:
+                messages.error(request, f'Registration failed: {str(e)}. Please try again.')
+                return render(request, 'accounts/register.html', {
+                    'form': form,
+                    'captcha': _captcha_from_post(request),
+                })
         record_attempt('register:ip', f'ip:{ip}', REGISTER_WINDOW_SECONDS)
         return render(request, 'accounts/register.html', {
             'form': form,
@@ -680,7 +687,7 @@ def profile(request):
 
 
 @login_required
-def settings(request):
+def account_settings(request):
     """Display account settings page."""
     password_form = PasswordChangeForm(request.user)
     context = {

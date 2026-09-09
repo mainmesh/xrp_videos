@@ -147,12 +147,14 @@ class WithdrawalRequest(models.Model):
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)
-        # Also create referral link
-        import uuid
-        from referrals.models import ReferralLink
-        code = str(uuid.uuid4())[:8].upper()
-        ReferralLink.objects.create(user=instance, code=code)
+        try:
+            Profile.objects.create(user=instance)
+            import uuid
+            from referrals.models import ReferralLink
+            code = str(uuid.uuid4())[:8].upper()
+            ReferralLink.objects.create(user=instance, code=code)
+        except Exception as e:
+            print(f"Failed to create profile/referral for {instance.username}: {e}")
 
 
 class PaymentAttempt(models.Model):
