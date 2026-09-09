@@ -89,50 +89,6 @@
     </div>
 </div>
 
-<!-- Legacy Deposits -->
-<div>
-    <h2 class="text-xl font-bold text-gray-800 mb-4">💵 Direct Deposits (Legacy)</h2>
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    {% for deposit in deposits %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold text-xs">
-                                    {{ deposit.user.username|slice:":1"|upper }}
-                                </div>
-                                <p class="text-sm font-medium text-gray-900">{{ deposit.user.username }}</p>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4"><span class="text-sm font-bold">${{ deposit.amount|floatformat:2 }}</span></td>
-                        <td class="px-6 py-4">
-                            {% if deposit.success %}
-                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Success</span>
-                            {% else %}
-                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Failed</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500">{{ deposit.created_at|date:"M d, Y H:i" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="4" class="px-6 py-12 text-center text-gray-500">No deposits found</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
 <!-- Reject Modal -->
 <div id="reject-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -151,10 +107,10 @@
     </div>
 </div>
 
-<!-- SMS Modal -->
+<!-- Details Modal -->
 <div id="sms-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-        <h3 class="text-lg font-bold mb-4">📱 M-Pesa SMS Message</h3>
+        <h3 class="text-lg font-bold mb-4">Payment Details</h3>
         <div class="bg-gray-100 p-4 rounded border border-gray-300 mb-4">
             <pre id="sms-content" class="whitespace-pre-wrap text-sm"></pre>
         </div>

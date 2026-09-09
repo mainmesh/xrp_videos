@@ -1,5 +1,7 @@
 from django.contrib import admin, messages
-from .models import PaymentAttempt, Transaction
+from .models import PaymentAttempt, Transaction, Profile, Deposit, WithdrawalRequest
+from django.utils.html import format_html
+from django.db.models import Sum
 
 
 @admin.action(description="Mark selected attempts as verified and credit users")
@@ -30,10 +32,6 @@ class PaymentAttemptAdmin(admin.ModelAdmin):
     actions = (mark_verified, mark_rejected)
     readonly_fields = ("created_at", "verified_at")
     ordering = ("-created_at",)
-from django.contrib import admin
-from django.utils.html import format_html
-from django.db.models import Sum
-from .models import Profile, Deposit, WithdrawalRequest
 
 
 @admin.register(Profile)
@@ -62,10 +60,10 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Deposit)
 class DepositAdmin(admin.ModelAdmin):
-    list_display = ("user", "amount_display", "created_at", "success_badge", "stripe_payment_intent")
+    list_display = ("user", "amount_display", "created_at", "success_badge")
     list_filter = ("success", "created_at")
-    search_fields = ("user__username", "user__email", "stripe_payment_intent")
-    readonly_fields = ("created_at", "stripe_payment_intent")
+    search_fields = ("user__username", "user__email")
+    readonly_fields = ("created_at",)
     date_hierarchy = "created_at"
     ordering = ("-created_at",)
     
@@ -76,8 +74,8 @@ class DepositAdmin(admin.ModelAdmin):
     
     def success_badge(self, obj):
         if obj.success:
-            return format_html('<span style="background: #28a745; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold;">✓ SUCCESS</span>')
-        return format_html('<span style="background: #dc3545; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold;">✗ FAILED</span>')
+            return format_html('<span style="background: #28a745; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold;">SUCCESS</span>')
+        return format_html('<span style="background: #dc3545; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: bold;">FAILED</span>')
     success_badge.short_description = "Status"
     
     def get_queryset(self, request):
@@ -120,12 +118,12 @@ class WithdrawalAdmin(admin.ModelAdmin):
             w.approve(request.user)
             count += 1
         self.message_user(request, f"{count} withdrawal(s) approved successfully.", level="success")
-    approve_withdrawals.short_description = "✓ Approve selected withdrawals"
+    approve_withdrawals.short_description = "Approve selected withdrawals"
     
     def reject_withdrawals(self, request, queryset):
         count = queryset.filter(status="pending").update(status="rejected")
         self.message_user(request, f"{count} withdrawal(s) rejected.", level="warning")
-    reject_withdrawals.short_description = "✗ Reject selected withdrawals"
+    reject_withdrawals.short_description = "Reject selected withdrawals"
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -141,11 +139,9 @@ class TransactionAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
     
     def has_add_permission(self, request):
-        # Prevent manual creation of transactions
         return False
     
     def has_delete_permission(self, request, obj=None):
-        # Prevent deletion of transaction records (audit trail)
         return False
     
     def get_queryset(self, request):

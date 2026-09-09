@@ -1,6 +1,5 @@
 from django.urls import path, include
 from core.views import home, about, tiers, chatbot
-from accounts.views import stripe_webhook
 from django.views.generic.base import RedirectView
 from django.contrib.staticfiles.storage import staticfiles_storage
 
@@ -11,8 +10,6 @@ urlpatterns = [
     path('tiers/', tiers, name='tiers'),
     # Chatbot
     path('api/chatbot/', chatbot, name='chatbot'),
-    # Stripe webhook
-    path('stripe/webhook/', stripe_webhook, name='stripe_webhook'),
     # App-specific account URLs first so our custom login/logout win.
     path('accounts/', include('accounts.urls')),
     # Django contrib auth URLs for the remaining defaults (password_change etc.)

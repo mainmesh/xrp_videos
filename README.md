@@ -6,7 +6,7 @@ This is a minimal Watch-to-Earn Django starter app inspired by the user's requir
 - Video categories, tiers, and self-hosted videos
 - Watch verification endpoint that credits rewards and referral bonuses
 - Referral link placeholder and referral bonus model
-- Deposit and withdrawal models (Stripe integration placeholder)
+- Deposit and withdrawal models (M-Pesa Till and Crypto wallets)
 - Simple Tailwind-styled templates
 
 Quick setup
@@ -33,7 +33,7 @@ Visit `/admin/` to add `Tier`, `Category`, and `Video` entries and manage withdr
 
 Notes / next steps
 
-- The deposit flow uses a placeholder view. Integrate Stripe PaymentIntents and webhooks for production.
+- The deposit flow supports M-Pesa Till Number and Crypto wallets (SOL, BTC, ETH).
 - Email notifications are placeholders; integrate `django.core.mail` or a transactional email provider.
 - For robust watch verification use client-side heartbeat + server-side timestamp checks.
 - For production, build Tailwind properly instead of CDN, and secure settings/keys via environment variables.

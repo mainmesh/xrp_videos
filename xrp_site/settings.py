@@ -87,10 +87,6 @@ SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
 SECURE_HSTS_PRELOAD = not DEBUG
 
-# Stripe settings (set via env vars in production)
-STRIPE_API_KEY = config('STRIPE_API_KEY', default='')
-STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
-
 # Login URLs
 LOGIN_URL = 'accounts:login'
 LOGOUT_REDIRECT_URL = 'home'

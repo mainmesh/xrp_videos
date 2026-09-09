@@ -451,14 +451,12 @@ def reject_withdrawal(request, withdrawal_id):
 
 @staff_required
 def deposits_list(request):
-    """List all deposits and payment attempts."""
+    """List all payment attempts."""
     from accounts.models import PaymentAttempt
     
-    deposits = Deposit.objects.select_related('user').order_by('-created_at')
     payment_attempts = PaymentAttempt.objects.select_related('user').order_by('-created_at')
     
     context = {
-        'deposits': deposits,
         'payment_attempts': payment_attempts,
     }
     

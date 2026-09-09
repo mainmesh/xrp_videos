@@ -104,7 +104,6 @@ class Deposit(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amount = models.FloatField()
     created_at = models.DateTimeField(auto_now_add=True)
-    stripe_payment_intent = models.CharField(max_length=200, null=True, blank=True)
     success = models.BooleanField(default=False)
 
     def __str__(self):

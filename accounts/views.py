@@ -8,7 +8,6 @@ from django.contrib.auth import login as auth_login, logout as auth_logout, upda
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm, AuthenticationForm  # noqa: F401
 from django.contrib import messages
 from referrals.models import ReferralLink
-import stripe
 from django.conf import settings
 import uuid
 import re
@@ -23,8 +22,6 @@ from .ratelimit import (
 from .emails import send_verification_email, send_login_alert
 
 
-stripe.api_key = settings.STRIPE_API_KEY
-
 # Configurable knobs
 LOGIN_FAIL_WINDOW_SECONDS = 900   # 15 min rolling
 LOGIN_FAIL_LIMIT = 5              # 5 failures -> captcha
@@ -33,38 +30,6 @@ RESET_WINDOW_SECONDS = 600
 RESET_LIMIT = 5
 REGISTER_WINDOW_SECONDS = 3600
 REGISTER_LIMIT = 8
-
-
-def placeholder_deposit(request):
-    """Placeholder deposit view. In production, integrate Stripe payment flow."""
-    from videos.models import Tier
-    
-    if request.method == "POST":
-        if not request.user.is_authenticated:
-            return JsonResponse({"error": "login_required"}, status=401)
-        
-        amount = float(request.POST.get("amount", 0))
-        deposit = Deposit.objects.create(user=request.user, amount=amount)
-        
-        # Determine tier based on deposit amount
-        try:
-            tier = Tier.objects.filter(price__lte=amount).order_by('-price').first()
-            if tier:
-                request.user.profile.current_tier = tier
-                request.user.profile.credit(amount, reason="deposit")  # Add to wallet
-                request.user.profile.save()
-        except Exception:
-            pass
-        
-        # Return success with tier info
-        return JsonResponse({
-            "status": "created",
-            "deposit_id": deposit.id,
-            "tier_upgraded": request.user.profile.current_tier.name if request.user.profile.current_tier else None
-        })
-    
-    tiers = Tier.objects.all().order_by('price')
-    return render(request, "accounts/deposit_placeholder.html", {"tiers": tiers})
 
 
 def get_exchange_rates():
@@ -575,71 +540,6 @@ def custom_password_reset(request, *args, **kwargs):
         success_url='/accounts/password-reset/done/',
         from_email=settings.DEFAULT_FROM_EMAIL,
     )(request, *args, **kwargs)
-
-
-@login_required
-@require_http_methods(["POST"])
-def create_payment_intent(request):
-    """Create a Stripe PaymentIntent for a deposit."""
-    try:
-        amount = int(float(request.POST.get("amount", 0)) * 100)  # cents
-        if amount <= 0:
-            return JsonResponse({"error": "invalid_amount"}, status=400)
-        
-        # Create PaymentIntent
-        intent = stripe.PaymentIntent.create(
-            amount=amount,
-            currency="usd",
-            metadata={"user_id": request.user.id}
-        )
-        
-        # Record deposit in DB
-        deposit = Deposit.objects.create(
-            user=request.user,
-            amount=amount / 100,
-            stripe_payment_intent=intent['id']
-        )
-        
-        return JsonResponse({"client_secret": intent['client_secret'], "deposit_id": deposit.id})
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-
-
-@require_http_methods(["POST"])
-def stripe_webhook(request):
-    """Handle Stripe webhook to mark deposits as successful."""
-    from videos.models import Tier
-    import json
-    try:
-        event_json = json.loads(request.body)
-        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
-        
-        # In production, verify signature:
-        # event = stripe.Webhook.construct_event(request.body, sig_header, settings.STRIPE_WEBHOOK_SECRET)
-        # For now, just process it (NOT SECURE for production)
-        event = event_json
-        
-        if event['type'] == 'payment_intent.succeeded':
-            pi = event['data']['object']
-            try:
-                deposit = Deposit.objects.get(stripe_payment_intent=pi['id'])
-                deposit.success = True
-                deposit.save()
-                # Credit user's wallet with deposit amount
-                user = deposit.user
-                user.profile.credit(deposit.amount, reason="deposit")
-                
-                # Upgrade tier based on deposit amount
-                tier = Tier.objects.filter(price__lte=deposit.amount).order_by('-price').first()
-                if tier:
-                    user.profile.current_tier = tier
-                    user.profile.save()
-            except Deposit.DoesNotExist:
-                pass
-        
-        return JsonResponse({"status": "ok"})
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
 
 
 @login_required
