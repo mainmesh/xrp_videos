@@ -40,21 +40,40 @@ class SiteSettings(models.Model):
 
 
 class PaymentOption(models.Model):
-    """Payment methods where users can send money.
+    """Payment methods where users can deposit money.
 
-    - `name`: Display name (e.g., 'Bank Transfer', 'M-Pesa', 'Bitcoin').
-    - `countries`: optional comma-separated list of ISO country codes this option applies to. Blank means global.
-    - `currency`: optional currency code for this option.
-    - `instructions`: free-form instructions or account details shown to the user.
-    - `active`: whether the option should be shown.
-    - `sort_order`: ordering when displayed.
+    Types:
+    - mpesa_till: M-Pesa Till Number payment
+    - crypto_wallet: Cryptocurrency wallet (Solana, Bitcoin, Ethereum)
+
+    Fields vary by type:
+    - mpesa_till: till_number, currency, countries
+    - crypto_wallet: crypto_network (SOL/BTC/ETH), wallet_address
     """
+    PAYMENT_TYPES = (
+        ('mpesa_till', 'M-Pesa Till'),
+        ('crypto_wallet', 'Crypto Wallet'),
+    )
+    CRYPTO_NETWORKS = (
+        ('SOL', 'Solana (SOL)'),
+        ('BTC', 'Bitcoin (BTC)'),
+        ('ETH', 'Ethereum (ETH)'),
+    )
+
     name = models.CharField(max_length=100)
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPES, default='mpesa_till')
     countries = models.CharField(max_length=200, blank=True, help_text="Comma-separated ISO country codes (e.g. US,GB,KE). Blank = all countries")
     currency = models.CharField(max_length=10, blank=True)
     instructions = models.TextField(blank=True, help_text="Payment instructions or account details")
     active = models.BooleanField(default=True)
     sort_order = models.IntegerField(default=100)
+
+    # M-Pesa Till fields
+    till_number = models.CharField(max_length=20, blank=True, help_text="M-Pesa Till Number (e.g. 156307)")
+
+    # Crypto wallet fields
+    crypto_network = models.CharField(max_length=10, choices=CRYPTO_NETWORKS, blank=True, help_text="Cryptocurrency network")
+    wallet_address = models.CharField(max_length=255, blank=True, help_text="Crypto wallet address")
 
     class Meta:
         ordering = ["sort_order", "name"]

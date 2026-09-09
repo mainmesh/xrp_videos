@@ -13,6 +13,7 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Country</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -33,6 +34,13 @@
                         </td>
                         <td class="px-6 py-4"><span class="text-sm font-bold">${{ payment.amount|floatformat:2 }}</span></td>
                         <td class="px-6 py-4">
+                            <span class="text-xs text-gray-700">
+                                {% if payment.payment_type == 'mpesa_till' %}M-Pesa Till
+                                {% elif payment.payment_type == 'crypto_wallet' %}Crypto
+                                {% else %}{{ payment.payment_type|default:"—" }}{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
                             <span class="text-sm text-gray-700">
                                 {% if payment.country == 'KE' %}🇰🇪 Kenya
                                 {% elif payment.country == 'TZ' %}🇹🇿 Tanzania
@@ -42,11 +50,11 @@
                         <td class="px-6 py-4"><span class="text-sm text-gray-700">{{ payment.phone|default:"—" }}</span></td>
                         <td class="px-6 py-4">
                             {% if payment.status == 'verified' %}
-                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">✓ Verified</span>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Verified</span>
                             {% elif payment.status == 'rejected' %}
-                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">✗ Rejected</span>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Rejected</span>
                             {% else %}
-                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">⏳ Pending</span>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500">{{ payment.created_at|date:"M d, Y H:i" }}</td>
@@ -56,15 +64,15 @@
                                 <a href="{% url 'admin_panel:approve_payment' payment.id %}" 
                                    onclick="return confirm('Approve this payment of ${{ payment.amount }} for {{ payment.user.username }}?')"
                                    class="px-3 py-1 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white rounded transition">
-                                    ✓ Approve
+                                    Approve
                                 </a>
                                 <button onclick="showRejectModal({{ payment.id }}, '{{ payment.user.username }}', '{{ payment.amount }}')"
                                         class="px-3 py-1 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded transition">
-                                    ✗ Reject
+                                    Reject
                                 </button>
                                 <button onclick="showMessageModal('{{ payment.raw_message|escapejs }}')"
                                         class="px-3 py-1 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded transition">
-                                    📱 View SMS
+                                    View Details
                                 </button>
                             </div>
                             {% else %}
@@ -73,7 +81,7 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="7" class="px-6 py-12 text-center text-gray-500">No payment submissions yet</td></tr>
+                    <tr><td colspan="8" class="px-6 py-12 text-center text-gray-500">No payment submissions yet</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

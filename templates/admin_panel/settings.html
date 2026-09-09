@@ -79,4 +79,129 @@
         </button>
     </form>
 </div>
+
+<!-- Payment Settings -->
+<div class="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
+    <h3 class="text-xl font-bold text-gray-800 mb-6">Payment Settings</h3>
+    <form method="post" action="{% url 'admin_panel:settings' %}" class="space-y-6">
+        {% csrf_token %}
+        <input type="hidden" name="settings_type" value="payments">
+
+        <!-- M-Pesa Till -->
+        <div class="border border-gray-200 rounded-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-semibold text-gray-800">M-Pesa Till Number</h4>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="mpesa_till_active" class="sr-only peer" {% if mpesa_till and mpesa_till.active %}checked{% endif %}>
+                    <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Till Number</label>
+                    <input type="text" name="mpesa_till_number" value="{% if mpesa_till %}{{ mpesa_till.till_number }}{% endif %}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <p class="mt-1 text-xs text-gray-500">M-Pesa Till Number for users to send money to</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Instructions</label>
+                    <textarea name="mpesa_instructions" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">{% if mpesa_till %}{{ mpesa_till.instructions }}{% endif %}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- M-Pesa Till -->
+        <div class="border border-gray-200 rounded-lg p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h4 class="text-lg font-semibold text-gray-800">M-Pesa Till Number</h4>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="mpesa_till_active" class="sr-only peer" {% if mpesa_till and mpesa_till.active %}checked{% endif %}>
+                    <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-600"></div>
+                </label>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Till Number</label>
+                    <input type="text" name="mpesa_till_number" value="{% if mpesa_till %}{{ mpesa_till.till_number }}{% endif %}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <p class="mt-1 text-xs text-gray-500">M-Pesa Till Number for users to send money to</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Instructions</label>
+                    <textarea name="mpesa_instructions" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">{% if mpesa_till %}{{ mpesa_till.instructions }}{% endif %}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crypto Wallets -->
+        <div class="border border-gray-200 rounded-lg p-6">
+            <h4 class="text-lg font-semibold text-gray-800 mb-4">Crypto Wallet Addresses</h4>
+            <div class="space-y-6">
+                {% with sol=crypto_sol btc=crypto_btc eth=crypto_eth %}
+                <div class="border border-gray-100 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h5 class="font-medium text-gray-700">Solana (SOL)</h5>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="crypto_active_SOL" class="sr-only peer" {% if sol and sol.active %}checked{% endif %}>
+                            <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Wallet Address</label>
+                            <input type="text" name="crypto_wallet_SOL" value="{% if sol %}{{ sol.wallet_address }}{% endif %}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm" placeholder="Enter SOL wallet address">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Instructions</label>
+                            <textarea name="crypto_instructions_SOL" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">{% if sol %}{{ sol.instructions }}{% endif %}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-gray-100 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h5 class="font-medium text-gray-700">Bitcoin (BTC)</h5>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="crypto_active_BTC" class="sr-only peer" {% if btc and btc.active %}checked{% endif %}>
+                            <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Wallet Address</label>
+                            <input type="text" name="crypto_wallet_BTC" value="{% if btc %}{{ btc.wallet_address }}{% endif %}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm" placeholder="Enter BTC wallet address">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Instructions</label>
+                            <textarea name="crypto_instructions_BTC" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">{% if btc %}{{ btc.instructions }}{% endif %}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-gray-100 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h5 class="font-medium text-gray-700">Ethereum (ETH)</h5>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="crypto_active_ETH" class="sr-only peer" {% if eth and eth.active %}checked{% endif %}>
+                            <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Wallet Address</label>
+                            <input type="text" name="crypto_wallet_ETH" value="{% if eth %}{{ eth.wallet_address }}{% endif %}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono text-sm" placeholder="Enter ETH wallet address">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Instructions</label>
+                            <textarea name="crypto_instructions_ETH" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">{% if eth %}{{ eth.instructions }}{% endif %}</textarea>
+                        </div>
+                    </div>
+                </div>
+                {% endwith %}
+            </div>
+        </div>
+
+        <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
+            Save Payment Settings
+        </button>
+    </form>
+</div>
 {% endblock %}

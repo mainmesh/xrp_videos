@@ -583,13 +583,14 @@ def fix_tier_names(request):
 @staff_required
 def settings_view(request):
     """Admin settings page."""
+    from admin_panel.models import PaymentOption, SiteSettings
     site_settings = SiteSettings.get_settings()
-    
+    payment_options = PaymentOption.objects.all().order_by('sort_order', 'name')
+
     if request.method == 'POST':
         settings_type = request.POST.get('settings_type', 'maintenance')
-        
+
         if settings_type == 'platform':
-            # Update all platform settings
             site_settings.site_name = request.POST.get('site_name', site_settings.site_name)
             site_settings.contact_email = request.POST.get('contact_email', site_settings.contact_email)
             site_settings.min_withdrawal_amount = request.POST.get('min_withdrawal_amount', site_settings.min_withdrawal_amount)
@@ -598,24 +599,47 @@ def settings_view(request):
             site_settings.referral_bonus_percentage = request.POST.get('referral_bonus_percentage', site_settings.referral_bonus_percentage)
             site_settings.default_video_reward = request.POST.get('default_video_reward', site_settings.default_video_reward)
             messages.success(request, 'Platform settings updated successfully.')
-        else:
-            # Update maintenance mode
+        elif settings_type == 'maintenance':
             if 'maintenance_mode' in request.POST:
                 site_settings.maintenance_mode = True
             else:
                 site_settings.maintenance_mode = False
-            
-            # Update maintenance message if provided
+
             if 'maintenance_message' in request.POST:
                 site_settings.maintenance_message = request.POST.get('maintenance_message')
-            
+
             messages.success(request, 'Maintenance settings updated successfully.')
-        
+        elif settings_type == 'payments':
+            # Update M-Pesa Till
+            till_option = payment_options.filter(payment_type='mpesa_till').first()
+            if till_option:
+                till_option.till_number = request.POST.get('mpesa_till_number', till_option.till_number)
+                till_option.instructions = request.POST.get('mpesa_instructions', till_option.instructions)
+                till_option.active = 'mpesa_till_active' in request.POST
+                till_option.save()
+                messages.success(request, 'M-Pesa Till settings updated successfully.')
+
+            # Update Crypto wallets
+            for network in ['SOL', 'BTC', 'ETH']:
+                crypto_option = payment_options.filter(payment_type='crypto_wallet', crypto_network=network).first()
+                if crypto_option:
+                    crypto_option.wallet_address = request.POST.get(f'crypto_wallet_{network}', crypto_option.wallet_address)
+                    crypto_option.instructions = request.POST.get(f'crypto_instructions_{network}', crypto_option.instructions)
+                    crypto_option.active = f'crypto_active_{network}' in request.POST
+                    crypto_option.save()
+
+            messages.success(request, 'Crypto wallet settings updated successfully.')
+
         site_settings.save()
         return redirect('admin_panel:settings')
-    
+
     context = {
         'site_settings': site_settings,
+        'payment_options': payment_options,
+        'mpesa_till': payment_options.filter(payment_type='mpesa_till').first(),
+        'crypto_sol': payment_options.filter(payment_type='crypto_wallet', crypto_network='SOL').first(),
+        'crypto_btc': payment_options.filter(payment_type='crypto_wallet', crypto_network='BTC').first(),
+        'crypto_eth': payment_options.filter(payment_type='crypto_wallet', crypto_network='ETH').first(),
     }
     return render(request, 'admin_panel/settings.html', context)
 

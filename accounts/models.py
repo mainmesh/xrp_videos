@@ -163,12 +163,17 @@ class PaymentAttempt(models.Model):
         ("verified", "Verified"),
         ("rejected", "Rejected"),
     )
+    PAYMENT_TYPES = (
+        ("mpesa_till", "M-Pesa Till"),
+        ("crypto_wallet", "Crypto Wallet"),
+    )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     country = models.CharField(max_length=10, blank=True, null=True)
     phone = models.CharField(max_length=50, blank=True)
     payment_option = models.ForeignKey('admin_panel.PaymentOption', null=True, blank=True, on_delete=models.SET_NULL)
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPES, default='mpesa_till')
     raw_message = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)

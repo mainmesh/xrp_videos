@@ -1,165 +1,180 @@
 {% extends "base.html" %}
-{% block title %}Send M-Pesa Payment{% endblock %}
+{% block title %}Deposit{% endblock %}
 {% block content %}
   <div class="max-w-3xl mx-auto">
-    <!-- Payment Instructions -->
-    <div class="dark-glass rounded-2xl p-8 border border-green-500/30 mb-6">
-      <h2 class="text-3xl font-bold gradient-text mb-4">💰 Send Payment</h2>
-      
-      <!-- Country Selection -->
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-gray-300 mb-2">Select Your Country</label>
-        <select id="country-select" class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500 transition text-lg font-semibold">
-          <option value="KE">🇰🇪 Kenya (M-Pesa)</option>
-          <option value="TZ">🇹🇿 Tanzania (M-Pesa)</option>
-        </select>
-      </div>
+    <h2 class="text-3xl font-bold gradient-text mb-8">💰 Deposit Funds</h2>
 
-      <!-- Amount Display -->
-      <div class="mb-6 p-6 bg-gradient-to-r from-green-600/20 to-emerald-600/20 border border-green-500/30 rounded-xl">
-        <p class="text-sm text-gray-300 mb-2">Amount to Send:</p>
-        <div class="text-4xl font-bold text-white mb-2">
-          <span id="local-currency">KES</span> <span id="local-amount">5,000</span>
-        </div>
-        <p class="text-sm text-gray-400">≈ $<span id="usd-amount">50.00</span> USD</p>
-        <p class="text-xs text-gray-500 mt-2">💱 Exchange rate: 1 USD = <span id="rate-display">{{ exchange_rates.KES|default:100 }} KES</span> (Live rate)</p>
-      </div>
+    {% if mpesa_options.exists or crypto_options.exists %}
+    <div class="space-y-6">
+      {% if mpesa_options.exists %}
+      <!-- M-Pesa Till Section -->
+      <div class="dark-glass rounded-2xl p-8 border border-green-500/30">
+        <h3 class="text-2xl font-bold text-white mb-4">📱 M-Pesa Till Number</h3>
 
-      <!-- Kenya Instructions -->
-      <div id="instructions-ke" class="payment-instructions">
-        <h3 class="text-xl font-bold text-white mb-4">📱 Send Money via M-Pesa</h3>
-        <div class="space-y-4">
-          <div class="p-4 bg-blue-600/10 border border-blue-500/30 rounded-lg">
-            <p class="text-sm text-gray-300 mb-1">Send to Phone Number:</p>
-            <p class="text-3xl font-bold text-blue-300">0792167414</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Select Your Country</label>
+            <select id="country-select" class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500 transition text-lg font-semibold">
+              <option value="KE">🇰🇪 Kenya (M-Pesa)</option>
+              <option value="TZ">🇹🇿 Tanzania (M-Pesa)</option>
+            </select>
           </div>
 
-          <div class="bg-slate-800/50 rounded-lg p-4">
-            <p class="font-semibold text-white mb-3">Follow these steps:</p>
-            <ol class="space-y-2 text-gray-300 text-sm">
-              <li class="flex gap-2"><span class="font-bold text-green-400">1.</span> Go to M-Pesa menu on your phone</li>
-              <li class="flex gap-2"><span class="font-bold text-green-400">2.</span> Select "Send Money" or "Lipa na M-Pesa"</li>
-              <li class="flex gap-2"><span class="font-bold text-green-400">3.</span> Enter phone number: <strong class="text-white">0792167414</strong></li>
-              <li class="flex gap-2"><span class="font-bold text-green-400">4.</span> Enter amount: <strong class="text-white" id="ke-amount">KES 5,000</strong></li>
-              <li class="flex gap-2"><span class="font-bold text-green-400">5.</span> Enter your M-Pesa PIN and confirm</li>
-              <li class="flex gap-2"><span class="font-bold text-green-400">6.</span> You'll receive a confirmation SMS</li>
-            </ol>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Deposit Amount (USD)</label>
+            <input type="number" id="usd-amount" value="50" min="1" step="1" class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500 transition text-lg font-semibold">
           </div>
         </div>
-      </div>
 
-      <!-- Tanzania Instructions -->
-      <div id="instructions-tz" class="payment-instructions hidden">
-        <h3 class="text-xl font-bold text-white mb-4">📱 Send Money via M-Pesa</h3>
-        <div class="space-y-4">
-          <div class="p-4 bg-blue-600/10 border border-blue-500/30 rounded-lg">
-            <p class="text-sm text-gray-300 mb-1">Send to Phone Number:</p>
-            <p class="text-3xl font-bold text-blue-300">0741029973</p>
+        <div class="mt-6 p-6 bg-gradient-to-r from-green-600/20 to-emerald-600/20 border border-green-500/30 rounded-xl">
+          <p class="text-sm text-gray-300 mb-2">Amount to Send:</p>
+          <div class="text-4xl font-bold text-white mb-2">
+            <span id="local-currency">KES</span> <span id="local-amount">5,000</span>
           </div>
-
-          <div class="bg-slate-800/50 rounded-lg p-4">
-            <p class="font-semibold text-white mb-3">Follow these steps:</p>
-            <ol class="space-y-2 text-gray-300 text-sm">
-              <li class="flex gap-2"><span class="font-bold text-green-400">1.</span> Go to M-Pesa menu on your phone</li>
-              <li class="flex gap-2"><span class="font-bold text-green-400">2.</span> Select "Send Money" or "Lipa na M-Pesa"</li>
-              <li class="flex gap-2"><span class="font-bold text-green-400">3.</span> Enter phone number: <strong class="text-white">0741029973</strong></li>
-              <li class="flex gap-2"><span class="font-bold text-green-400">4.</span> Enter amount: <strong class="text-white" id="tz-amount">TZS 115,000</strong></li>
-              <li class="flex gap-2"><span class="font-bold text-green-400">5.</span> Enter your M-Pesa PIN and confirm</li>
-              <li class="flex gap-2"><span class="font-bold text-green-400">6.</span> You'll receive a confirmation SMS</li>
-            </ol>
-          </div>
+          <p class="text-sm text-gray-400">≈ $<span id="usd-display">50.00</span> USD</p>
+          <p class="text-xs text-gray-500 mt-2">💱 Exchange rate: 1 USD = <span id="rate-display">{{ exchange_rates.KES|default:100 }} KES</span> (Live rate)</p>
         </div>
-      </div>
 
-      <div class="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-        <p class="text-sm text-yellow-300">
-          <strong>⚠️ Important:</strong> Send the EXACT amount shown above to avoid delays in verification.
-        </p>
+        {% for opt in mpesa_options %}
+        <div class="mt-6 p-4 bg-slate-800/50 border border-purple-500/30 rounded-lg">
+          <h4 class="text-xl font-bold text-white mb-4">📱 Pay via M-Pesa Till</h4>
+          <div class="p-4 bg-blue-600/10 border border-blue-500/30 rounded-lg mb-4">
+            <p class="text-sm text-gray-300 mb-1">Till Number:</p>
+            <p class="text-3xl font-bold text-blue-300">{{ opt.till_number|default:'1563070' }}</p>
+          </div>
+          {% if opt.instructions %}
+          <div class="text-sm text-gray-300 whitespace-pre-line">{{ opt.instructions }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+
+        <form method="post" class="mt-6 space-y-4">
+          {% csrf_token %}
+          <input type="hidden" name="payment_type" value="mpesa_till">
+          <input type="hidden" name="amount" id="amount-input" />
+          <input type="hidden" name="country" id="country-input" value="KE" />
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Phone Number You Used</label>
+            <input name="phone" type="text" placeholder="e.g. 0712345678" class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">M-Pesa Confirmation Message</label>
+            <textarea name="note" rows="5" required class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" placeholder="Paste your full M-Pesa SMS here. Example:&#10;&#10;RKQ7XYZ123 Confirmed. Ksh5,000.00 sent to 1563070 on 20/1/26 at 3:45 PM..."></textarea>
+          </div>
+
+          <button type="submit" class="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-lg transition shadow-lg">
+            Submit M-Pesa Payment
+          </button>
+        </form>
       </div>
+      {% endif %}
+
+      {% if crypto_options.exists %}
+      <!-- Crypto Section -->
+      <div class="dark-glass rounded-2xl p-8 border border-purple-500/30">
+        <h3 class="text-2xl font-bold text-white mb-4">₿ Cryptocurrency</h3>
+        <p class="text-gray-400 mb-6">Send crypto to one of the wallet addresses below. Select your network and enter the transaction hash after sending.</p>
+
+        <div class="grid grid-cols-1 gap-4">
+          {% for opt in crypto_options %}
+          <div class="p-4 bg-slate-800/50 border border-purple-500/30 rounded-lg">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-lg font-bold text-white">
+                {% if opt.crypto_network == 'SOL' %}Solana (SOL)
+                {% elif opt.crypto_network == 'BTC' %}Bitcoin (BTC)
+                {% else %}Ethereum (ETH)
+                {% endif %}
+              </h4>
+              <span class="px-2 py-1 bg-purple-500/20 border border-purple-500/50 rounded text-xs text-purple-300">Active</span>
+            </div>
+            <div class="p-3 bg-slate-900/50 rounded-lg mb-3">
+              <p class="text-xs text-gray-400 mb-1">Wallet Address</p>
+              <p class="font-mono text-sm text-green-400 break-all">{{ opt.wallet_address|default:'Not configured' }}</p>
+            </div>
+            {% if opt.instructions %}
+            <p class="text-xs text-gray-400">{{ opt.instructions }}</p>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+
+        <form method="post" class="mt-6 space-y-4">
+          {% csrf_token %}
+          <input type="hidden" name="payment_type" value="crypto_wallet" />
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Cryptocurrency Network</label>
+            <select name="crypto_network" class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500 transition">
+              {% for opt in crypto_options %}
+              <option value="{{ opt.crypto_network }}">{{ opt.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Amount (USD)</label>
+              <input type="number" name="amount" min="1" step="0.01" required class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" placeholder="100.00" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">Transaction Hash / ID</label>
+              <input type="text" name="note" required class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition font-mono text-sm" placeholder="Paste transaction hash" />
+            </div>
+          </div>
+
+          <button type="submit" class="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition shadow-lg">
+            Submit Crypto Payment
+          </button>
+        </form>
+      </div>
+      {% endif %}
     </div>
-
-    <!-- Verification Form -->
-    <div class="dark-glass rounded-2xl p-8 border border-purple-500/30">
-      <h3 class="text-2xl font-bold gradient-text mb-2">✅ Submit Confirmation Message</h3>
-      <p class="text-gray-400 mb-6">After sending money, paste your M-Pesa confirmation SMS below</p>
-      
-      <form method="post" class="space-y-4">
-        {% csrf_token %}
-        <input type="hidden" name="amount" id="amount-input" />
-        <input type="hidden" name="country" id="country-input" value="KE" />
-
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">Phone Number You Used</label>
-          <input name="phone" type="text" placeholder="e.g. 0712345678" class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" />
-          <p class="text-xs text-gray-400 mt-1">The phone number you used to send the money</p>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">M-Pesa Confirmation Message</label>
-          <textarea name="message" rows="6" required class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition" placeholder="Paste your full M-Pesa SMS here. Example:&#10;&#10;RKQ7XYZ123 Confirmed. Ksh5,000.00 sent to 0792167414 on 20/1/26 at 3:45 PM..."></textarea>
-          <p class="text-xs text-gray-400 mt-1">Copy and paste the entire SMS you received after sending money</p>
-        </div>
-
-        <button type="submit" class="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-lg transition shadow-lg">
-          ✓ Submit for Verification
-        </button>
-      </form>
-
-      <div class="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-        <p class="text-xs text-blue-300">
-          <strong>ℹ️ Note:</strong> We'll automatically verify your payment and credit your balance. If automatic verification fails, our team will manually review within 24 hours.
-        </p>
-      </div>
+    {% else %}
+    <div class="dark-glass rounded-2xl p-8 border border-yellow-500/30 text-center">
+      <p class="text-gray-300 text-lg">No payment methods are currently available. Please contact support.</p>
     </div>
+    {% endif %}
   </div>
 
+  {% if mpesa_options.exists %}
   <script>
-    // Exchange rates (live from API, updated hourly)
     const EXCHANGE_RATES = {
       'KE': {{ exchange_rates.KES|default:100 }},
       'TZ': {{ exchange_rates.TZS|default:2300 }}
     };
-
     const CURRENCY_SYMBOLS = {
       'KE': 'KES',
       'TZ': 'TZS'
     };
 
-    // Get amount from URL parameter
-    const urlParams = new URLSearchParams(window.location.search);
-    const usdAmount = parseFloat(urlParams.get('amount')) || 50;
-    
-    document.getElementById('usd-amount').textContent = usdAmount.toFixed(2);
-    document.getElementById('amount-input').value = usdAmount.toFixed(2);
-
-    // Update display when country changes
     const countrySelect = document.getElementById('country-select');
-    
+    const usdInput = document.getElementById('usd-amount');
+    const localCurrency = document.getElementById('local-currency');
+    const localAmount = document.getElementById('local-amount');
+    const usdDisplay = document.getElementById('usd-display');
+    const rateDisplay = document.getElementById('rate-display');
+    const amountInput = document.getElementById('amount-input');
+    const countryInput = document.getElementById('country-input');
+
     function updatePaymentInfo() {
       const country = countrySelect.value;
       const rate = EXCHANGE_RATES[country];
-      const localAmount = Math.ceil(usdAmount * rate);
-      
-      // Update currency display
-      document.getElementById('local-currency').textContent = CURRENCY_SYMBOLS[country];
-      document.getElementById('local-amount').textContent = localAmount.toLocaleString();
-      document.getElementById('country-input').value = country;
-      
-      // Update exchange rate display
-      document.getElementById('rate-display').textContent = rate + ' ' + CURRENCY_SYMBOLS[country];
-      
-      // Update instructions for each country
-      document.getElementById('ke-amount').textContent = 'KES ' + Math.ceil(usdAmount * EXCHANGE_RATES.KE).toLocaleString();
-      document.getElementById('tz-amount').textContent = 'TZS ' + Math.ceil(usdAmount * EXCHANGE_RATES.TZ).toLocaleString();
-      
-      // Show/hide country-specific instructions
-      document.getElementById('instructions-ke').classList.toggle('hidden', country !== 'KE');
-      document.getElementById('instructions-tz').classList.toggle('hidden', country !== 'TZ');
+      const usd = parseFloat(usdInput.value || 0);
+      const local = Math.ceil(usd * rate);
+
+      localCurrency.textContent = CURRENCY_SYMBOLS[country];
+      localAmount.textContent = local.toLocaleString();
+      usdDisplay.textContent = usd.toFixed(2);
+      rateDisplay.textContent = rate + ' ' + CURRENCY_SYMBOLS[country];
+      amountInput.value = usd.toFixed(2);
+      countryInput.value = country;
     }
-    
+
     countrySelect.addEventListener('change', updatePaymentInfo);
-    
-    // Initialize on page load
+    usdInput.addEventListener('input', updatePaymentInfo);
     updatePaymentInfo();
   </script>
+  {% endif %}
 {% endblock %}

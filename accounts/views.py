@@ -103,18 +103,20 @@ def get_exchange_rates():
 
 @login_required
 def deposit_mpesa(request):
-    """Allow users to submit MPesa/SMS payment messages for verification.
+    """Allow users to submit M-Pesa Till or Crypto payments for verification.
 
-    Basic behavior:
-    - User fills amount, selects country (KE/TZ), provides phone used and raw MPesa message.
-    - Server attempts a simple parse/verification; if it finds a matching amount and transaction id, it marks verified and credits user.
-    - Otherwise the attempt remains pending for manual review.
+    M-Pesa Till:
+    - User selects country, enters amount and M-Pesa confirmation message
+    - Server attempts auto-verification via heuristics
+
+    Crypto:
+    - User selects network (SOL/BTC/ETH), enters amount and transaction hash
+    - Server creates PaymentAttempt for manual review
     """
     if request.method == 'POST':
+        payment_type = request.POST.get('payment_type', 'mpesa_till')
         amount = request.POST.get('amount')
-        country = request.POST.get('country')
-        phone = request.POST.get('phone')
-        message = request.POST.get('message', '')
+        note = request.POST.get('note', '')
 
         try:
             amount_val = float(amount)
@@ -122,90 +124,100 @@ def deposit_mpesa(request):
             messages.error(request, "Invalid amount")
             return redirect('accounts:deposit')
 
+        # Get active payment option
+        payment_option = PaymentOption.objects.filter(payment_type=payment_type, active=True).first()
+        if not payment_option:
+            messages.error(request, "This payment method is not currently available.")
+            return redirect('accounts:deposit')
+
         pa = PaymentAttempt.objects.create(
             user=request.user,
             amount=amount_val,
-            country=(country or '').upper(),
-            phone=phone,
-            raw_message=message,
+            payment_option=payment_option,
+            country=(request.POST.get('country') or '').upper(),
+            phone=request.POST.get('phone', ''),
+            raw_message=note,
+            payment_type=payment_type,
         )
 
-        # Attempt automatic verification via simple heuristics
         verified = False
-        note = []
+        note_parts = []
 
-        # Get exchange rate to convert USD to local currency
-        exchange_rates = get_exchange_rates()
-        country_code = (country or '').upper()
-        expected_local_amount = None
-        
-        if country_code == 'KE':
-            expected_local_amount = amount_val * exchange_rates['KES']
-        elif country_code == 'TZ':
-            expected_local_amount = amount_val * exchange_rates['TZS']
+        if payment_type == 'mpesa_till':
+            # M-Pesa auto-verification heuristics
+            exchange_rates = get_exchange_rates()
+            country_code = (request.POST.get('country') or '').upper()
+            expected_local_amount = None
 
-        # Extract an amount from the message
-        amt_match = re.search(r"(?:KES|TZS|UGX|USD|Ksh|TSh|TZS|KES)?\s*([0-9,.]+)", message, re.IGNORECASE)
-        if amt_match:
-            amt_str = amt_match.group(1).replace(',', '')
-            try:
-                parsed_amt = float(amt_str)
-                
-                # Compare with expected local currency amount if available
-                if expected_local_amount:
-                    # Allow 5% discrepancy for exchange rate fluctuations and fees
-                    tolerance = max(100, expected_local_amount * 0.05)
-                    if abs(parsed_amt - expected_local_amount) <= tolerance:
-                        verified = True
-                        note.append(f"Message amount {parsed_amt} matches expected {expected_local_amount:.2f} ({country_code})")
+            if country_code == 'KE':
+                expected_local_amount = amount_val * exchange_rates['KES']
+            elif country_code == 'TZ':
+                expected_local_amount = amount_val * exchange_rates['TZS']
+
+            amt_match = re.search(r"(?:KES|TZS|UGX|USD|Ksh|TSh|TZS|KES)?\s*([0-9,.]+)", note, re.IGNORECASE)
+            if amt_match:
+                amt_str = amt_match.group(1).replace(',', '')
+                try:
+                    parsed_amt = float(amt_str)
+                    if expected_local_amount:
+                        tolerance = max(100, expected_local_amount * 0.05)
+                        if abs(parsed_amt - expected_local_amount) <= tolerance:
+                            verified = True
+                            note_parts.append(f"Message amount {parsed_amt} matches expected {expected_local_amount:.2f} ({country_code})")
+                        else:
+                            note_parts.append(f"Message amount {parsed_amt} differs from expected {expected_local_amount:.2f} ({country_code})")
                     else:
-                        note.append(f"Message amount {parsed_amt} differs from expected {expected_local_amount:.2f} ({country_code})")
-                else:
-                    # Fallback: compare with USD amount directly (for backwards compatibility)
-                    if abs(parsed_amt - amount_val) <= max(1.0, 0.02 * amount_val):
-                        verified = True
-                        note.append(f"Message amount {parsed_amt} matches submitted {amount_val}")
-                    else:
-                        note.append(f"Message amount {parsed_amt} differs from submitted {amount_val}")
-            except Exception:
-                pass
+                        if abs(parsed_amt - amount_val) <= max(1.0, 0.02 * amount_val):
+                            verified = True
+                            note_parts.append(f"Message amount {parsed_amt} matches submitted {amount_val}")
+                        else:
+                            note_parts.append(f"Message amount {parsed_amt} differs from submitted {amount_val}")
+                except Exception:
+                    pass
 
-        # Look for a transaction code token (alphanumeric, length 6-12)
-        tx_match = re.search(r"([A-Z0-9]{6,12})", message)
-        if tx_match:
-            note.append(f"Found tx id {tx_match.group(1)}")
+            tx_match = re.search(r"([A-Z0-9]{6,12})", note)
+            if tx_match:
+                note_parts.append(f"Found tx id {tx_match.group(1)}")
 
-        # If heuristics pass, mark verified and credit
+        elif payment_type == 'crypto_wallet':
+            # Crypto: check for transaction hash
+            tx_match = re.search(r"([a-fA-F0-9]{64})", note)
+            if tx_match:
+                note_parts.append(f"Found tx hash {tx_match.group(1)}")
+
         if verified:
-            pa.mark_verified(verifier_note='; '.join(note))
-            
-            # Auto-upgrade tier based on total balance
+            pa.mark_verified(verifier_note='; '.join(note_parts))
+
             try:
                 from videos.models import Tier
                 profile = request.user.profile
-                profile.refresh_from_db()  # Get updated balance
-                
-                # Find highest tier user qualifies for based on balance
+                profile.refresh_from_db()
+
                 tier = Tier.objects.filter(price__lte=profile.balance).order_by('-price').first()
                 if tier and (not profile.current_tier or tier.price > profile.current_tier.price):
                     profile.current_tier = tier
                     profile.save()
-                    messages.success(request, f"✅ Payment verified! ${amount_val:.2f} credited. Upgraded to {tier.name} tier!")
+                    messages.success(request, f"Payment verified! ${amount_val:.2f} credited. Upgraded to {tier.name} tier!")
                 else:
-                    messages.success(request, f"✅ Payment verified! ${amount_val:.2f} credited to your wallet.")
+                    messages.success(request, f"Payment verified! ${amount_val:.2f} credited to your wallet.")
             except Exception:
-                messages.success(request, f"✅ Payment verified! ${amount_val:.2f} credited to your wallet.")
+                messages.success(request, f"Payment verified! ${amount_val:.2f} credited to your wallet.")
         else:
-            pa.verifier_note = '; '.join(note)
+            pa.verifier_note = '; '.join(note_parts) if note_parts else 'Pending manual review'
             pa.save()
-            messages.info(request, "📋 Payment submitted for verification. Our team will review it within 24 hours and you'll receive a notification once it's processed.")
+            messages.info(request, "Payment submitted for verification. Our team will review it shortly.")
 
         return redirect('accounts:dashboard')
 
-    # GET -> show a small MPesa submission form with current exchange rates
+    # GET -> show deposit form with active payment options
+    mpesa_options = PaymentOption.objects.filter(payment_type='mpesa_till', active=True)
+    crypto_options = PaymentOption.objects.filter(payment_type='crypto_wallet', active=True)
     exchange_rates = get_exchange_rates()
+
     return render(request, 'accounts/deposit_mpesa.html', {
-        'exchange_rates': exchange_rates
+        'mpesa_options': mpesa_options,
+        'crypto_options': crypto_options,
+        'exchange_rates': exchange_rates,
     })
 
 
