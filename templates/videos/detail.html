@@ -179,7 +179,11 @@
               headers: {'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest'}
             });
             const data = await res.json();
-            if (data.ok) clientId = data.client_id;
+            if (data.ok) {
+              clientId = data.client_id;
+            } else {
+              console.error('startWatch failed', data);
+            }
           } catch (e) {
             console.error('startWatch error', e);
           }
@@ -199,7 +203,12 @@
         }
 
         async function submitReward() {
-          if (!clientId) return;
+          if (!clientId) {
+            alert('Unable to claim reward. Please refresh the page and try again.');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '❌ Error - Try Again';
+            return;
+          }
           if (sessionStorage.getItem('submitting_' + videoId) === 'true') return;
           sessionStorage.setItem('submitting_' + videoId, 'true');
 
@@ -227,6 +236,10 @@
               setTimeout(() => {
                 window.location.href = '{% url "videos:list" %}?available=1';
               }, 4000);
+            } else if (data.error === 'one_video_per_day') {
+              alert('You can only watch one video per day. Come back tomorrow for more rewards!');
+              submitBtn.disabled = false;
+              submitBtn.textContent = '⏳ Come back tomorrow';
             } else {
               alert('Error: ' + (data.error || 'unknown'));
               submitBtn.disabled = false;

@@ -522,6 +522,25 @@ def complete_watch(request, pk):
 
     now = timezone.now()
     elapsed = (now - watch.started_at).total_seconds()
+
+    # ENFORCE: Only one video per user per day
+    today = now.date()
+    watched_today = VideoWatch.objects.filter(
+        user=request.user,
+        credited=True,
+        credited_at__date=today
+    ).exists()
+    if watched_today:
+        WatchCompletionAttempt.objects.create(
+            user=request.user, video=video, client_id=client_id,
+            elapsed_seconds=int(elapsed), accepted=False, reason='one_video_per_day',
+            ip_address=_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
+        )
+        return JsonResponse({
+            "error": "one_video_per_day",
+            "message": "You can only watch one video per day."
+        }, status=400)
     required = int(video.duration_seconds or 0)
     if required and elapsed + 1 < required:  # +1s tolerance for clock skew
         WatchCompletionAttempt.objects.create(
