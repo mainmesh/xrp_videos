@@ -2,21 +2,21 @@
 {% block title %}Deposit{% endblock %}
 {% block content %}
   <div class="max-w-3xl mx-auto">
-    <h2 class="text-3xl font-bold gradient-text mb-8">💰 Deposit Funds</h2>
+    <h2 class="text-3xl font-bold gradient-text mb-8"> Deposit Funds</h2>
 
     {% if mpesa_options.exists or crypto_options.exists %}
     <div class="space-y-6">
       {% if mpesa_options.exists %}
       <!-- M-Pesa Till Section -->
       <div class="dark-glass rounded-2xl p-8 border border-green-500/30">
-        <h3 class="text-2xl font-bold text-white mb-4">📱 M-Pesa Till Number</h3>
+        <h3 class="text-2xl font-bold text-white mb-4"> M-Pesa Till Number</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label class="block text-sm font-medium text-gray-300 mb-2">Select Your Country</label>
             <select id="country-select" class="w-full px-4 py-3 bg-slate-800/50 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500 transition text-lg font-semibold">
-              <option value="KE">🇰🇪 Kenya (M-Pesa)</option>
-              <option value="TZ">🇹🇿 Tanzania (M-Pesa)</option>
+              <option value="KE"> Kenya (M-Pesa)</option>
+              <option value="TZ"> Tanzania (M-Pesa)</option>
             </select>
           </div>
 
@@ -32,12 +32,12 @@
             <span id="local-currency">KES</span> <span id="local-amount">5,000</span>
           </div>
           <p class="text-sm text-gray-400">≈ $<span id="usd-display">50.00</span> USD</p>
-          <p class="text-xs text-gray-500 mt-2">💱 Exchange rate: 1 USD = <span id="rate-display">{{ exchange_rates.KES|default:100 }} KES</span> (Live rate)</p>
+          <p class="text-xs text-gray-500 mt-2"> Exchange rate: 1 USD = <span id="rate-display">{{ exchange_rates.KES|default:100 }} KES</span> (Live rate)</p>
         </div>
 
         {% for opt in mpesa_options %}
         <div class="mt-6 p-4 bg-slate-800/50 border border-purple-500/30 rounded-lg">
-          <h4 class="text-xl font-bold text-white mb-4">📱 Pay via M-Pesa Till</h4>
+          <h4 class="text-xl font-bold text-white mb-4"> Pay via M-Pesa Till</h4>
           <div class="p-4 bg-blue-600/10 border border-blue-500/30 rounded-lg mb-4">
             <p class="text-sm text-gray-300 mb-1">Till Number:</p>
             <p class="text-3xl font-bold text-blue-300">{{ opt.till_number|default:'1563070' }}</p>

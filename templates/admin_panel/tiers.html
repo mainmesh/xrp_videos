@@ -7,7 +7,7 @@
     <form method="POST" action="{% url 'admin_panel:fix_tier_names' %}" onsubmit="return confirm('This will rename your tiers to Bronze, Silver, Gold based on price. Continue?');">
         {% csrf_token %}
         <button type="submit" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-semibold transition">
-            🔧 Fix Tier Names (Bronze/Silver/Gold)
+             Fix Tier Names (Bronze/Silver/Gold)
         </button>
     </form>
 </div>

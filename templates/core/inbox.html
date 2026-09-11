@@ -19,7 +19,7 @@
 
     {% if unread_count > 0 %}
     <div class="dark-glass border border-blue-500/30 rounded-lg p-4 mb-6">
-        <p class="text-blue-300">📬 You have <strong>{{ unread_count }}</strong> unread message{{ unread_count|pluralize }}.</p>
+        <p class="text-blue-300"> You have <strong>{{ unread_count }}</strong> unread message{{ unread_count|pluralize }}.</p>
     </div>
     {% endif %}
 
@@ -34,19 +34,19 @@
                         <div class="flex-shrink-0">
                             {% if msg.message_type == 'reward' %}
                                 <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                                    <span class="text-lg">💰</span>
+                                    <span class="text-lg"></span>
                                 </div>
                             {% elif msg.message_type == 'withdrawal' %}
                                 <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                                    <span class="text-lg">💸</span>
+                                    <span class="text-lg"></span>
                                 </div>
                             {% elif msg.message_type == 'admin' %}
                                 <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                                    <span class="text-lg">👤</span>
+                                    <span class="text-lg"></span>
                                 </div>
                             {% else %}
                                 <div class="w-10 h-10 rounded-full bg-gray-500/20 flex items-center justify-center">
-                                    <span class="text-lg">📧</span>
+                                    <span class="text-lg"></span>
                                 </div>
                             {% endif %}
                         </div>

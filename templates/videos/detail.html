@@ -22,7 +22,7 @@
         {% endif %}
         {% if required_tier %}
         <div class="inline-block px-3 py-1 bg-amber-500/20 border border-amber-500/50 rounded-full text-xs text-amber-300">
-          🔒 {{ required_tier.name }} Tier
+           {{ required_tier.name }} Tier
         </div>
         {% endif %}
       </div>
@@ -32,7 +32,7 @@
     {% if not has_access %}
       <div class="dark-glass rounded-2xl p-8 border border-red-500/30 mb-8">
         <div class="flex items-start gap-4">
-          <div class="text-4xl">🔒</div>
+          <div class="text-4xl"></div>
           <div>
             <h3 class="text-2xl font-bold text-red-300 mb-3">Premium Content</h3>
             <p class="text-gray-300 mb-6">This video requires <strong>{{ required_tier.name }}</strong> tier access.</p>
@@ -48,11 +48,11 @@
                 </strong>
               </p>
               <a href="{% url 'accounts:deposit' %}" class="inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold rounded-lg transition">
-                Upgrade Your Tier 💳
+                Upgrade Your Tier 
               </a>
             {% else %}
               <a href="{% url 'login' %}" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
-                Log In to Upgrade 🔑
+                Log In to Upgrade 
               </a>
             {% endif %}
           </div>
@@ -82,7 +82,7 @@
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
           </div>
-          <h3 class="text-2xl font-bold text-green-300 mb-3">✓ Already Watched</h3>
+          <h3 class="text-2xl font-bold text-green-300 mb-3"> Already Watched</h3>
           <p class="text-gray-300 mb-6">You have already completed this video and received your reward.</p>
           <a href="{% url 'videos:list' %}?available=1" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
             Browse More Videos →
@@ -92,7 +92,7 @@
       <!-- Watch Timer & Controls -->
       {% if user.is_authenticated %}
         <div class="mb-6">
-          <p class="text-gray-400 text-sm mb-2">⏱️ Watch Progress</p>
+          <p class="text-gray-400 text-sm mb-2"> Watch Progress</p>
           <div class="flex items-center gap-4">
             <div class="flex-1">
               <div class="h-2 bg-slate-800/50 rounded-full overflow-hidden">
@@ -110,7 +110,7 @@
           {% csrf_token %}
           <input type="hidden" id="watched-seconds-input" name="watched_seconds" value="0">
           <button type="submit" id="submit-btn" class="w-full px-6 py-4 bg-slate-700 text-gray-300 font-bold rounded-lg cursor-not-allowed transition disabled:opacity-50" disabled>
-            ⏳ Watch the video to claim your reward...
+             Watch the video to claim your reward...
           </button>
         </form>
 
@@ -124,7 +124,7 @@
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
             </div>
-            <h3 class="text-3xl font-bold text-white mb-2">🎉 Congratulations!</h3>
+            <h3 class="text-3xl font-bold text-white mb-2"> Congratulations!</h3>
             <p class="text-gray-300 mb-4">You've earned</p>
             <p id="reward-amount" class="text-5xl font-bold text-green-400 mb-6">$0.00</p>
             <p class="text-gray-400 text-sm mb-6">The reward has been added to your account balance.</p>
@@ -142,7 +142,7 @@
         <div class="dark-glass rounded-2xl p-8 border border-purple-500/30 text-center">
           <p class="text-gray-300 mb-4">Sign in to earn rewards for watching</p>
           <a href="{% url 'login' %}" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
-            Log In Now 🔑
+            Log In Now 
           </a>
         </div>
       {% endif %}
@@ -206,13 +206,13 @@
           if (!clientId) {
             alert('Unable to claim reward. Please refresh the page and try again.');
             submitBtn.disabled = false;
-            submitBtn.textContent = '❌ Error - Try Again';
+            submitBtn.textContent = ' Error - Try Again';
             return;
           }
           if (sessionStorage.getItem('submitting_' + videoId) === 'true') return;
           sessionStorage.setItem('submitting_' + videoId, 'true');
 
-          submitBtn.textContent = '⏳ Processing...';
+          submitBtn.textContent = ' Processing...';
           submitBtn.disabled = true;
 
           try {
@@ -239,18 +239,18 @@
             } else if (data.error === 'one_video_per_day') {
               alert('You can only watch one video per day. Come back tomorrow for more rewards!');
               submitBtn.disabled = false;
-              submitBtn.textContent = '⏳ Come back tomorrow';
+              submitBtn.textContent = ' Come back tomorrow';
             } else {
               alert('Error: ' + (data.error || 'unknown'));
               submitBtn.disabled = false;
-              submitBtn.textContent = '❌ Error - Try Again';
+              submitBtn.textContent = ' Error - Try Again';
             }
           } catch (e) {
             console.error('submitReward error', e);
             sessionStorage.removeItem('submitting_' + videoId);
             alert('An error occurred while claiming your reward. Please try again.');
             submitBtn.disabled = false;
-            submitBtn.textContent = '❌ Error - Try Again';
+            submitBtn.textContent = ' Error - Try Again';
           }
         }
 

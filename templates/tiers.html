@@ -23,19 +23,19 @@
       
       <ul class="space-y-3 text-gray-300 mb-8">
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>Access to Bronze videos</span>
         </li>
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>Earn <strong>$0.50</strong> per video</span>
         </li>
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>Referral bonuses (10% commission)</span>
         </li>
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>Instant wallet payouts</span>
         </li>
       </ul>
@@ -62,19 +62,19 @@
       
       <ul class="space-y-3 text-gray-300 mb-8">
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>All Bronze features</span>
         </li>
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>Access to Silver videos</span>
         </li>
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>Earn <strong>$1.00</strong> per video</span>
         </li>
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>Priority access to new content</span>
         </li>
       </ul>
@@ -82,14 +82,14 @@
       {% if user.is_authenticated %}
         {% if user_tier and user_tier.price >= 50 %}
           <button disabled class="w-full block text-center px-4 py-3 bg-gray-600 text-gray-300 font-bold rounded-lg cursor-not-allowed">
-            {% if user_tier.price == 50 %}✓ Current Tier{% else %}✓ Unlocked{% endif %}
+            {% if user_tier.price == 50 %} Current Tier{% else %} Unlocked{% endif %}
           </button>
         {% else %}
           {# User is on Bronze or no tier, can upgrade to Silver #}
           {% for tier in tiers_list %}
             {% if tier.name == 'Silver' %}
               <a href="{% url 'accounts:upgrade_tier' tier.id %}" class="w-full block text-center px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold rounded-lg transition shadow-lg">
-                💰 Upgrade to Silver - ${{ tier.price|floatformat:0 }}
+                 Upgrade to Silver - ${{ tier.price|floatformat:0 }}
               </a>
             {% endif %}
           {% endfor %}
@@ -109,19 +109,19 @@
       
       <ul class="space-y-3 text-gray-300 mb-8">
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>All Silver features</span>
         </li>
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>Full access to Gold videos</span>
         </li>
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>Premium earning: <strong>$2.00</strong> per video</span>
         </li>
         <li class="flex items-start gap-3">
-          <span class="text-green-400 mt-1">✓</span>
+          <span class="text-green-400 mt-1"></span>
           <span>VIP customer support</span>
         </li>
       </ul>
@@ -129,14 +129,14 @@
       {% if user.is_authenticated %}
         {% if user_tier and user_tier.price >= 100 %}
           <button disabled class="w-full block text-center px-4 py-3 bg-gray-600 text-gray-300 font-bold rounded-lg cursor-not-allowed">
-            ✓ Current Tier
+             Current Tier
           </button>
         {% else %}
           {# User is on Bronze/Silver or no tier, can upgrade to Gold #}
           {% for tier in tiers_list %}
             {% if tier.name == 'Gold' %}
               <a href="{% url 'accounts:upgrade_tier' tier.id %}" class="w-full block text-center px-4 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white font-bold rounded-lg transition shadow-lg">
-                💰 Upgrade to Gold - ${{ tier.price|floatformat:0 }}
+                 Upgrade to Gold - ${{ tier.price|floatformat:0 }}
               </a>
             {% endif %}
           {% endfor %}

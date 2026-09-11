@@ -5,7 +5,7 @@
 {% block content %}
 <!-- M-Pesa Payment Attempts -->
 <div class="mb-8">
-    <h2 class="text-xl font-bold text-gray-800 mb-4">📱 M-Pesa Payment Submissions</h2>
+    <h2 class="text-xl font-bold text-gray-800 mb-4"> M-Pesa Payment Submissions</h2>
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -42,8 +42,8 @@
                         </td>
                         <td class="px-6 py-4">
                             <span class="text-sm text-gray-700">
-                                {% if payment.country == 'KE' %}🇰🇪 Kenya
-                                {% elif payment.country == 'TZ' %}🇹🇿 Tanzania
+                                {% if payment.country == 'KE' %} Kenya
+                                {% elif payment.country == 'TZ' %} Tanzania
                                 {% else %}{{ payment.country }}{% endif %}
                             </span>
                         </td>
