@@ -236,6 +236,10 @@
               setTimeout(() => {
                 window.location.href = '{% url "videos:list" %}?available=1';
               }, 4000);
+            } else if (data.error === 'daily_limit_reached') {
+              alert(data.message || 'You have reached your daily video limit.');
+              submitBtn.disabled = false;
+              submitBtn.textContent = ' Limit Reached';
             } else if (data.error === 'one_video_per_day') {
               alert('You can only watch one video per day. Come back tomorrow for more rewards!');
               submitBtn.disabled = false;

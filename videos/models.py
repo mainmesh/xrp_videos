@@ -6,6 +6,7 @@ from django.utils import timezone
 class Tier(models.Model):
     name = models.CharField(max_length=50)
     price = models.FloatField(default=0.0)
+    daily_watch_limit = models.IntegerField(default=1, help_text="Maximum videos a user can watch per day. 0 = unlimited.")
 
     def __str__(self):
         return f"{self.name} (${self.price})"

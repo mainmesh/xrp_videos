@@ -523,24 +523,30 @@ def complete_watch(request, pk):
     now = timezone.now()
     elapsed = (now - watch.started_at).total_seconds()
 
-    # ENFORCE: Only one video per user per day
+    # ENFORCE: Daily watch limit based on user's tier
     today = now.date()
-    watched_today = VideoWatch.objects.filter(
-        user=request.user,
-        credited=True,
-        credited_at__date=today
-    ).exists()
-    if watched_today:
-        WatchCompletionAttempt.objects.create(
-            user=request.user, video=video, client_id=client_id,
-            elapsed_seconds=int(elapsed), accepted=False, reason='one_video_per_day',
-            ip_address=_client_ip(request),
-            user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
-        )
-        return JsonResponse({
-            "error": "one_video_per_day",
-            "message": "You can only watch one video per day."
-        }, status=400)
+    tier = getattr(request.user.profile, 'current_tier', None)
+    daily_limit = tier.daily_watch_limit if tier else 1  # default 1 for no tier
+
+    if daily_limit > 0:  # 0 = unlimited
+        watched_today_count = VideoWatch.objects.filter(
+            user=request.user,
+            credited=True,
+            credited_at__date=today
+        ).count()
+        if watched_today_count >= daily_limit:
+            WatchCompletionAttempt.objects.create(
+                user=request.user, video=video, client_id=client_id,
+                elapsed_seconds=int(elapsed), accepted=False, reason='daily_limit_reached',
+                ip_address=_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
+            )
+            return JsonResponse({
+                "error": "daily_limit_reached",
+                "message": f"You've reached your daily limit of {daily_limit} video(s). Come back tomorrow!",
+                "daily_limit": daily_limit,
+                "watched_today": watched_today_count,
+            }, status=400)
     required = int(video.duration_seconds or 0)
     if required and elapsed + 1 < required:  # +1s tolerance for clock skew
         WatchCompletionAttempt.objects.create(
