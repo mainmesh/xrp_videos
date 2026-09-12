@@ -44,6 +44,29 @@ def get_exchange_rates():
     }
 
 
+EAST_AFRICA_COUNTRIES = {'KE', 'TZ', 'UG', 'RW', 'BI', 'ET', 'SO', 'DJ', 'SS'}
+
+
+def get_client_country(request):
+    """Detect the client's country from GeoIP headers or session."""
+    # Vercel sends geo headers
+    country = request.META.get('HTTP_X_VERCEL_IP_COUNTRY', '').strip().upper()
+    if not country:
+        # Fallback: check Cloudflare or other geo headers
+        country = request.META.get('HTTP_CF_IPCOUNTRY', '').strip().upper()
+    if not country:
+        # Try session-stored country
+        country = request.session.get('user_country', '').strip().upper()
+    return country
+
+
+def is_east_africa_country(country_code):
+    """Return True if the country code is in East Africa."""
+    if not country_code:
+        return False
+    return country_code.strip().upper() in EAST_AFRICA_COUNTRIES
+
+
 @login_required
 def deposit_mpesa(request):
     """Allow users to submit M-Pesa Till or Crypto payments for verification.
@@ -153,14 +176,26 @@ def deposit_mpesa(request):
         return redirect('accounts:dashboard')
 
     # GET -> show deposit form with active payment options
-    mpesa_options = PaymentOption.objects.filter(payment_type='mpesa_till', active=True)
-    crypto_options = PaymentOption.objects.filter(payment_type='crypto_wallet', active=True)
+    country = get_client_country(request)
+    is_ea = is_east_africa_country(country)
+
+    if is_ea:
+        # East Africa: show M-Pesa Till + Crypto
+        mpesa_options = PaymentOption.objects.filter(payment_type='mpesa_till', active=True)
+        crypto_options = PaymentOption.objects.filter(payment_type='crypto_wallet', active=True)
+    else:
+        # Rest of world: show only Crypto
+        mpesa_options = PaymentOption.objects.none()
+        crypto_options = PaymentOption.objects.filter(payment_type='crypto_wallet', active=True)
+
     exchange_rates = get_exchange_rates()
 
     return render(request, 'accounts/deposit_mpesa.html', {
         'mpesa_options': mpesa_options,
         'crypto_options': crypto_options,
         'exchange_rates': exchange_rates,
+        'is_east_africa': is_ea,
+        'user_country': country,
     })
 
 

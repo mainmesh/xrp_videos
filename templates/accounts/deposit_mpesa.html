@@ -4,6 +4,15 @@
   <div class="max-w-3xl mx-auto">
     <h2 class="text-3xl font-bold gradient-text mb-8"> Deposit Funds</h2>
 
+    {% if not is_east_africa %}
+    <div class="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
+      <p class="text-blue-300 text-sm">
+        M-Pesa Till is only available for users in East Africa (Kenya, Tanzania, Uganda, etc.).
+        Users outside East Africa can deposit using cryptocurrency (Solana, Bitcoin, Ethereum).
+      </p>
+    </div>
+    {% endif %}
+
     {% if mpesa_options.exists or crypto_options.exists %}
     <div class="space-y-6">
       {% if mpesa_options.exists %}
