@@ -63,7 +63,7 @@ def get_client_country(request):
 def is_east_africa_country(country_code):
     """Return True if the country code is in East Africa."""
     if not country_code:
-        return False
+        return True
     return country_code.strip().upper() in EAST_AFRICA_COUNTRIES
 
 

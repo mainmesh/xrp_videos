@@ -102,7 +102,7 @@
               <p class="text-xs text-gray-400 mb-1">Wallet Address</p>
               <div class="flex items-center gap-2">
                 <p class="font-mono text-sm text-green-400 break-all">{{ opt.wallet_address|default:'Not configured' }}</p>
-                <button onclick="copyWalletAddress('{{ opt.wallet_address|escapejs }}')" class="px-2 py-1 bg-purple-600 hover:bg-purple-500 text-white text-xs rounded transition shrink-0">Copy</button>
+                <button onclick="copyWalletAddress(this, '{{ opt.wallet_address|escapejs }}')" class="px-2 py-1 bg-purple-600 hover:bg-purple-500 text-white text-xs rounded transition shrink-0">Copy</button>
               </div>
             </div>
             {% if opt.instructions %}
@@ -171,37 +171,57 @@
     const countryInput = document.getElementById('country-input');
 
     function updatePaymentInfo() {
-      const country = countrySelect.value;
-      const rate = EXCHANGE_RATES[country];
+      if (!countrySelect || !usdInput) return;
+      const country = countrySelect.value || 'KE';
+      const rate = EXCHANGE_RATES[country] || 100;
       const usd = parseFloat(usdInput.value || 0);
       const local = Math.ceil(usd * rate);
 
-      localCurrency.textContent = CURRENCY_SYMBOLS[country];
-      localAmount.textContent = local.toLocaleString();
-      usdDisplay.textContent = usd.toFixed(2);
-      rateDisplay.textContent = rate + ' ' + CURRENCY_SYMBOLS[country];
-      amountInput.value = usd.toFixed(2);
-      countryInput.value = country;
+      if (localCurrency) localCurrency.textContent = CURRENCY_SYMBOLS[country] || country;
+      if (localAmount) localAmount.textContent = local.toLocaleString();
+      if (usdDisplay) usdDisplay.textContent = usd.toFixed(2);
+      if (rateDisplay) rateDisplay.textContent = rate + ' ' + (CURRENCY_SYMBOLS[country] || country);
+      if (amountInput) amountInput.value = usd.toFixed(2);
+      if (countryInput) countryInput.value = country;
     }
 
-    countrySelect.addEventListener('change', updatePaymentInfo);
-    usdInput.addEventListener('input', updatePaymentInfo);
-    updatePaymentInfo();
+    if (countrySelect && usdInput) {
+      countrySelect.addEventListener('change', updatePaymentInfo);
+      usdInput.addEventListener('input', updatePaymentInfo);
+      updatePaymentInfo();
+    }
   </script>
+  {% endif %}
+
   <script>
-    function copyWalletAddress(address) {
+    function copyWalletAddress(btnOrAddress, textAddress) {
+      let btn = null;
+      let address = textAddress;
+
+      if (typeof btnOrAddress === 'string') {
+        address = btnOrAddress;
+        if (window.event && window.event.target) {
+          btn = window.event.target.closest('button');
+        }
+      } else if (btnOrAddress && btnOrAddress.nodeType) {
+        btn = btnOrAddress;
+      }
+
       if (navigator.clipboard && address) {
         navigator.clipboard.writeText(address).then(() => {
-          const btn = event.target.closest('button');
-          const original = btn.textContent;
-          btn.textContent = 'Copied!';
-          setTimeout(() => btn.textContent = original, 1500);
+          if (btn) {
+            const original = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = original; }, 1500);
+          }
         }).catch(() => fallbackCopy(address));
-      } else {
+      } else if (address) {
         fallbackCopy(address);
       }
     }
+
     function fallbackCopy(text) {
+      if (!text) return;
       const ta = document.createElement('textarea');
       ta.value = text;
       document.body.appendChild(ta);
