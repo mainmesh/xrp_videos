@@ -187,11 +187,50 @@
     </div>
     {% empty %}
       <div class="col-span-4 text-center py-12">
-        <svg class="w-20 h-20 mx-auto mb-4 text-purple-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-        </svg>
-        <p class="text-gray-400 text-lg">No videos available yet. Check back soon!</p>
+        {% if limit_reached and watch_state %}
+          <!-- Daily limit reached: countdown until the rolling 24h window frees up -->
+          <svg class="w-20 h-20 mx-auto mb-4 text-amber-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-white text-2xl font-bold mb-2">You've watched your {{ watch_state.limit }} video{{ watch_state.limit|pluralize }} for today</p>
+          <p class="text-gray-400 mb-4">Your remaining videos reappear automatically. Come back tomorrow — unlocks in:</p>
+          <p id="limit-countdown" class="text-3xl font-bold text-purple-300 mb-4">--:--:--</p>
+          {% if all_tiers.last and user_tier and user_tier.price < all_tiers.last.price or not user_tier %}
+          <p class="text-gray-400 mb-3">Want to earn more every day?</p>
+          <a href="{% url 'tiers' %}" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
+            Upgrade for more daily videos
+          </a>
+          {% endif %}
+        {% else %}
+          <svg class="w-20 h-20 mx-auto mb-4 text-purple-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+          <p class="text-gray-400 text-lg">No videos available yet. Check back soon!</p>
+        {% endif %}
       </div>
     {% endfor %}
   </div>
+
+  {% if limit_reached and watch_state and watch_state.unlock_at %}
+  <script>
+    (function () {
+      var unlock = new Date("{{ watch_state.unlock_at|date:'c' }}");
+      var el = document.getElementById('limit-countdown');
+      if (!el) return;
+      function pad(n) { return (n < 10 ? '0' : '') + n; }
+      function tick() {
+        var diff = Math.floor((unlock - new Date()) / 1000);
+        if (diff <= 0) {
+          el.textContent = 'Unlocked!';
+          location.reload();
+          return;
+        }
+        var h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60), s = diff % 60;
+        el.textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
+        setTimeout(tick, 1000);
+      }
+      tick();
+    })();
+  </script>
+  {% endif %}
 {% endblock %}

@@ -73,7 +73,33 @@
           </iframe>
         </div>
       </div>
-      
+
+      {% if limit_reached %}
+      <!-- Daily Limit Reached Banner -->
+      <div class="dark-glass rounded-2xl p-8 border border-amber-500/30 mb-8 text-center">
+        <h3 class="text-2xl font-bold text-amber-300 mb-3">Daily Limit Reached</h3>
+        <p class="text-gray-300 mb-2">You've watched your {{ watch_state.limit }} video{{ watch_state.limit|pluralize }} for today on your {{ user_tier.name|default:"Bronze" }} plan.</p>
+        <p class="text-gray-400 mb-4">New videos unlock in <span id="limit-countdown" class="font-bold text-purple-300">--:--:--</span> — come back tomorrow!</p>
+        <a href="{% url 'videos:list' %}" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">Back to Videos</a>
+      </div>
+      <script>
+        (function () {
+          var unlock = new Date("{{ watch_state.unlock_at|date:'c' }}");
+          var el = document.getElementById('limit-countdown');
+          if (!el) return;
+          function pad(n) { return (n < 10 ? '0' : '') + n; }
+          function tick() {
+            var diff = Math.floor((unlock - new Date()) / 1000);
+            if (diff <= 0) { el.textContent = 'Unlocked!'; return; }
+            var h = Math.floor(diff / 3600), m = Math.floor((diff % 3600) / 60), s = diff % 60;
+            el.textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
+            setTimeout(tick, 1000);
+          }
+          tick();
+        })();
+      </script>
+      {% endif %}
+
       {% if already_watched %}
         <!-- Already Watched Message -->
         <div class="dark-glass rounded-2xl p-8 border border-green-500/30 mb-8 text-center">
@@ -90,7 +116,7 @@
         </div>
       {% else %}
       <!-- Watch Timer & Controls -->
-      {% if user.is_authenticated %}
+      {% if user.is_authenticated and not limit_reached %}
         <div class="mb-6">
           <p class="text-gray-400 text-sm mb-2"> Watch Progress</p>
           <div class="flex items-center gap-4">
@@ -138,7 +164,7 @@
             </div>
           </div>
         </div>
-      {% else %}
+      {% elif not user.is_authenticated %}
         <div class="dark-glass rounded-2xl p-8 border border-purple-500/30 text-center">
           <p class="text-gray-300 mb-4">Sign in to earn rewards for watching</p>
           <a href="{% url 'login' %}" class="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-lg transition">
@@ -147,7 +173,7 @@
         </div>
       {% endif %}
 
-      {% if not already_watched %}
+      {% if not already_watched and not limit_reached %}
       <script>
         const videoId = {{ video.id }};
         const videoDuration = {{ video.duration_seconds }};
@@ -181,6 +207,9 @@
             const data = await res.json();
             if (data.ok) {
               clientId = data.client_id;
+            } else if (data.error === 'daily_limit_reached') {
+              alert(data.message || 'You have reached your daily video limit. Come back later!');
+              window.location.href = '{% url "videos:list" %}';
             } else {
               console.error('startWatch failed', data);
             }
@@ -283,6 +312,7 @@
         }
       </script>
       {% endif %}
+    {% endif %}
     {% endif %}
   </div>
 {% endblock %}

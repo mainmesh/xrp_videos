@@ -17,6 +17,75 @@ from django.shortcuts import redirect
 from django.contrib.admin.views.decorators import staff_member_required
 from django.utils import timezone
 from decimal import Decimal
+from datetime import timedelta
+
+
+def _daily_watch_state(user):
+    """Tier-aware daily watch quota over a rolling 24-hour window.
+
+    Counts distinct videos credited to `user` in the last 24 hours from both
+    credit flows (legacy WatchHistory and new VideoWatch). Returns:
+      limit     -- videos allowed per day (0 = unlimited); 1 when no tier
+      watched   -- distinct videos credited inside the window
+      unlock_at -- datetime when a slot frees up (only set when reached)
+      reached   -- True when no new video can be credited right now
+    The window is rolling, so the quota frees exactly 24h after the credit
+    that filled it — matching the "come back in 24 hours" UX.
+    """
+    now = timezone.now()
+    window_start = now - timedelta(hours=24)
+    tier = getattr(getattr(user, 'profile', None), 'current_tier', None)
+    limit = int(tier.daily_watch_limit) if tier else 1
+
+    wh = WatchHistory.objects.filter(user=user, verified=True, watched_at__gte=window_start)
+    vw = VideoWatch.objects.filter(user=user, credited=True, credited_at__gte=window_start)
+    credited_ids = set(wh.values_list('video_id', flat=True)) | set(
+        vw.values_list('video_id', flat=True))
+    watched = len(credited_ids)
+
+    unlock_at = None
+    if limit > 0 and watched >= limit:
+        timestamps = sorted(
+            list(wh.values_list('watched_at', flat=True)) +
+            list(vw.values_list('credited_at', flat=True))
+        )
+        # The quota frees when the (watched - limit + 1)-th oldest credit
+        # leaves the 24h window, i.e. 24h after its timestamp.
+        if timestamps:
+            idx = min(max(watched - limit, 0), len(timestamps) - 1)
+            unlock_at = timestamps[idx] + timedelta(hours=24)
+
+    return {
+        'limit': limit,
+        'watched': watched,
+        'unlock_at': unlock_at,
+        'reached': bool(limit > 0 and watched >= limit),
+    }
+
+
+def _daily_limit_message(state):
+    """Message shown when the rolling daily quota is exhausted."""
+    plural = 's' if state['limit'] != 1 else ''
+    return (f"You've watched your {state['limit']} video{plural} for today. "
+            f"New videos unlock {_fmt_eta(state['unlock_at'])} — come back then!")
+
+
+def _fmt_eta(unlock_at):
+    """Human-friendly 'in Xh Ym Zs' string for a future datetime."""
+    if not unlock_at:
+        return 'later today'
+    secs = int((unlock_at - timezone.now()).total_seconds())
+    if secs <= 0:
+        return ' shortly'
+    h, rem = divmod(secs, 3600)
+    m, s = divmod(rem, 60)
+    parts = []
+    if h:
+        parts.append(f'{h}h')
+    if m:
+        parts.append(f'{m}m')
+    parts.append(f'{s}s')
+    return 'in ' + ' '.join(parts)
 
 
 def video_list(request):
@@ -84,10 +153,9 @@ def video_list(request):
     # Available filter: show only unwatched videos for logged in users
     show_available = request.GET.get('available') == '1'
     watched_video_ids = set()
-    watched_today = False
+    watch_state = None
     today = None
     if request.user.is_authenticated:
-        from django.utils import timezone
         today = timezone.now().date()
         watched_history_ids = set(WatchHistory.objects.filter(
             user=request.user,
@@ -99,25 +167,22 @@ def video_list(request):
         ).values_list('video_id', flat=True))
         watched_video_ids = watched_history_ids | watched_watch_ids
 
-        watched_today = WatchHistory.objects.filter(
-            user=request.user,
-            verified=True,
-            watched_at__date=today
-        ).exists() or VideoWatch.objects.filter(
-            user=request.user,
-            credited=True,
-            credited_at__date=today
-        ).exists()
+        # Rolling 24h, tier-aware quota (Bronze=1, Silver=5, Gold=unlimited)
+        watch_state = _daily_watch_state(request.user)
         if show_available:
             videos = [v for v in videos if v.id not in watched_video_ids]
-        if watched_today:
+        if watch_state['reached']:
+            # Quota used up for today: remaining videos disappear until the
+            # rolling window frees a slot (24h after the qualifying credit).
             videos = []
     context = {
         "videos": videos,
         "user_tier": user_tier,
         "all_tiers": Tier.objects.all().order_by('price'),
         "watched_video_ids": watched_video_ids,
-        "watched_today": watched_today,
+        "watched_today": bool(watch_state and watch_state['reached']),
+        "watch_state": watch_state,
+        "limit_reached": bool(watch_state and watch_state['reached']),
         "today": today
     }
     return render(request, "videos/list.html", context)
@@ -145,6 +210,7 @@ def video_detail(request, pk):
             has_access = True
     
     # Check if user has already watched and earned from this video
+    watch_state = None
     if request.user.is_authenticated:
         already_watched = WatchHistory.objects.filter(
             user=request.user,
@@ -155,13 +221,16 @@ def video_detail(request, pk):
             video=video,
             credited=True
         ).exists()
+        watch_state = _daily_watch_state(request.user)
     
     context = {
         "video": video,
         "has_access": has_access,
         "required_tier": video.min_tier,
         "user_tier": user_tier,
-        "already_watched": already_watched
+        "already_watched": already_watched,
+        "watch_state": watch_state,
+        "limit_reached": bool(watch_state and watch_state['reached'] and not already_watched)
     }
     return render(request, "videos/detail.html", context)
 
@@ -282,18 +351,15 @@ def watch_complete(request, pk):
             "required": required_seconds,
             "watched": watched_seconds
         }, status=400)
-    # ENFORCE: Only one video per user per day
-    from django.utils import timezone
-    today = timezone.now().date()
-    watched_today = WatchHistory.objects.filter(
-        user=request.user,
-        verified=True,
-        watched_at__date=today
-    ).exists()
-    if watched_today:
+    # ENFORCE: rolling 24h watch limit based on user's tier
+    state = _daily_watch_state(request.user)
+    if state['reached']:
         return JsonResponse({
-            "error": "one_video_per_day",
-            "message": "You can only watch one video per day."
+            "error": "daily_limit_reached",
+            "message": _daily_limit_message(state),
+            "daily_limit": state['limit'],
+            "watched_today": state['watched'],
+            "unlock_at": state['unlock_at'].isoformat() if state['unlock_at'] else None,
         }, status=400)
 
     # Require at least 3 heartbeats recorded for this user/video in recent session
@@ -440,6 +506,21 @@ def start_watch(request, pk):
         if not tier or tier.price < video.min_tier.price:
             return JsonResponse({"error": "insufficient_tier"}, status=403)
 
+    # Block starting a new watch when the rolling 24h tier quota is spent.
+    # An already-open (uncredited) session may resume so nobody loses progress.
+    state = _daily_watch_state(request.user)
+    if state['reached']:
+        has_open_session = VideoWatch.objects.filter(
+            user=request.user, video=video, credited=False).exists()
+        if not has_open_session:
+            return JsonResponse({
+                "error": "daily_limit_reached",
+                "message": _daily_limit_message(state),
+                "daily_limit": state['limit'],
+                "watched_today": state['watched'],
+                "unlock_at": state['unlock_at'].isoformat() if state['unlock_at'] else None,
+            }, status=400)
+
     now = timezone.now()
     watch, created = VideoWatch.objects.get_or_create(
         user=request.user, video=video,
@@ -523,30 +604,23 @@ def complete_watch(request, pk):
     now = timezone.now()
     elapsed = (now - watch.started_at).total_seconds()
 
-    # ENFORCE: Daily watch limit based on user's tier
-    today = now.date()
+    # ENFORCE: rolling 24h watch limit based on user's tier
+    state = _daily_watch_state(request.user)
+    if state['reached']:
+        WatchCompletionAttempt.objects.create(
+            user=request.user, video=video, client_id=client_id,
+            elapsed_seconds=int(elapsed), accepted=False, reason='daily_limit_reached',
+            ip_address=_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
+        )
+        return JsonResponse({
+            "error": "daily_limit_reached",
+            "message": _daily_limit_message(state),
+            "daily_limit": state['limit'],
+            "watched_today": state['watched'],
+            "unlock_at": state['unlock_at'].isoformat() if state['unlock_at'] else None,
+        }, status=400)
     tier = getattr(request.user.profile, 'current_tier', None)
-    daily_limit = tier.daily_watch_limit if tier else 1  # default 1 for no tier
-
-    if daily_limit > 0:  # 0 = unlimited
-        watched_today_count = VideoWatch.objects.filter(
-            user=request.user,
-            credited=True,
-            credited_at__date=today
-        ).count()
-        if watched_today_count >= daily_limit:
-            WatchCompletionAttempt.objects.create(
-                user=request.user, video=video, client_id=client_id,
-                elapsed_seconds=int(elapsed), accepted=False, reason='daily_limit_reached',
-                ip_address=_client_ip(request),
-                user_agent=request.META.get('HTTP_USER_AGENT', '')[:255],
-            )
-            return JsonResponse({
-                "error": "daily_limit_reached",
-                "message": f"You've reached your daily limit of {daily_limit} video(s). Come back tomorrow!",
-                "daily_limit": daily_limit,
-                "watched_today": watched_today_count,
-            }, status=400)
     required = int(video.duration_seconds or 0)
     if required and elapsed + 1 < required:  # +1s tolerance for clock skew
         WatchCompletionAttempt.objects.create(
