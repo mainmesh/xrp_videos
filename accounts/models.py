@@ -210,6 +210,8 @@ class Transaction(models.Model):
         ("deposit", "Deposit"),
         ("withdrawal", "Withdrawal"),
         ("referral_bonus", "Referral Bonus"),
+        ("admin_credit", "Admin Credit"),
+        ("admin_debit", "Admin Debit"),
     )
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')

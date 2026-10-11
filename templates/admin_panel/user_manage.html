@@ -1,0 +1,147 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Manage {{ target.username }}{% endblock %}
+{% block page_title %}Manage User: {{ target.username }}{% endblock %}
+
+{% block content %}
+<a href="{% url 'admin_panel:users' %}" class="inline-flex items-center text-sm text-purple-600 hover:text-purple-800 font-medium mb-6">
+    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    Back to Users
+</a>
+
+<!-- User summary -->
+<div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 mb-6">
+    <div class="flex flex-wrap items-center gap-4">
+        <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl font-bold">
+            {{ target.username|slice:":1"|upper }}
+        </div>
+        <div class="flex-1 min-w-[200px]">
+            <p class="text-lg font-bold text-gray-900">{{ target.username }}</p>
+            <p class="text-sm text-gray-500">{{ target.email|default:"No email" }} · Joined {{ target.date_joined|date:"M d, Y" }}</p>
+        </div>
+        <div class="text-center px-4">
+            <p class="text-xs text-gray-500 uppercase">Balance</p>
+            <p class="text-2xl font-bold text-green-600">${{ profile.balance|floatformat:2 }}</p>
+        </div>
+        <div class="text-center px-4">
+            <p class="text-xs text-gray-500 uppercase">Tier</p>
+            <p class="text-lg font-bold text-gray-800">{{ profile.current_tier|default:"Free" }}</p>
+        </div>
+        <div class="text-center px-4">
+            <p class="text-xs text-gray-500 uppercase">Status</p>
+            {% if target.is_active %}
+            <span class="px-2 py-1 inline-flex text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+            {% else %}
+            <span class="px-2 py-1 inline-flex text-xs font-semibold rounded-full bg-red-100 text-red-800">Suspended</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Credit -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <h3 class="text-lg font-bold text-gray-800 mb-1">Add Funds (Credit)</h3>
+        <p class="text-sm text-gray-500 mb-4">Instantly add money to the wallet, e.g. $5 bonus.</p>
+        <form method="post" action="{% url 'admin_panel:credit_user' target.id %}" class="space-y-3">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Amount (USD)</label>
+                <input type="number" name="amount" step="0.01" min="0.01" value="5.00" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Reason (visible to user)</label>
+                <input type="text" name="reason" placeholder="e.g. Goodwill bonus" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            <button type="submit" class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition">Credit Account</button>
+        </form>
+    </div>
+
+    <!-- Debit -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <h3 class="text-lg font-bold text-gray-800 mb-1">Remove Funds (Debit)</h3>
+        <p class="text-sm text-gray-500 mb-4">Deduct money for corrections. Cannot exceed balance.</p>
+        <form method="post" action="{% url 'admin_panel:debit_user' target.id %}" class="space-y-3" onsubmit="return confirm('Deduct funds from {{ target.username }}?');">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Amount (USD)</label>
+                <input type="number" name="amount" step="0.01" min="0.01" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Reason (visible to user)</label>
+                <input type="text" name="reason" placeholder="e.g. Duplicate credit reversal" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+            <button type="submit" class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition">Debit Account</button>
+        </form>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Tier -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <h3 class="text-lg font-bold text-gray-800 mb-1">Membership Tier</h3>
+        <p class="text-sm text-gray-500 mb-4">Upgrade or reset tier instantly. No balance is charged.</p>
+        <form method="post" action="{% url 'admin_panel:set_user_tier' target.id %}" class="space-y-3">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tier</label>
+                <select name="tier_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <option value="">Free (no tier)</option>
+                    {% for tier in tiers %}
+                    <option value="{{ tier.id }}" {% if profile.current_tier and profile.current_tier.id == tier.id %}selected{% endif %}>{{ tier.name }} — ${{ tier.price|floatformat:2 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition">Set Tier</button>
+        </form>
+    </div>
+
+    <!-- Status -->
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <h3 class="text-lg font-bold text-gray-800 mb-1">Account Status</h3>
+        <p class="text-sm text-gray-500 mb-4">Suspend abusive accounts or re-activate them.</p>
+        <div class="flex flex-wrap gap-3">
+            <form method="post" action="{% url 'admin_panel:toggle_user_active' target.id %}" onsubmit="return confirm('Change active status of {{ target.username }}?');">
+                {% csrf_token %}
+                {% if target.is_active %}
+                <button type="submit" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg transition">Suspend Account</button>
+                {% else %}
+                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition">Re-activate Account</button>
+                {% endif %}
+            </form>
+            <a href="{% url 'admin_panel:send_message' target.id %}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition">Message User</a>
+            <a href="{% url 'admin_panel:edit_user_role' target.id %}" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition">Admin Role</a>
+        </div>
+    </div>
+</div>
+
+<!-- Recent transactions -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-bold text-gray-800">Recent Transactions</h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for tx in recent_transactions %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-3 text-sm font-medium text-gray-900">{{ tx.get_transaction_type_display }}</td>
+                    <td class="px-6 py-3 text-sm font-bold {% if tx.transaction_type == 'admin_debit' or tx.transaction_type == 'withdrawal' or tx.transaction_type == 'tier_upgrade' %}text-red-600{% else %}text-green-600{% endif %}">${{ tx.amount|floatformat:2 }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-600">{{ tx.description|truncatechars:80 }}</td>
+                    <td class="px-6 py-3 text-sm text-gray-500">{{ tx.created_at|date:"M d, Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">No transactions yet</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

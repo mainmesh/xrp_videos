@@ -487,11 +487,15 @@ def approve_payment(request, payment_id):
                 
             # Send notification to user
             from core.models import Message
+            notice = (f"Your payment of ${payment.amount} has been verified and credited "
+                      f"to your wallet. Your current balance is ${profile.balance:.2f}.")
             Message.objects.create(
                 sender=request.user,
-                recipient=payment.user,
-                subject="💰 Payment Approved!",
-                body=f"Your payment of ${payment.amount} has been verified and credited to your wallet. Your current balance is ${profile.balance:.2f}."
+                receiver=payment.user,
+                subject="Payment Approved",
+                message=notice,
+                message_type='deposit',
+                content=notice,
             )
         except Exception:
             pass
@@ -515,11 +519,16 @@ def reject_payment(request, payment_id):
         # Send notification to user
         try:
             from core.models import Message
+            notice = (f"Unfortunately, your payment submission of ${payment.amount} could not "
+                      f"be verified. Reason: {reason}. Please contact support if you believe "
+                      f"this is an error.")
             Message.objects.create(
                 sender=request.user,
-                recipient=payment.user,
-                subject="❌ Payment Rejected",
-                body=f"Unfortunately, your payment submission of ${payment.amount} could not be verified. Reason: {reason}. Please contact support if you believe this is an error."
+                receiver=payment.user,
+                subject="Payment Rejected",
+                message=notice,
+                message_type='message',
+                content=notice,
             )
         except Exception:
             pass
@@ -906,6 +915,201 @@ def edit_user_role(request, user_id):
         'role_perms': {r: sorted(v) for r, v in ROLE_PERMS.items()},
         'user_perms': set(profile.permissions.values_list('key', flat=True)),
     })
+
+
+@staff_required
+@permission_required('manage_users')
+def manage_user(request, user_id):
+    """Per-user management page: credit/debit balance, set tier, activate/deactivate.
+
+    All actions are also available as standalone POST endpoints (used by the
+    quick modals on the users list) which redirect back here.
+    """
+    from accounts.models import Transaction
+    target = get_object_or_404(User.objects.select_related('profile'), pk=user_id)
+    profile = target.profile
+    tiers = Tier.objects.all().order_by('price')
+    recent_transactions = (
+        Transaction.objects.filter(user=target).select_related('tier', 'video')[:20]
+    )
+    return render(request, 'admin_panel/user_manage.html', {
+        'target': target,
+        'profile': profile,
+        'tiers': tiers,
+        'recent_transactions': recent_transactions,
+    })
+
+
+@staff_required
+@permission_required('manage_users')
+def credit_user(request, user_id):
+    """Manually add funds to a user's wallet (e.g. +$5 goodwill / correction)."""
+    target = get_object_or_404(User.objects.select_related('profile'), pk=user_id)
+    fallback = request.POST.get('next') or 'admin_panel:manage_user'
+    fallback_kwargs = {} if fallback != 'admin_panel:manage_user' else {'user_id': user_id}
+    if request.method != 'POST':
+        return redirect('admin_panel:manage_user', user_id=user_id)
+    try:
+        amount = float(request.POST.get('amount', 0) or 0)
+    except (TypeError, ValueError):
+        amount = 0
+    reason = (request.POST.get('reason') or '').strip() or 'Manual credit by admin'
+    if amount <= 0:
+        messages.error(request, 'Amount must be greater than $0.')
+        return redirect(fallback, **fallback_kwargs)
+    profile = target.profile
+    before = {'balance': float(profile.balance)}
+    profile.credit(amount, reason=f'Admin credit by {request.user.username}: {reason}',
+                   transaction_type='admin_credit')
+    profile.refresh_from_db()
+    audit('user.credit', request=request, actor=request.user,
+          target_type='User', target_id=str(target.pk),
+          description=f'Credited ${amount:.2f} to {target.username} ({reason})',
+          before=before, after={'balance': float(profile.balance)})
+    try:
+        notice = (f'Your account was credited with ${amount:.2f} by support. '
+                  f'Reason: {reason}. New balance: ${float(profile.balance):.2f}.')
+        Message.objects.create(
+            sender=request.user, receiver=target,
+            subject='Account Credited',
+            message=notice,
+            message_type='reward',
+            content=notice,
+        )
+    except Exception:
+        pass
+    messages.success(request, f'Credited ${amount:.2f} to {target.username}. New balance: ${float(profile.balance):.2f}.')
+    return redirect(fallback, **fallback_kwargs)
+
+
+@staff_required
+@permission_required('manage_users')
+def debit_user(request, user_id):
+    """Manually remove funds from a user's wallet (correction / penalty)."""
+    target = get_object_or_404(User.objects.select_related('profile'), pk=user_id)
+    fallback = request.POST.get('next') or 'admin_panel:manage_user'
+    fallback_kwargs = {} if fallback != 'admin_panel:manage_user' else {'user_id': user_id}
+    if request.method != 'POST':
+        return redirect('admin_panel:manage_user', user_id=user_id)
+    try:
+        amount = float(request.POST.get('amount', 0) or 0)
+    except (TypeError, ValueError):
+        amount = 0
+    reason = (request.POST.get('reason') or '').strip() or 'Manual debit by admin'
+    if amount <= 0:
+        messages.error(request, 'Amount must be greater than $0.')
+        return redirect(fallback, **fallback_kwargs)
+    profile = target.profile
+    if float(profile.balance) < amount:
+        messages.error(request, f'Insufficient balance: {target.username} has ${float(profile.balance):.2f}.')
+        return redirect(fallback, **fallback_kwargs)
+    before = {'balance': float(profile.balance)}
+    ok = profile.debit(amount, reason=f'Admin debit by {request.user.username}: {reason}',
+                       transaction_type='admin_debit')
+    profile.refresh_from_db()
+    if not ok:
+        messages.error(request, 'Debit failed. Please try again.')
+        return redirect(fallback, **fallback_kwargs)
+    audit('user.debit', request=request, actor=request.user,
+          target_type='User', target_id=str(target.pk),
+          description=f'Debited ${amount:.2f} from {target.username} ({reason})',
+          before=before, after={'balance': float(profile.balance)})
+    try:
+        notice = (f'${amount:.2f} was deducted from your account by support. '
+                  f'Reason: {reason}. New balance: ${float(profile.balance):.2f}.')
+        Message.objects.create(
+            sender=request.user, receiver=target,
+            subject='Account Adjusted',
+            message=notice,
+            message_type='message',
+            content=notice,
+        )
+    except Exception:
+        pass
+    messages.success(request, f'Debited ${amount:.2f} from {target.username}. New balance: ${float(profile.balance):.2f}.')
+    return redirect(fallback, **fallback_kwargs)
+
+
+@staff_required
+@permission_required('manage_users')
+def set_user_tier(request, user_id):
+    """Manually set / upgrade / downgrade a user's tier (no balance charged)."""
+    target = get_object_or_404(User.objects.select_related('profile'), pk=user_id)
+    fallback = request.POST.get('next') or 'admin_panel:manage_user'
+    fallback_kwargs = {} if fallback != 'admin_panel:manage_user' else {'user_id': user_id}
+    if request.method != 'POST':
+        return redirect('admin_panel:manage_user', user_id=user_id)
+    tier_id = request.POST.get('tier_id') or request.POST.get('tier')
+    profile = target.profile
+    before = {'tier': profile.current_tier.name if profile.current_tier else None}
+    if not tier_id or tier_id in ('', 'none', 'null'):
+        profile.current_tier = None
+        profile.save(update_fields=['current_tier'])
+        audit('user.tier_remove', request=request, actor=request.user,
+              target_type='User', target_id=str(target.pk),
+              description=f'Removed tier from {target.username}',
+              before=before, after={'tier': None})
+        try:
+            notice = 'Your membership tier was reset to Free by support.'
+            Message.objects.create(
+                sender=request.user, receiver=target,
+                subject='Membership Tier Updated',
+                message=notice,
+                message_type='message',
+                content=notice,
+            )
+        except Exception:
+            pass
+        messages.success(request, f'{target.username} tier reset to Free.')
+        return redirect(fallback, **fallback_kwargs)
+    try:
+        tier = Tier.objects.get(pk=int(tier_id))
+    except (Tier.DoesNotExist, ValueError, TypeError):
+        messages.error(request, 'Invalid tier selected.')
+        return redirect(fallback, **fallback_kwargs)
+    profile.current_tier = tier
+    profile.save(update_fields=['current_tier'])
+    audit('user.tier_set', request=request, actor=request.user,
+          target_type='User', target_id=str(target.pk),
+          description=f'Set {target.username} tier to {tier.name}',
+          before=before, after={'tier': tier.name})
+    try:
+        notice = f'Your membership tier was set to {tier.name} by support. Enjoy your benefits!'
+        Message.objects.create(
+            sender=request.user, receiver=target,
+            subject='Membership Tier Updated',
+            message=notice,
+            message_type='reward',
+            content=notice,
+        )
+    except Exception:
+        pass
+    messages.success(request, f'{target.username} is now {tier.name}.')
+    return redirect(fallback, **fallback_kwargs)
+
+
+@staff_required
+@permission_required('manage_users')
+def toggle_user_active(request, user_id):
+    """Activate / deactivate (suspend) a user account."""
+    target = get_object_or_404(User, pk=user_id)
+    if request.method != 'POST':
+        return redirect('admin_panel:manage_user', user_id=user_id)
+    if target.pk == request.user.pk:
+        messages.error(request, 'You cannot deactivate your own account.')
+        return redirect('admin_panel:manage_user', user_id=user_id)
+    if target.is_superuser and not request.user.is_superuser:
+        messages.error(request, 'Only superusers can suspend another superuser.')
+        return redirect('admin_panel:manage_user', user_id=user_id)
+    before = {'is_active': target.is_active}
+    target.is_active = not target.is_active
+    target.save(update_fields=['is_active'])
+    audit('user.toggle_active', request=request, actor=request.user,
+          target_type='User', target_id=str(target.pk),
+          description=f"{'Activated' if target.is_active else 'Deactivated'} {target.username}",
+          before=before, after={'is_active': target.is_active})
+    messages.success(request, f'{target.username} has been {"activated" if target.is_active else "deactivated"}.')
+    return redirect('admin_panel:manage_user', user_id=user_id)
 
 
 @staff_required

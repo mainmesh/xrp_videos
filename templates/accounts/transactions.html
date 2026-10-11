@@ -37,6 +37,12 @@
       <a href="?type=referral_bonus" class="filter-btn {% if current_type == 'referral_bonus' %}active{% endif %}">
          Referrals ({{ type_counts.referral_bonus }})
       </a>
+      <a href="?type=admin_credit" class="filter-btn {% if current_type == 'admin_credit' %}active{% endif %}">
+         Admin Credits ({{ type_counts.admin_credit }})
+      </a>
+      <a href="?type=admin_debit" class="filter-btn {% if current_type == 'admin_debit' %}active{% endif %}">
+         Admin Debits ({{ type_counts.admin_debit }})
+      </a>
     </div>
   </div>
 
@@ -67,6 +73,14 @@
                   </div>
                 {% elif transaction.transaction_type == 'referral_bonus' %}
                   <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                    <span class="text-2xl"></span>
+                  </div>
+                {% elif transaction.transaction_type == 'admin_credit' %}
+                  <div class="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <span class="text-2xl"></span>
+                  </div>
+                {% elif transaction.transaction_type == 'admin_debit' %}
+                  <div class="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center">
                     <span class="text-2xl"></span>
                   </div>
                 {% endif %}

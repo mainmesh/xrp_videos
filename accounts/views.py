@@ -582,6 +582,8 @@ def transaction_history(request):
         'deposit': Transaction.objects.filter(user=request.user, transaction_type='deposit').count(),
         'withdrawal': Transaction.objects.filter(user=request.user, transaction_type='withdrawal').count(),
         'referral_bonus': Transaction.objects.filter(user=request.user, transaction_type='referral_bonus').count(),
+        'admin_credit': Transaction.objects.filter(user=request.user, transaction_type='admin_credit').count(),
+        'admin_debit': Transaction.objects.filter(user=request.user, transaction_type='admin_debit').count(),
     }
     
     context = {
