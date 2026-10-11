@@ -299,6 +299,59 @@
         background-color: rgba(139, 92, 246, 0.1) !important;
       }
       
+      /* ---- Light mode readability fixes for dark-styled components ---- */
+
+      /* Pastel accent text designed for dark backgrounds -> readable dark variants */
+      body.light-mode .text-purple-300,
+      body.light-mode .text-purple-400 { color: #7c3aed !important; }
+      body.light-mode .text-green-300,
+      body.light-mode .text-green-400 { color: #15803d !important; }
+      body.light-mode .text-amber-300,
+      body.light-mode .text-amber-400 { color: #b45309 !important; }
+      body.light-mode .text-red-300,
+      body.light-mode .text-red-400 { color: #b91c1c !important; }
+      body.light-mode .text-blue-300,
+      body.light-mode .text-blue-400 { color: #1d4ed8 !important; }
+      body.light-mode .text-yellow-300,
+      body.light-mode .text-yellow-400 { color: #a16207 !important; }
+      body.light-mode .text-pink-300,
+      body.light-mode .text-pink-400 { color: #be185d !important; }
+
+      /* Keep light text on intentionally dark surfaces (video modal, thumbnail
+         overlays, success popup) — both nested and same-element cases */
+      body.light-mode .bg-black\/60.text-white,
+      body.light-mode .bg-black\/80.text-white,
+      body.light-mode .bg-slate-900.text-white,
+      body.light-mode .bg-green-500\/90.text-white,
+      body.light-mode .bg-black\/60 .text-white,
+      body.light-mode .bg-black\/80 .text-white,
+      body.light-mode .bg-slate-900 .text-white,
+      body.light-mode .bg-slate-800 .text-white,
+      body.light-mode .bg-slate-700 .text-white { color: #f9fafb !important; }
+
+      body.light-mode .bg-black\/60 .text-gray-300,
+      body.light-mode .bg-black\/80 .text-gray-300,
+      body.light-mode .bg-slate-900 .text-gray-300 { color: #d1d5db !important; }
+
+      body.light-mode .bg-black\/60 .text-gray-400,
+      body.light-mode .bg-black\/80 .text-gray-400,
+      body.light-mode .bg-slate-900 .text-gray-400 { color: #9ca3af !important; }
+
+      /* Dark overlays keep their own accent colors (already-watched check mark) */
+      body.light-mode .bg-black\/60 .text-green-400,
+      body.light-mode .bg-black\/80 .text-green-400 { color: #4ade80 !important; }
+
+      /* Gradient buttons, colored buttons and avatars keep white text */
+      body.light-mode [class*="bg-gradient"].text-white,
+      body.light-mode .bg-purple-600.text-white,
+      body.light-mode .bg-purple-700.text-white,
+      body.light-mode .bg-green-600.text-white,
+      body.light-mode .bg-red-600.text-white,
+      body.light-mode .bg-blue-600.text-white,
+      body.light-mode .bg-pink-600.text-white,
+      body.light-mode .bg-slate-800.text-gray-300,
+      body.light-mode .bg-slate-700.text-gray-300 { color: #f9fafb !important; }
+
       /* Mobile responsive fixes */
       @media (max-width: 1023px) {
         .main-content-wrapper {
